@@ -16,13 +16,21 @@ const EMAILJS_CONFIG = {
   targetEmail: process.env.EMAILJS_TARGET_EMAIL || 'mushabbirahmed99@gmail.com'
 };
 
+// Enhanced debugging function
+function logDebugInfo(context: string, data: any) {
+  console.log(`🔍 [${context}] ${new Date().toISOString()}`);
+  console.log(`🔍 Environment Variables:`);
+  console.log(`🔍   EMAILJS_SERVICE_ID: ${process.env.EMAILJS_SERVICE_ID || 'NOT SET'}`);
+  console.log(`🔍   EMAILJS_TEMPLATE_ID: ${process.env.EMAILJS_TEMPLATE_ID || 'NOT SET'}`);
+  console.log(`🔍   EMAILJS_PRIVATE_KEY: ${process.env.EMAILJS_PRIVATE_KEY ? 'SET' : 'NOT SET'}`);
+  console.log(`🔍   EMAILJS_TARGET_EMAIL: ${process.env.EMAILJS_TARGET_EMAIL || 'NOT SET'}`);
+  console.log(`🔍 Data:`, JSON.stringify(data, null, 2));
+}
+
 // Send OTP email using EmailJS REST API
 async function sendOTPEmail(otp: string) {
   try {
-    console.log('📧 Attempting to send OTP via EmailJS...');
-    console.log('📧 Service ID:', EMAILJS_CONFIG.serviceId);
-    console.log('📧 Template ID:', EMAILJS_CONFIG.templateId);
-    console.log('📧 Target Email:', EMAILJS_CONFIG.targetEmail);
+    logDebugInfo('OTP_ATTEMPT', { otp, config: EMAILJS_CONFIG });
     
     const emailjsUrl = `https://api.emailjs.com/api/v1.0/email/send`;
     
@@ -42,6 +50,8 @@ async function sendOTPEmail(otp: string) {
       }
     };
     
+    console.log('📧 Sending request to EmailJS...');
+    console.log('📧 URL:', emailjsUrl);
     console.log('📧 Request body:', JSON.stringify(requestBody, null, 2));
     
     const response = await fetch(emailjsUrl, {
@@ -55,22 +65,32 @@ async function sendOTPEmail(otp: string) {
     console.log('📧 Response status:', response.status);
     console.log('📧 Response headers:', Object.fromEntries(response.headers.entries()));
 
+    const responseText = await response.text();
+    console.log('📧 Response body:', responseText);
+
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('📧 EmailJS API error:', response.status, errorData);
-      throw new Error(`EmailJS API error: ${response.status}: ${errorData}`);
+      console.error('📧 EmailJS API error:', response.status, responseText);
+      throw new Error(`EmailJS API error: ${response.status}: ${responseText}`);
     }
 
-    const result = await response.json();
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (e) {
+      result = { raw: responseText };
+    }
+    
     console.log('📧 EmailJS success response:', result);
-    return { success: true };
+    logDebugInfo('OTP_SUCCESS', { result });
+    return { success: true, result };
     
   } catch (error) {
     console.error('📧 EmailJS error:', error);
+    logDebugInfo('OTP_ERROR', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     
     // For development/testing, show OTP in console
     console.log(`📧 ==========================================`);
-    console.log(`📧 ADMIN LOGIN OTP`);
+    console.log(`📧 ADMIN LOGIN OTP (FALLBACK)`);
     console.log(`📧 ==========================================`);
     console.log(`📧 Email: ${EMAILJS_CONFIG.targetEmail}`);
     console.log(`📧 OTP Code: ${otp}`);
@@ -83,7 +103,7 @@ async function sendOTPEmail(otp: string) {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    return { success: true };
+    return { success: true, fallback: true };
   }
 }
 
