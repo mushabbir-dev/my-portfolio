@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Mushabbir Ahmed - AI Specialist & Software Engineer',
-      description: 'Professional portfolio of Mushabbir Ahmed, AI Specialist and Software Engineer based in Saga, Japan.',
+      description: 'Professional portfolio of Mushabbir Ahmed, AI Specialist and Software Engineer.',
 }
 
 export default function RootLayout({

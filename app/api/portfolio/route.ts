@@ -29,7 +29,7 @@ const defaultPortfolioData = {
   about: {
     english: "I'm Mushabbir Ahmed, a results-driven AI Specialist and Software Engineer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan (Graduating March 2026). With a strong foundation in Software Engineering from Qingdao University, China, I specialize in developing secure, scalable systems using React, Flask, MongoDB, and advanced encryption methods like AES‑256 and RSA‑2048. My hands-on projects include a secure medical data simulation system and a movie recommendation engine. I'm also serving as an International Student Tutor and was appointed as a Saga City International Tourism Ambassador in July 2025. I'm passionate about delivering data-driven, AI-powered solutions that create real-world impact.",
     japanese: "私はムサビル・アハメドと申します。現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程（2026年3月修了予定）に在籍しています。中国の青島大学でソフトウェア工学を学び、Python・JavaScript・React・Flask・MongoDBを活用したソフトウェア開発および、AES-256・RSA-2048などの高度な暗号技術を用いたセキュアなシステム構築を得意としています。医療データ暗号化シミュレーションや映画レコメンデーションシステムの開発経験があり、現在は佐賀大学の技術サポートチューターとしても活動中です。2025年7月には佐賀市国際観光アンバサダーにも任命され、地域貢献にも力を入れています。",
-    location: "Saga, Japan",
+    location: "",
     status: "Actively looking for full-time opportunities in Japan",
     education: "Master's Student at Saga University"
   },
@@ -230,7 +230,7 @@ const defaultPortfolioData = {
   contact: {
     email: "mushabbir@example.com",
     phone: "+81 90-XXXX-XXXX",
-    location: "Saga, Japan",
+    location: "",
     social: {
       github: "https://github.com/mushabbir",
       linkedin: "https://linkedin.com/in/mushabbir",
