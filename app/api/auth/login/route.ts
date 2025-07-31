@@ -11,7 +11,7 @@ const VALID_CREDENTIALS = {
 // EmailJS configuration (SECURE - Using Private Key)
 const EMAILJS_CONFIG = {
   serviceId: process.env.EMAILJS_SERVICE_ID || 'service_qqslkja',
-  templateId: process.env.EMAILJS_TEMPLATE_ID || 'template_e9dshs7',
+  templateId: process.env.EMAILJS_TEMPLATE_ID || 'template_nr8wqkq', // OTP template
   privateKey: process.env.EMAILJS_PRIVATE_KEY || '1jyIruPWFATPFQKrubr2x', // Using private key for server-side
   targetEmail: process.env.EMAILJS_TARGET_EMAIL || 'mushabbirahmed99@gmail.com'
 };
