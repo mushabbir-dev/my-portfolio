@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 
-// File path for persistent storage
-const DATA_FILE_PATH = path.join(process.cwd(), 'data', 'portfolio.json');
+// In-memory storage for Vercel compatibility
+// In production, you'd use a database like MongoDB, PostgreSQL, or Redis
+let portfolioData: any = null;
 
 // Default portfolio data
 const defaultPortfolioData = {
@@ -241,33 +240,19 @@ const defaultPortfolioData = {
   }
 };
 
-// Helper function to ensure data directory exists
-function ensureDataDirectory() {
-  const dataDir = path.dirname(DATA_FILE_PATH);
-  try {
-    fs.accessSync(dataDir);
-  } catch {
-    fs.mkdirSync(dataDir, { recursive: true });
+// Helper function to get portfolio data
+function getPortfolioData() {
+  if (!portfolioData) {
+    portfolioData = { ...defaultPortfolioData };
   }
+  return portfolioData;
 }
 
-// Helper function to load portfolio data from file
-function loadPortfolioData() {
-  try {
-    ensureDataDirectory();
-    const fileContent = fs.readFileSync(DATA_FILE_PATH, 'utf-8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    // If file doesn't exist or is invalid, return default data
-    return defaultPortfolioData;
-  }
-}
-
-// Helper function to save portfolio data to file
+// Helper function to save portfolio data
 function savePortfolioData(data: any) {
   try {
-    ensureDataDirectory();
-    fs.writeFileSync(DATA_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    portfolioData = { ...data };
+    console.log('Portfolio data saved successfully');
     return true;
   } catch (error) {
     console.error('Error saving portfolio data:', error);
@@ -277,8 +262,10 @@ function savePortfolioData(data: any) {
 
 export async function GET() {
   try {
-    const portfolioData = loadPortfolioData();
-    return NextResponse.json(portfolioData);
+    console.log('GET /api/portfolio - Loading portfolio data');
+    const data = getPortfolioData();
+    console.log('Portfolio data loaded successfully');
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error loading portfolio data:', error);
     return NextResponse.json(
@@ -290,9 +277,12 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    console.log('PUT /api/portfolio - Updating portfolio data');
+    
     // Check content length
     const contentLength = request.headers.get('content-length');
     if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) { // 10MB limit
+      console.log('Payload too large:', contentLength);
       return NextResponse.json(
         { error: 'Payload too large. Maximum size is 10MB.' },
         { status: 413 }
@@ -300,24 +290,28 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('Received portfolio data:', Object.keys(body));
     
     // Validate the data structure
     if (!body || typeof body !== 'object') {
+      console.log('Invalid data format received');
       return NextResponse.json(
         { error: 'Invalid data format' },
         { status: 400 }
       );
     }
 
-    // Save to file
+    // Save to memory
     const success = savePortfolioData(body);
     
     if (success) {
+      console.log('Portfolio data updated successfully');
       return NextResponse.json({ 
         message: 'Portfolio data updated successfully',
         data: body 
       });
     } else {
+      console.log('Failed to save portfolio data');
       return NextResponse.json(
         { error: 'Failed to save portfolio data' },
         { status: 500 }
@@ -334,9 +328,12 @@ export async function PUT(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('POST /api/portfolio - Creating portfolio data');
+    
     // Check content length
     const contentLength = request.headers.get('content-length');
     if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) { // 10MB limit
+      console.log('Payload too large:', contentLength);
       return NextResponse.json(
         { error: 'Payload too large. Maximum size is 10MB.' },
         { status: 413 }
@@ -344,24 +341,28 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('Received portfolio data:', Object.keys(body));
     
     // Validate the data structure
     if (!body || typeof body !== 'object') {
+      console.log('Invalid data format received');
       return NextResponse.json(
         { error: 'Invalid data format' },
         { status: 400 }
       );
     }
 
-    // Save to file
+    // Save to memory
     const success = savePortfolioData(body);
     
     if (success) {
+      console.log('Portfolio data created successfully');
       return NextResponse.json({ 
         message: 'Portfolio data created successfully',
         data: body 
       });
     } else {
+      console.log('Failed to create portfolio data');
       return NextResponse.json(
         { error: 'Failed to create portfolio data' },
         { status: 500 }
