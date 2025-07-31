@@ -796,7 +796,7 @@ export default function HomePage() {
                     {portfolioData?.hero?.profilePicture ? (
                       <div className="w-full h-full">
                         <img
-                          src={portfolioData.hero.profilePicture}
+                          src={typeof portfolioData.hero.profilePicture === 'string' ? portfolioData.hero.profilePicture : ''}
                           alt={portfolioData?.hero?.name?.[language] || "Profile"}
                           className="w-full h-full object-cover"
                         />

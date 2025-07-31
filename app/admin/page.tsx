@@ -455,6 +455,10 @@ export default function AdminPage() {
   const saveData = async () => {
     setIsSaving(true);
     try {
+      console.log('Saving portfolio data:', data);
+      console.log('Profile picture type:', typeof data.hero.profilePicture);
+      console.log('Profile picture value:', data.hero.profilePicture);
+      
       // Save to API
       const response = await fetch('/api/portfolio', {
         method: 'PUT',
@@ -470,6 +474,7 @@ export default function AdminPage() {
         throw new Error('Failed to save data');
       }
     } catch (error) {
+      console.error('Save error:', error);
       setSaveModalType('error');
       setShowSaveModal(true);
       setTimeout(() => setShowSaveModal(false), 3000);
@@ -948,9 +953,12 @@ export default function AdminPage() {
                   const result = await response.json();
 
                   if (result.success) {
+                    console.log('Profile picture upload successful:', result.url);
+                    console.log('Profile picture type:', typeof result.url);
                     updateData('hero', { profilePicture: result.url });
                     alert('Profile picture uploaded successfully!');
                   } else {
+                    console.error('Profile picture upload failed:', result.error);
                     alert('Failed to upload profile picture: ' + result.error);
                   }
                 } catch (error) {
