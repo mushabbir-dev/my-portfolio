@@ -8,11 +8,11 @@ const VALID_CREDENTIALS = {
   passwordHash: process.env.ADMIN_PASSWORD_HASH || '757162ad31b07cbf9291d629916881410ace61bbb6b1067721ea8cde107c4e57' // SHA-256 hash of Ahmed@2025
 };
 
-// EmailJS configuration
+// EmailJS configuration (SECURE - Using Private Key)
 const EMAILJS_CONFIG = {
   serviceId: process.env.EMAILJS_SERVICE_ID || 'service_8qjqjqj',
   templateId: process.env.EMAILJS_TEMPLATE_ID || 'template_8qjqjqj',
-  publicKey: process.env.EMAILJS_PUBLIC_KEY || '8qjqjqj',
+  privateKey: process.env.EMAILJS_PRIVATE_KEY || 'user_8qjqjqj', // Using private key for server-side
   targetEmail: process.env.EMAILJS_TARGET_EMAIL || 'mushabbirahmed99@gmail.com'
 };
 
@@ -29,7 +29,7 @@ async function sendOTPEmail(otp: string) {
       body: JSON.stringify({
         service_id: EMAILJS_CONFIG.serviceId,
         template_id: EMAILJS_CONFIG.templateId,
-        user_id: EMAILJS_CONFIG.publicKey,
+        user_id: EMAILJS_CONFIG.privateKey,
         template_params: {
           to_email: EMAILJS_CONFIG.targetEmail,
           to_name: 'Admin',
