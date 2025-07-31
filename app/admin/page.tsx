@@ -419,9 +419,11 @@ export default function AdminPage() {
     // Load saved data from API
     const fetchData = async () => {
       try {
+        console.log('Fetching portfolio data from API...');
         const response = await fetch('/api/portfolio');
         if (response.ok) {
           const fetchedData = await response.json();
+          console.log('Fetched data:', fetchedData);
           
           // Sanitize the fetched data to ensure correct structure
           const sanitizedData = {
@@ -479,9 +481,11 @@ export default function AdminPage() {
                 : project.description || { english: "", japanese: "" },
               technologies: Array.isArray(project.technologies) ? project.technologies : [],
               images: Array.isArray(project.images) ? project.images : []
-            })) : []
+            })) : [],
+            papers: Array.isArray(fetchedData.papers) ? fetchedData.papers : []
           };
           
+          console.log('Sanitized data:', sanitizedData);
           setData(sanitizedData);
         } else {
           console.error('Failed to fetch portfolio data');
@@ -500,10 +504,8 @@ export default function AdminPage() {
     setIsSaving(true);
     try {
       console.log('Saving portfolio data:', data);
-      console.log('Profile picture type:', typeof data.hero.profilePicture);
-      console.log('Profile picture value:', data.hero.profilePicture);
       
-      // Sanitize data before saving to ensure correct structure
+      // Ensure data structure is correct before saving
       const sanitizedData = {
         ...data,
         hero: {
@@ -559,7 +561,8 @@ export default function AdminPage() {
             : { english: "", japanese: "" },
           technologies: Array.isArray(project.technologies) ? project.technologies : [],
           images: Array.isArray(project.images) ? project.images : []
-        })) : []
+        })) : [],
+        papers: Array.isArray(data.papers) ? data.papers : []
       };
       
       console.log('Sanitized data:', sanitizedData);
@@ -576,7 +579,8 @@ export default function AdminPage() {
         setShowSaveModal(true);
         setTimeout(() => setShowSaveModal(false), 3000);
       } else {
-        throw new Error('Failed to save data');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save data');
       }
     } catch (error) {
       console.error('Save error:', error);
@@ -794,16 +798,19 @@ export default function AdminPage() {
         const cvKey = language === 'en' ? 'english' : 'japanese';
         const filename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
         
-        updateData('cv', {
-          ...data.cv,
-          [cvKey]: {
-            url: `/cv/${filename}`,
-            filename: filename,
-            isActive: true
+        setData(prev => ({
+          ...prev,
+          cv: {
+            ...prev.cv,
+            [cvKey]: {
+              url: result.url,
+              filename: filename,
+              isActive: true
+            }
           }
-        });
+        }));
 
-
+        alert('CV uploaded successfully!');
       } else {
         console.error('CV upload failed:', result.error);
         alert('Failed to upload CV: ' + result.error);
@@ -818,13 +825,16 @@ export default function AdminPage() {
 
   const toggleCVActive = (language: 'en' | 'ja') => {
     const cvKey = language === 'en' ? 'english' : 'japanese';
-    updateData('cv', {
-      ...data.cv,
-      [cvKey]: {
-        ...data.cv[cvKey],
-        isActive: !data.cv[cvKey].isActive
+    setData(prev => ({
+      ...prev,
+      cv: {
+        ...prev.cv,
+        [cvKey]: {
+          ...prev.cv[cvKey],
+          isActive: !prev.cv[cvKey].isActive
+        }
       }
-    });
+    }));
   };
 
   const removeCV = async (language: 'en' | 'ja') => {
@@ -837,16 +847,19 @@ export default function AdminPage() {
 
       if (response.ok && result.success) {
         const cvKey = language === 'en' ? 'english' : 'japanese';
-        updateData('cv', {
-          ...data.cv,
-          [cvKey]: {
-            url: "",
-            filename: "",
-            isActive: false
+        setData(prev => ({
+          ...prev,
+          cv: {
+            ...prev.cv,
+            [cvKey]: {
+              url: "",
+              filename: "",
+              isActive: false
+            }
           }
-        });
+        }));
 
-
+        alert('CV removed successfully!');
       } else {
         console.error('CV delete failed:', result.error);
         alert('Failed to delete CV: ' + result.error);
@@ -859,76 +872,40 @@ export default function AdminPage() {
 
   // Papers Management Functions
   const addPaper = () => {
-    try {
-      const newPaper = {
-        id: Date.now().toString(),
-        title: "",
-        type: "oral" as 'poster' | 'oral',
-        date: "",
-        conference: "",
-        paperPdf: "",
-        paperFilename: "",
-        posterPdf: "",
-        posterFilename: "",
-        presentationPdf: "",
-        presentationFilename: "",
-      };
-      
-      // Ensure papers is always an array and handle undefined/null cases
-      let currentPapers: any[] = [];
-      if (data && data.papers) {
-        currentPapers = Array.isArray(data.papers) ? data.papers : [];
-      }
-      const updatedPapers = [...currentPapers, newPaper];
-      
-      updateData('papers', updatedPapers);
-    } catch (error) {
-      console.error('Error adding paper:', error);
-      // Fallback: ensure papers array exists
-      if (!data.papers || !Array.isArray(data.papers)) {
-        updateData('papers', []);
-      }
-    }
+    const newPaper = {
+      id: Date.now().toString(),
+      title: "",
+      type: "oral" as 'poster' | 'oral',
+      date: "",
+      conference: "",
+      paperPdf: "",
+      paperFilename: "",
+      posterPdf: "",
+      posterFilename: "",
+      presentationPdf: "",
+      presentationFilename: "",
+    };
+    
+    setData(prev => ({
+      ...prev,
+      papers: [...(prev.papers || []), newPaper]
+    }));
   };
 
   const updatePaper = (id: string, updates: any) => {
-    try {
-      // Ensure papers is always an array and handle undefined/null cases
-      let papersArray: any[] = [];
-      if (data && data.papers) {
-        papersArray = Array.isArray(data.papers) ? data.papers : [];
-      }
-      const updatedPapers = papersArray.map(paper => 
+    setData(prev => ({
+      ...prev,
+      papers: (prev.papers || []).map(paper => 
         paper.id === id ? { ...paper, ...updates } : paper
-      );
-      updateData('papers', updatedPapers);
-
-    } catch (error) {
-      console.error('Error updating paper:', error);
-      // Fallback: ensure papers array exists
-      if (!data.papers || !Array.isArray(data.papers)) {
-        updateData('papers', []);
-      }
-    }
+      )
+    }));
   };
 
   const removePaper = (id: string) => {
-    try {
-      // Ensure papers is always an array and handle undefined/null cases
-      let papersArray: any[] = [];
-      if (data && data.papers) {
-        papersArray = Array.isArray(data.papers) ? data.papers : [];
-      }
-      const updatedPapers = papersArray.filter(paper => paper.id !== id);
-      
-      updateData('papers', updatedPapers);
-    } catch (error) {
-      console.error('Error removing paper:', error);
-      // Fallback: ensure papers array exists
-      if (!data.papers || !Array.isArray(data.papers)) {
-        updateData('papers', []);
-      }
-    }
+    setData(prev => ({
+      ...prev,
+      papers: (prev.papers || []).filter(paper => paper.id !== id)
+    }));
   };
 
   const handlePaperUpload = async (file: File, paperId: string, fileType: 'paper' | 'poster' | 'presentation') => {
@@ -959,7 +936,7 @@ export default function AdminPage() {
         }
         
         updatePaper(paperId, updates);
-
+        alert(`${fileType} uploaded successfully!`);
       } else {
         console.error(`${fileType} upload failed:`, result.error);
         alert(`Failed to upload ${fileType}: ` + result.error);
@@ -983,25 +960,34 @@ export default function AdminPage() {
 
       if (response.ok) {
         const result = await response.json();
-        const project = data.projects.find(p => p.id === projectId);
-        if (project) {
-          const updatedImages = [...project.images, result.imageUrl];
-          updateProject(projectId, { images: updatedImages });
-        }
+        setData(prev => ({
+          ...prev,
+          projects: prev.projects.map(project => 
+            project.id === projectId 
+              ? { ...project, images: [...project.images, result.imageUrl] }
+              : project
+          )
+        }));
+        alert('Project image uploaded successfully!');
       } else {
         console.error('Failed to upload project image');
+        alert('Failed to upload project image');
       }
     } catch (error) {
       console.error('Error uploading project image:', error);
+      alert('Error uploading project image. Please try again.');
     }
   };
 
   const addProjectImageUrl = (projectId: string, imageUrl: string) => {
-    const project = data.projects.find(p => p.id === projectId);
-    if (project) {
-      const updatedImages = [...project.images, imageUrl];
-      updateProject(projectId, { images: updatedImages });
-    }
+    setData(prev => ({
+      ...prev,
+      projects: prev.projects.map(project => 
+        project.id === projectId 
+          ? { ...project, images: [...project.images, imageUrl] }
+          : project
+      )
+    }));
   };
 
   const renderHeroSection = () => (
@@ -2056,97 +2042,123 @@ export default function AdminPage() {
   );
 
   const renderPapersSection = () => {
-    try {
-      // Ensure papers is always an array and handle undefined/null cases
-      let papersArray: any[] = [];
-      if (data && data.papers) {
-        papersArray = Array.isArray(data.papers) ? data.papers : [];
-      }
+    const papersArray = data.papers || [];
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Papers Management</h2>
+          <button
+            onClick={addPaper}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add Paper</span>
+          </button>
+        </div>
 
-      
-      return (
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Papers Management</h2>
-            <button
-              onClick={addPaper}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Paper</span>
-            </button>
-          </div>
+          {papersArray.map((paper) => (
+            <div key={paper.id} className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {paper.title || 'Untitled Paper'}
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => removePaper(paper.id)}
+                    className="text-red-600 hover:text-red-700 transition-colors"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
 
-          <div className="space-y-6">
-            {papersArray.map((paper) => (
-              <div key={paper.id} className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {paper.title || 'Untitled Paper'}
-                  </h3>
-                  <div className="flex items-center space-x-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                  <input
+                    type="text"
+                    value={paper.title || ''}
+                    onChange={(e) => updatePaper(paper.id, { title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="Paper title"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type</label>
+                  <select
+                    value={paper.type || 'oral'}
+                    onChange={(e) => updatePaper(paper.id, { type: e.target.value as 'poster' | 'oral' })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                  >
+                    <option value="poster">Poster</option>
+                    <option value="oral">Oral Presentation</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
+                  <input
+                    type="date"
+                    value={paper.date || ''}
+                    onChange={(e) => updatePaper(paper.id, { date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Conference</label>
+                  <input
+                    type="text"
+                    value={paper.conference || ''}
+                    onChange={(e) => updatePaper(paper.id, { conference: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="Conference name"
+                  />
+                </div>
+
+                {/* Paper PDF Upload */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Paper PDF</label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={paper.paperPdf || ''}
+                      onChange={(e) => updatePaper(paper.id, { paperPdf: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                      placeholder="PDF URL or upload file"
+                    />
                     <button
-                      onClick={() => removePaper(paper.id)}
-                      className="text-red-600 hover:text-red-700 transition-colors"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = '.pdf';
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            handlePaperUpload(file, paper.id, 'paper');
+                          }
+                        };
+                        input.click();
+                      }}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
                     >
-                      <Trash2 className="h-5 w-5" />
+                      <Upload className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
-                    <input
-                      type="text"
-                      value={paper.title || ''}
-                      onChange={(e) => updatePaper(paper.id, { title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
-                      placeholder="Paper title"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type</label>
-                    <select
-                      value={paper.type || 'oral'}
-                      onChange={(e) => updatePaper(paper.id, { type: e.target.value as 'poster' | 'oral' })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
-                    >
-                      <option value="poster">Poster</option>
-                      <option value="oral">Oral Presentation</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
-                    <input
-                      type="date"
-                      value={paper.date || ''}
-                      onChange={(e) => updatePaper(paper.id, { date: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Conference</label>
-                    <input
-                      type="text"
-                      value={paper.conference || ''}
-                      onChange={(e) => updatePaper(paper.id, { conference: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
-                      placeholder="Conference name"
-                    />
-                  </div>
-
-                  {/* Paper PDF Upload */}
+                {/* Poster PDF Upload (for poster type) */}
+                {paper.type === 'poster' && (
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Paper PDF</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Poster PDF</label>
                     <div className="flex space-x-2">
                       <input
                         type="text"
-                        value={paper.paperPdf || ''}
-                        onChange={(e) => updatePaper(paper.id, { paperPdf: e.target.value })}
+                        value={paper.posterPdf || ''}
+                        onChange={(e) => updatePaper(paper.id, { posterPdf: e.target.value })}
                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
                         placeholder="PDF URL or upload file"
                       />
@@ -2158,7 +2170,7 @@ export default function AdminPage() {
                           input.onchange = (e) => {
                             const file = (e.target as HTMLInputElement).files?.[0];
                             if (file) {
-                              handlePaperUpload(file, paper.id, 'paper');
+                              handlePaperUpload(file, paper.id, 'poster');
                             }
                           };
                           input.click();
@@ -2169,89 +2181,46 @@ export default function AdminPage() {
                       </button>
                     </div>
                   </div>
+                )}
 
-                  {/* Poster PDF Upload (for poster type) */}
-                  {paper.type === 'poster' && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Poster PDF</label>
-                      <div className="flex space-x-2">
-                        <input
-                          type="text"
-                          value={paper.posterPdf || ''}
-                          onChange={(e) => updatePaper(paper.id, { posterPdf: e.target.value })}
-                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
-                          placeholder="PDF URL or upload file"
-                        />
-                        <button
-                          onClick={() => {
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.accept = '.pdf';
-                            input.onchange = (e) => {
-                              const file = (e.target as HTMLInputElement).files?.[0];
-                              if (file) {
-                                handlePaperUpload(file, paper.id, 'poster');
-                              }
-                            };
-                            input.click();
-                          }}
-                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                        >
-                          <Upload className="h-4 w-4" />
-                        </button>
-                      </div>
+                {/* Presentation PDF Upload (for oral type) */}
+                {paper.type === 'oral' && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Presentation PDF</label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={paper.presentationPdf || ''}
+                        onChange={(e) => updatePaper(paper.id, { presentationPdf: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                        placeholder="PDF URL or upload file"
+                      />
+                      <button
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = '.pdf';
+                          input.onchange = (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (file) {
+                              handlePaperUpload(file, paper.id, 'presentation');
+                            }
+                          };
+                          input.click();
+                        }}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                      >
+                        <Upload className="h-4 w-4" />
+                      </button>
                     </div>
-                  )}
-
-                  {/* Presentation PDF Upload (for oral type) */}
-                  {paper.type === 'oral' && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Presentation PDF</label>
-                      <div className="flex space-x-2">
-                        <input
-                          type="text"
-                          value={paper.presentationPdf || ''}
-                          onChange={(e) => updatePaper(paper.id, { presentationPdf: e.target.value })}
-                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
-                          placeholder="PDF URL or upload file"
-                        />
-                        <button
-                          onClick={() => {
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.accept = '.pdf';
-                            input.onchange = (e) => {
-                              const file = (e.target as HTMLInputElement).files?.[0];
-                              if (file) {
-                                handlePaperUpload(file, paper.id, 'presentation');
-                              }
-                            };
-                            input.click();
-                          }}
-                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                        >
-                          <Upload className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      );
-    } catch (error) {
-      console.error('Error rendering papers section:', error);
-      return (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Papers Management</h2>
-          <div className="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-400 px-4 py-3 rounded">
-            Error loading papers section. Please refresh the page.
-          </div>
-        </div>
-      );
-    }
+      </div>
+    );
   };
 
   const renderSection = () => {
@@ -2437,93 +2406,45 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Interactive Save Modal */}
+      {/* Save Modal */}
       {showSaveModal && (
-        <motion.div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setShowSaveModal(false)}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 50 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 50 }}
-            onClick={(e) => e.stopPropagation()}
-            className={`bg-white dark:bg-gray-800 rounded-xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden ${
-              saveModalType === 'error' ? 'border-l-4 border-red-500' : 'border-l-4 border-green-500'
-            }`}
-          >
-            {/* Background animation */}
-            <motion.div
-              className={`absolute inset-0 ${
-                saveModalType === 'error' 
-                  ? 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20' 
-                  : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20'
-              }`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            />
-            
-            <div className="relative z-10 text-center">
-              <motion.div
-                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
-                  saveModalType === 'error' 
-                    ? 'bg-red-100 dark:bg-red-900' 
-                    : 'bg-green-100 dark:bg-green-900'
-                }`}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              >
-                {saveModalType === 'error' ? (
-                  <X className="h-8 w-8 text-red-600 dark:text-red-400" />
-                ) : (
-                  <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-                )}
-              </motion.div>
-              
-              <h3 className={`text-xl font-semibold mb-2 ${
-                saveModalType === 'error' 
-                  ? 'text-red-900 dark:text-red-100' 
-                  : 'text-green-900 dark:text-green-100'
-              }`}>
-                {saveModalType === 'error' ? 'Save Failed' : 'Save Successful'}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center space-x-3 mb-4">
+              {saveModalType === 'success' ? (
+                <CheckCircle className="h-6 w-6 text-green-500" />
+              ) : (
+                <Circle className="h-6 w-6 text-red-500" />
+              )}
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {saveModalType === 'success' ? 'Success!' : 'Error!'}
               </h3>
-              
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                {saveModalType === 'error' 
-                  ? 'Failed to save portfolio data. Please try again.' 
-                  : 'Portfolio data saved successfully!'
-                }
-              </p>
-              
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowSaveModal(false)}
-                className={`px-6 py-2 rounded-lg font-medium transition-colors duration-200 ${
-                  saveModalType === 'error'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-green-600 hover:bg-green-700 text-white'
-                }`}
-              >
-                OK
-              </motion.button>
             </div>
-          </motion.div>
-        </motion.div>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              {saveModalType === 'success' 
+                ? 'Portfolio data saved successfully!' 
+                : 'Failed to save portfolio data. Please try again.'
+              }
+            </p>
+            <button
+              onClick={() => setShowSaveModal(false)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+            >
+              OK
+            </button>
+          </div>
+        </div>
       )}
 
       {/* CV Upload Modal */}
-      <CVUploadModal
-        isOpen={showCVUploadModal}
-        onClose={() => setShowCVUploadModal(false)}
-        onSave={handleCVUpload}
-        language={cvUploadLanguage}
-      />
+      {showCVUploadModal && (
+        <CVUploadModal
+          isOpen={showCVUploadModal}
+          onClose={() => setShowCVUploadModal(false)}
+          onSave={handleCVUpload}
+          language={cvUploadLanguage}
+        />
+      )}
     </div>
   );
 } 

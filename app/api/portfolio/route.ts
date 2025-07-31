@@ -23,7 +23,16 @@ const defaultPortfolioData = {
       english: "I'm a results-driven AI Specialist and Software Engineer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan.",
       japanese: "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIスペシャリスト・ソフトウェアエンジニアです。"
     },
-    profilePicture: null // Add profile picture support
+    profilePicture: null,
+    tools: [
+      { name: 'Git', icon: '📝' },
+      { name: 'VS Code', icon: '💻' },
+      { name: 'Postman', icon: '📮' },
+      { name: 'MATLAB', icon: '🔬' },
+      { name: 'IBM Watson', icon: '🤖' },
+      { name: 'Excel', icon: '📈' },
+      { name: 'NetBeans', icon: '☕' }
+    ]
   },
   about: {
     english: "I'm Mushabbir Ahmed, a results-driven AI Specialist and Software Engineer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan (Graduating March 2026). With a strong foundation in Software Engineering from Qingdao University, China, I specialize in developing secure, scalable systems using React, Flask, MongoDB, and advanced encryption methods like AES‑256 and RSA‑2048. My hands-on projects include a secure medical data simulation system and a movie recommendation engine. I'm also serving as an International Student Tutor and was appointed as a Saga City International Tourism Ambassador in July 2025. I'm passionate about delivering data-driven, AI-powered solutions that create real-world impact.",
@@ -165,7 +174,6 @@ const defaultPortfolioData = {
       pdf: "/certifications/Introduction to Artificial Intelligence (AI).pdf"
     }
   ],
-
   papers: [
     {
       id: "1",
@@ -251,7 +259,51 @@ function getPortfolioData() {
 // Helper function to save portfolio data
 function savePortfolioData(data: any) {
   try {
-    portfolioData = { ...data };
+    // Ensure all required sections exist with proper structure
+    const sanitizedData = {
+      ...defaultPortfolioData,
+      ...data,
+      hero: {
+        ...defaultPortfolioData.hero,
+        ...data.hero,
+        name: data.hero?.name || defaultPortfolioData.hero.name,
+        title: data.hero?.title || defaultPortfolioData.hero.title,
+        subtitle: data.hero?.subtitle || defaultPortfolioData.hero.subtitle,
+        description: data.hero?.description || defaultPortfolioData.hero.description,
+        profilePicture: data.hero?.profilePicture || null,
+        tools: Array.isArray(data.hero?.tools) ? data.hero.tools : defaultPortfolioData.hero.tools
+      },
+      about: {
+        ...defaultPortfolioData.about,
+        ...data.about
+      },
+      cv: {
+        ...defaultPortfolioData.cv,
+        ...data.cv
+      },
+      education: Array.isArray(data.education) ? data.education : defaultPortfolioData.education,
+      skills: {
+        ...defaultPortfolioData.skills,
+        ...data.skills,
+        languages: Array.isArray(data.skills?.languages) ? data.skills.languages : defaultPortfolioData.skills.languages,
+        frameworks: Array.isArray(data.skills?.frameworks) ? data.skills.frameworks : defaultPortfolioData.skills.frameworks,
+        databases: Array.isArray(data.skills?.databases) ? data.skills.databases : defaultPortfolioData.skills.databases,
+        tools: Array.isArray(data.skills?.tools) ? data.skills.tools : defaultPortfolioData.skills.tools
+      },
+      certifications: Array.isArray(data.certifications) ? data.certifications : defaultPortfolioData.certifications,
+      papers: Array.isArray(data.papers) ? data.papers : defaultPortfolioData.papers,
+      projects: Array.isArray(data.projects) ? data.projects : defaultPortfolioData.projects,
+      contact: {
+        ...defaultPortfolioData.contact,
+        ...data.contact,
+        social: {
+          ...defaultPortfolioData.contact.social,
+          ...data.contact?.social
+        }
+      }
+    };
+    
+    portfolioData = sanitizedData;
     console.log('Portfolio data saved successfully');
     return true;
   } catch (error) {
