@@ -117,6 +117,18 @@ export default function HomePage() {
             status: typeof data.about?.status === 'string' ? data.about.status : "",
             education: typeof data.about?.education === 'string' ? data.about.education : ""
           },
+          cv: {
+            english: {
+              url: typeof data.cv?.english?.url === 'string' ? data.cv.english.url : "",
+              filename: typeof data.cv?.english?.filename === 'string' ? data.cv.english.filename : "",
+              isActive: typeof data.cv?.english?.isActive === 'boolean' ? data.cv.english.isActive : false
+            },
+            japanese: {
+              url: typeof data.cv?.japanese?.url === 'string' ? data.cv.japanese.url : "",
+              filename: typeof data.cv?.japanese?.filename === 'string' ? data.cv.japanese.filename : "",
+              isActive: typeof data.cv?.japanese?.isActive === 'boolean' ? data.cv.japanese.isActive : false
+            }
+          },
           education: Array.isArray(data.education) ? data.education.map((edu: any) => ({
             ...edu,
             institution: typeof edu.institution === 'string'
@@ -146,7 +158,27 @@ export default function HomePage() {
               : project.description || { english: "", japanese: "" },
             technologies: Array.isArray(project.technologies) ? project.technologies : [],
             images: Array.isArray(project.images) ? project.images : []
-          })) : []
+          })) : [],
+          papers: Array.isArray(data.papers) ? data.papers : [],
+          skills: {
+            languages: Array.isArray(data.skills?.languages) ? data.skills.languages : [],
+            frameworks: Array.isArray(data.skills?.frameworks) ? data.skills.frameworks : [],
+            databases: Array.isArray(data.skills?.databases) ? data.skills.databases : [],
+            tools: Array.isArray(data.skills?.tools) ? data.skills.tools : []
+          },
+          certifications: Array.isArray(data.certifications) ? data.certifications : [],
+          contact: {
+            email: typeof data.contact?.email === 'string' ? data.contact.email : "",
+            phone: typeof data.contact?.phone === 'string' ? data.contact.phone : "",
+            location: typeof data.contact?.location === 'string' ? data.contact.location : "",
+            social: {
+              github: typeof data.contact?.social?.github === 'string' ? data.contact.social.github : "",
+              linkedin: typeof data.contact?.social?.linkedin === 'string' ? data.contact.social.linkedin : "",
+              whatsapp: typeof data.contact?.social?.whatsapp === 'string' ? data.contact.social.whatsapp : "",
+              facebook: typeof data.contact?.social?.facebook === 'string' ? data.contact.social.facebook : "",
+              indeed: typeof data.contact?.social?.indeed === 'string' ? data.contact.social.indeed : ""
+            }
+          }
         };
         
         setPortfolioData(sanitizedData);
