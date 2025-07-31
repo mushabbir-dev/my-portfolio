@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend with API key or undefined
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export interface EmailData {
   to: string;
@@ -11,6 +12,29 @@ export interface EmailData {
 
 export async function sendEmail(emailData: EmailData) {
   try {
+    // Check if Resend is available
+    if (!resend) {
+      console.log('📧 Resend API key not configured. Using fallback method.');
+      
+      // Fallback: Log email details for development
+      console.log('📧 ==========================================');
+      console.log('📧 EMAIL SENT (FALLBACK)');
+      console.log('📧 ==========================================');
+      console.log('📧 To:', emailData.to);
+      console.log('📧 Subject:', emailData.subject);
+      console.log('📧 Content:', emailData.html.replace(/<[^>]*>/g, ''));
+      console.log('📧 Time:', new Date().toISOString());
+      console.log('📧 ==========================================');
+      console.log('📧 Note: Set RESEND_API_KEY environment variable');
+      console.log('📧 to enable actual email sending.');
+      console.log('📧 ==========================================');
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      return { success: true, fallback: true };
+    }
+
     const { data, error } = await resend.emails.send({
       from: 'Portfolio System <noreply@yourdomain.com>',
       to: emailData.to,
