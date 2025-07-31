@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,29 +10,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'projects');
-    await mkdir(uploadsDir, { recursive: true });
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return NextResponse.json(
+        { error: 'Invalid file type. Only JPEG, PNG, and WebP images are allowed.' },
+        { status: 400 }
+      );
+    }
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const originalName = file.name;
-    const extension = path.extname(originalName);
-    const filename = `project-${projectId}-${timestamp}${extension}`;
-    const filepath = path.join(uploadsDir, filename);
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { error: 'File too large. Maximum size is 5MB.' },
+        { status: 400 }
+      );
+    }
 
-    // Convert file to buffer and save
+    // Convert file to base64
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filepath, buffer);
+    const base64 = buffer.toString('base64');
+    const dataUrl = `data:${file.type};base64,${base64}`;
 
-    // Return the API URL for serving the image
-    const imageUrl = `/api/uploads/projects/${filename}`;
+    console.log('Project image uploaded successfully as base64');
 
     return NextResponse.json({ 
       success: true, 
-      imageUrl,
-      filename 
+      imageUrl: dataUrl,
+      filename: file.name
     });
 
   } catch (error) {

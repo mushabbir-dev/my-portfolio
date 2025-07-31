@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,34 +30,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    try {
-      await mkdir(uploadsDir, { recursive: true });
-    } catch (error) {
-      console.error('Error creating uploads directory:', error);
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop();
-    const fileName = `profile-picture-${timestamp}.${fileExtension}`;
-    const filePath = path.join(uploadsDir, fileName);
-
-    // Convert file to buffer and save
+    // Convert file to base64
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    
-    await writeFile(filePath, buffer);
+    const base64 = buffer.toString('base64');
+    const dataUrl = `data:${file.type};base64,${base64}`;
 
-    // Return the public URL
-    const publicUrl = `/uploads/${fileName}`;
-
-    console.log('Profile picture uploaded successfully:', publicUrl);
+    console.log('Profile picture uploaded successfully as base64');
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: dataUrl,
       message: 'Profile picture uploaded successfully'
     });
 

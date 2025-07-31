@@ -1,18 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-// File path for papers storage
-const PAPERS_DIR = path.join(process.cwd(), 'public', 'papers');
-
-// Ensure papers directory exists
-function ensurePapersDirectory() {
-  try {
-    fs.accessSync(PAPERS_DIR);
-  } catch {
-    fs.mkdirSync(PAPERS_DIR, { recursive: true });
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,25 +24,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 });
     }
 
-    // Ensure papers directory exists
-    ensurePapersDirectory();
+    // Convert file to base64
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64 = buffer.toString('base64');
+    const dataUrl = `data:application/pdf;base64,${base64}`;
 
     // Generate unique filename
     const timestamp = Date.now();
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filename = `${paperId}_${fileType}_${timestamp}_${originalName}`;
-    const filePath = path.join(PAPERS_DIR, filename);
 
-    // Save file
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    fs.writeFileSync(filePath, buffer);
-
-    const publicUrl = `/papers/${filename}`;
+    console.log('Paper uploaded successfully as base64');
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: dataUrl,
       filename: filename,
       message: 'Paper uploaded successfully'
     });
@@ -76,13 +59,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'No filename provided' }, { status: 400 });
     }
 
-    const filePath = path.join(PAPERS_DIR, filename);
-
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 });
-    }
-
-    fs.unlinkSync(filePath);
+    console.log('Paper deleted successfully');
 
     return NextResponse.json({
       success: true,

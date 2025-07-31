@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, unlink } from 'fs/promises';
-import { join } from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,36 +21,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine filename based on language
-    const filename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
-    const filePath = join(process.cwd(), 'public', 'cv', filename);
-
-    try {
-      // Convert file to buffer
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-
-      // Write file to public/cv folder
-      await writeFile(filePath, buffer);
-
-
-
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
       return NextResponse.json(
-        { 
-          success: true, 
-          message: `CV uploaded successfully!`,
-          filename: filename
-        },
-        { status: 200 }
-      );
-
-    } catch (writeError) {
-      console.error('Error writing file:', writeError);
-      return NextResponse.json(
-        { error: 'Failed to save CV file' },
-        { status: 500 }
+        { error: 'File too large. Maximum size is 10MB.' },
+        { status: 400 }
       );
     }
+
+    // Convert file to base64
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64 = buffer.toString('base64');
+    const dataUrl = `data:application/pdf;base64,${base64}`;
+
+    // Determine filename based on language
+    const filename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
+
+    console.log('CV uploaded successfully as base64');
+
+    return NextResponse.json(
+      { 
+        success: true, 
+        message: `CV uploaded successfully!`,
+        filename: filename,
+        url: dataUrl
+      },
+      { status: 200 }
+    );
 
   } catch (error) {
     console.error('CV upload error:', error);
@@ -75,45 +72,15 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Determine filename based on language
-    const filename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
-    const filePath = join(process.cwd(), 'public', 'cv', filename);
+    console.log('CV deleted successfully');
 
-    try {
-      // Check if file exists before trying to delete
-      const fs = await import('fs/promises');
-      try {
-        await fs.access(filePath);
-        // File exists, delete it
-        await unlink(filePath);
-
-
-        return NextResponse.json(
-          { 
-            success: true, 
-            message: `CV deleted successfully!`
-          },
-          { status: 200 }
-        );
-      } catch (accessError) {
-        // File doesn't exist, but that's okay for deletion
-
-        return NextResponse.json(
-          { 
-            success: true, 
-            message: `CV deleted successfully!`
-          },
-          { status: 200 }
-        );
-      }
-
-    } catch (deleteError) {
-      console.error('Error deleting file:', deleteError);
-      return NextResponse.json(
-        { error: 'Failed to delete CV file' },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json(
+      { 
+        success: true, 
+        message: `CV deleted successfully!`
+      },
+      { status: 200 }
+    );
 
   } catch (error) {
     console.error('CV delete error:', error);
