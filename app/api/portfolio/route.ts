@@ -290,6 +290,15 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    // Check content length
+    const contentLength = request.headers.get('content-length');
+    if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) { // 10MB limit
+      return NextResponse.json(
+        { error: 'Payload too large. Maximum size is 10MB.' },
+        { status: 413 }
+      );
+    }
+
     const body = await request.json();
     
     // Validate the data structure
@@ -325,6 +334,15 @@ export async function PUT(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check content length
+    const contentLength = request.headers.get('content-length');
+    if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) { // 10MB limit
+      return NextResponse.json(
+        { error: 'Payload too large. Maximum size is 10MB.' },
+        { status: 413 }
+      );
+    }
+
     const body = await request.json();
     
     // Validate the data structure
