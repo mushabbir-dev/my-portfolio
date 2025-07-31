@@ -1,7 +1,17 @@
 import { Resend } from 'resend';
 
 // Initialize Resend with API key or undefined
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+let resend: Resend | null = null;
+
+// Only initialize Resend if API key is available
+if (process.env.RESEND_API_KEY) {
+  try {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  } catch (error) {
+    console.warn('Failed to initialize Resend:', error);
+    resend = null;
+  }
+}
 
 export interface EmailData {
   to: string;
