@@ -1,16 +1,24 @@
 import { Resend } from 'resend';
 
-// Initialize Resend with API key or undefined
+// Lazy initialization of Resend client
 let resend: Resend | null = null;
 
-// Only initialize Resend if API key is available
-if (process.env.RESEND_API_KEY) {
-  try {
-    resend = new Resend(process.env.RESEND_API_KEY);
-  } catch (error) {
-    console.warn('Failed to initialize Resend:', error);
-    resend = null;
+function getResendClient(): Resend | null {
+  if (resend) {
+    return resend;
   }
+  
+  if (process.env.RESEND_API_KEY) {
+    try {
+      resend = new Resend(process.env.RESEND_API_KEY);
+      return resend;
+    } catch (error) {
+      console.warn('Failed to initialize Resend:', error);
+      return null;
+    }
+  }
+  
+  return null;
 }
 
 export interface EmailData {
@@ -25,12 +33,14 @@ export async function sendEmail(emailData: EmailData) {
     console.log('📧 Email service called with:', {
       to: emailData.to,
       subject: emailData.subject,
-      hasResend: !!resend,
       hasApiKey: !!process.env.RESEND_API_KEY
     });
 
+    // Get Resend client (lazy-loaded)
+    const resendClient = getResendClient();
+
     // Check if Resend is available
-    if (!resend) {
+    if (!resendClient) {
       console.log('📧 Resend API key not configured. Using fallback method.');
       
       // Fallback: Log email details for development
@@ -54,7 +64,7 @@ export async function sendEmail(emailData: EmailData) {
 
     console.log('📧 Attempting to send email via Resend...');
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await resendClient.emails.send({
       from: 'onboarding@resend.dev', // Use Resend's default domain
       to: emailData.to,
       subject: emailData.subject,
