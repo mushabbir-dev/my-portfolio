@@ -30,7 +30,8 @@ async function sendContactEmail(name: string, email: string, message: string) {
         message: message,
         subject: 'New Contact Form Message',
         time: new Date().toLocaleString()
-      }
+      },
+      accessToken: EMAILJS_CONFIG.privateKey
     };
     
     console.log('📧 Contact form request body:', JSON.stringify(requestBody, null, 2));
@@ -39,6 +40,7 @@ async function sendContactEmail(name: string, email: string, message: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${EMAILJS_CONFIG.privateKey}`
       },
       body: JSON.stringify(requestBody)
     });

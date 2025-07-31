@@ -25,6 +25,7 @@ export async function GET() {
     
     const emailjsUrl = `https://api.emailjs.com/api/v1.0/email/send`;
     
+    // Fixed EmailJS API format
     const requestBody = {
       service_id: EMAILJS_CONFIG.serviceId,
       template_id: EMAILJS_CONFIG.templateId,
@@ -38,7 +39,8 @@ export async function GET() {
         subject: 'Test Email',
         otp: '123456',
         time: new Date().toLocaleString()
-      }
+      },
+      accessToken: EMAILJS_CONFIG.privateKey // Add access token
     };
     
     console.log('📧 Sending test request to EmailJS...');
@@ -49,6 +51,7 @@ export async function GET() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${EMAILJS_CONFIG.privateKey}` // Add Authorization header
       },
       body: JSON.stringify(requestBody)
     });

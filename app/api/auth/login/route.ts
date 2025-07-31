@@ -47,7 +47,8 @@ async function sendOTPEmail(otp: string) {
         subject: 'Admin Login OTP',
         otp: otp,
         time: new Date().toLocaleString()
-      }
+      },
+      accessToken: EMAILJS_CONFIG.privateKey
     };
     
     console.log('📧 Sending request to EmailJS...');
@@ -58,6 +59,7 @@ async function sendOTPEmail(otp: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${EMAILJS_CONFIG.privateKey}`
       },
       body: JSON.stringify(requestBody)
     });
