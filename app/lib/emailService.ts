@@ -12,6 +12,13 @@ export interface EmailData {
 
 export async function sendEmail(emailData: EmailData) {
   try {
+    console.log('📧 Email service called with:', {
+      to: emailData.to,
+      subject: emailData.subject,
+      hasResend: !!resend,
+      hasApiKey: !!process.env.RESEND_API_KEY
+    });
+
     // Check if Resend is available
     if (!resend) {
       console.log('📧 Resend API key not configured. Using fallback method.');
@@ -35,8 +42,10 @@ export async function sendEmail(emailData: EmailData) {
       return { success: true, fallback: true };
     }
 
+    console.log('📧 Attempting to send email via Resend...');
+
     const { data, error } = await resend.emails.send({
-      from: 'Portfolio System <noreply@yourdomain.com>',
+      from: 'onboarding@resend.dev', // Use Resend's default domain
       to: emailData.to,
       subject: emailData.subject,
       html: emailData.html,
@@ -44,14 +53,14 @@ export async function sendEmail(emailData: EmailData) {
     });
 
     if (error) {
-      console.error('Email sending error:', error);
+      console.error('📧 Email sending error:', error);
       return { success: false, error: error.message };
     }
 
-    console.log('Email sent successfully:', data);
+    console.log('📧 Email sent successfully:', data);
     return { success: true, data };
   } catch (error) {
-    console.error('Email service error:', error);
+    console.error('📧 Email service error:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
