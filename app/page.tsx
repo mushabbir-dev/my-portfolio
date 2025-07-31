@@ -1630,7 +1630,7 @@ export default function HomePage() {
                     <div className="relative h-full">
                       <img
                         src={project.images[0]}
-                        alt={project.title}
+                        alt={project.title?.[language === 'en' ? 'english' : 'japanese'] || project.title?.english || "Project"}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/40"></div>
@@ -1646,8 +1646,8 @@ export default function HomePage() {
                       <div className="absolute inset-0 bg-black/20"></div>
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center text-white">
-                          <h3 className="text-2xl font-bold mb-2">{project.title}</h3>
-                          <p className="text-white/80">{project.description}</p>
+                          <h3 className="text-2xl font-bold mb-2">{project.title?.[language === 'en' ? 'english' : 'japanese'] || project.title?.english || "Project"}</h3>
+                          <p className="text-white/80">{project.description?.[language === 'en' ? 'english' : 'japanese'] || project.description?.english || ""}</p>
                         </div>
                       </div>
                     </>
