@@ -19,44 +19,66 @@ const EMAILJS_CONFIG = {
 // Send OTP email using EmailJS REST API
 async function sendOTPEmail(otp: string) {
   try {
+    console.log('📧 Attempting to send OTP via EmailJS...');
+    console.log('📧 Service ID:', EMAILJS_CONFIG.serviceId);
+    console.log('📧 Template ID:', EMAILJS_CONFIG.templateId);
+    console.log('📧 Target Email:', EMAILJS_CONFIG.targetEmail);
+    
     const emailjsUrl = `https://api.emailjs.com/api/v1.0/email/send`;
+    
+    const requestBody = {
+      service_id: EMAILJS_CONFIG.serviceId,
+      template_id: EMAILJS_CONFIG.templateId,
+      user_id: EMAILJS_CONFIG.privateKey,
+      template_params: {
+        to_email: EMAILJS_CONFIG.targetEmail,
+        to_name: 'Admin',
+        from_name: 'Portfolio System',
+        from_email: 'noreply@portfolio.com',
+        message: `Your OTP code is: ${otp}. This code will expire in 5 minutes.`,
+        subject: 'Admin Login OTP',
+        otp: otp,
+        time: new Date().toLocaleString()
+      }
+    };
+    
+    console.log('📧 Request body:', JSON.stringify(requestBody, null, 2));
     
     const response = await fetch(emailjsUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        service_id: EMAILJS_CONFIG.serviceId,
-        template_id: EMAILJS_CONFIG.templateId,
-        user_id: EMAILJS_CONFIG.privateKey,
-        template_params: {
-          to_email: EMAILJS_CONFIG.targetEmail,
-          to_name: 'Admin',
-          from_name: 'Portfolio System',
-          from_email: 'noreply@portfolio.com',
-          message: `Your OTP code is: ${otp}. This code will expire in 5 minutes.`,
-          subject: 'Admin Login OTP',
-          otp: otp,
-          time: new Date().toLocaleString()
-        }
-      })
+      body: JSON.stringify(requestBody)
     });
+
+    console.log('📧 Response status:', response.status);
+    console.log('📧 Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('EmailJS API error:', response.status, errorData);
-      throw new Error(`EmailJS API error: ${response.status}`);
+      console.error('📧 EmailJS API error:', response.status, errorData);
+      throw new Error(`EmailJS API error: ${response.status}: ${errorData}`);
     }
 
     const result = await response.json();
+    console.log('📧 EmailJS success response:', result);
     return { success: true };
     
   } catch (error) {
-    console.error('EmailJS error:', error);
+    console.error('📧 EmailJS error:', error);
     
-    // Fallback to console logging for development (OTP hidden for security)
-    console.log(`📧 OTP sent to ${EMAILJS_CONFIG.targetEmail}`);
+    // For development/testing, show OTP in console
+    console.log(`📧 ==========================================`);
+    console.log(`📧 ADMIN LOGIN OTP`);
+    console.log(`📧 ==========================================`);
+    console.log(`📧 Email: ${EMAILJS_CONFIG.targetEmail}`);
+    console.log(`📧 OTP Code: ${otp}`);
+    console.log(`📧 Expires: 5 minutes`);
+    console.log(`📧 Time: ${new Date().toLocaleString()}`);
+    console.log(`📧 ==========================================`);
+    console.log(`📧 Check the server console above for your OTP`);
+    console.log(`📧 ==========================================`);
     
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000));
