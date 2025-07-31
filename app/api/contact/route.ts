@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// EmailJS configuration (SECURE - Using Private Key)
+// EmailJS configuration (Using Private Key for server-side API)
 const EMAILJS_CONFIG = {
   serviceId: process.env.EMAILJS_SERVICE_ID || 'service_qqslkja',
   templateId: process.env.EMAILJS_TEMPLATE_ID || 'template_e9dshs7',
@@ -21,7 +21,7 @@ async function sendContactEmail(name: string, email: string, message: string) {
     const requestBody = {
       service_id: EMAILJS_CONFIG.serviceId,
       template_id: EMAILJS_CONFIG.templateId,
-      user_id: EMAILJS_CONFIG.privateKey,
+      user_id: EMAILJS_CONFIG.privateKey, // Use private key for server-side
       template_params: {
         to_email: EMAILJS_CONFIG.targetEmail,
         to_name: 'Mushabbir Ahmed',
@@ -30,8 +30,7 @@ async function sendContactEmail(name: string, email: string, message: string) {
         message: message,
         subject: 'New Contact Form Message',
         time: new Date().toLocaleString()
-      },
-      accessToken: EMAILJS_CONFIG.privateKey
+      }
     };
     
     console.log('📧 Contact form request body:', JSON.stringify(requestBody, null, 2));
@@ -39,8 +38,7 @@ async function sendContactEmail(name: string, email: string, message: string) {
     const response = await fetch(emailjsUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${EMAILJS_CONFIG.privateKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });

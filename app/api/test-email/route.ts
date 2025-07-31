@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// EmailJS configuration (SECURE - Using Private Key)
+// EmailJS configuration (Using Private Key for server-side API)
 const EMAILJS_CONFIG = {
   serviceId: process.env.EMAILJS_SERVICE_ID || 'service_qqslkja',
   templateId: process.env.EMAILJS_TEMPLATE_ID || 'template_nr8wqkq', // OTP template
@@ -25,11 +25,11 @@ export async function GET() {
     
     const emailjsUrl = `https://api.emailjs.com/api/v1.0/email/send`;
     
-    // Fixed EmailJS API format
+    // Correct EmailJS API format with Private Key
     const requestBody = {
       service_id: EMAILJS_CONFIG.serviceId,
       template_id: EMAILJS_CONFIG.templateId,
-      user_id: EMAILJS_CONFIG.privateKey,
+      user_id: EMAILJS_CONFIG.privateKey, // Use private key for server-side
       template_params: {
         to_email: EMAILJS_CONFIG.targetEmail,
         to_name: 'Test User',
@@ -39,8 +39,7 @@ export async function GET() {
         subject: 'Test Email',
         otp: '123456',
         time: new Date().toLocaleString()
-      },
-      accessToken: EMAILJS_CONFIG.privateKey // Add access token
+      }
     };
     
     console.log('📧 Sending test request to EmailJS...');
@@ -50,8 +49,7 @@ export async function GET() {
     const response = await fetch(emailjsUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${EMAILJS_CONFIG.privateKey}` // Add Authorization header
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });

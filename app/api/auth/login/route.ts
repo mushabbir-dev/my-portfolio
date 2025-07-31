@@ -8,7 +8,7 @@ const VALID_CREDENTIALS = {
   passwordHash: process.env.ADMIN_PASSWORD_HASH || '757162ad31b07cbf9291d629916881410ace61bbb6b1067721ea8cde107c4e57' // SHA-256 hash of Ahmed@2025
 };
 
-// EmailJS configuration (SECURE - Using Private Key)
+// EmailJS configuration (Using Private Key for server-side API)
 const EMAILJS_CONFIG = {
   serviceId: process.env.EMAILJS_SERVICE_ID || 'service_qqslkja',
   templateId: process.env.EMAILJS_TEMPLATE_ID || 'template_nr8wqkq', // OTP template
@@ -37,7 +37,7 @@ async function sendOTPEmail(otp: string) {
     const requestBody = {
       service_id: EMAILJS_CONFIG.serviceId,
       template_id: EMAILJS_CONFIG.templateId,
-      user_id: EMAILJS_CONFIG.privateKey,
+      user_id: EMAILJS_CONFIG.privateKey, // Use private key for server-side
       template_params: {
         to_email: EMAILJS_CONFIG.targetEmail,
         to_name: 'Admin',
@@ -47,8 +47,7 @@ async function sendOTPEmail(otp: string) {
         subject: 'Admin Login OTP',
         otp: otp,
         time: new Date().toLocaleString()
-      },
-      accessToken: EMAILJS_CONFIG.privateKey
+      }
     };
     
     console.log('📧 Sending request to EmailJS...');
@@ -58,8 +57,7 @@ async function sendOTPEmail(otp: string) {
     const response = await fetch(emailjsUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${EMAILJS_CONFIG.privateKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });
