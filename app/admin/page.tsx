@@ -1275,7 +1275,7 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={edu.institution.english}
+                  value={typeof edu.institution === 'object' && edu.institution?.english ? edu.institution.english : (typeof edu.institution === 'string' ? edu.institution : '')}
                   onChange={(e) => updateEducation(edu.id, { institution: { ...edu.institution, english: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
@@ -1287,7 +1287,7 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={edu.institution.japanese}
+                  value={typeof edu.institution === 'object' && edu.institution?.japanese ? edu.institution.japanese : ''}
                   onChange={(e) => updateEducation(edu.id, { institution: { ...edu.institution, japanese: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
@@ -1299,7 +1299,7 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={edu.degree.english}
+                  value={typeof edu.degree === 'object' && edu.degree?.english ? edu.degree.english : (typeof edu.degree === 'string' ? edu.degree : '')}
                   onChange={(e) => updateEducation(edu.id, { degree: { ...edu.degree, english: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
@@ -1311,7 +1311,7 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={edu.degree.japanese}
+                  value={typeof edu.degree === 'object' && edu.degree?.japanese ? edu.degree.japanese : ''}
                   onChange={(e) => updateEducation(edu.id, { degree: { ...edu.degree, japanese: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
@@ -1323,7 +1323,7 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={edu.period.english}
+                  value={typeof edu.period === 'object' && edu.period?.english ? edu.period.english : (typeof edu.period === 'string' ? edu.period : '')}
                   onChange={(e) => updateEducation(edu.id, { period: { ...edu.period, english: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
@@ -1335,7 +1335,7 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={edu.period.japanese}
+                  value={typeof edu.period === 'object' && edu.period?.japanese ? edu.period.japanese : ''}
                   onChange={(e) => updateEducation(edu.id, { period: { ...edu.period, japanese: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
@@ -1348,7 +1348,7 @@ export default function AdminPage() {
               </label>
               <textarea
                 rows={3}
-                value={edu.description.english}
+                                  value={typeof edu.description === 'object' && edu.description?.english ? edu.description.english : (typeof edu.description === 'string' ? edu.description : '')}
                 onChange={(e) => updateEducation(edu.id, { description: { ...edu.description, english: e.target.value } })}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
@@ -1360,7 +1360,7 @@ export default function AdminPage() {
               </label>
               <textarea
                 rows={3}
-                value={edu.description.japanese}
+                                  value={typeof edu.description === 'object' && edu.description?.japanese ? edu.description.japanese : ''}
                 onChange={(e) => updateEducation(edu.id, { description: { ...edu.description, japanese: e.target.value } })}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
@@ -1594,7 +1594,7 @@ export default function AdminPage() {
         {data.projects.map((project) => (
           <div key={project.id} className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{project.title.english || 'Untitled Project'}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{typeof project.title === 'object' && project.title?.english ? project.title.english : (typeof project.title === 'string' ? project.title : 'Untitled Project')}</h3>
               <button
                 onClick={() => removeProject(project.id)}
                 className="text-red-600 hover:text-red-700"
@@ -1608,7 +1608,7 @@ export default function AdminPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
                 <input
                   type="text"
-                  value={project.title.english || ''}
+                  value={typeof project.title === 'object' && project.title?.english ? project.title.english : (typeof project.title === 'string' ? project.title : '')}
                   onChange={(e) => updateProject(project.id, { title: { ...project.title, english: e.target.value } })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
@@ -1618,7 +1618,7 @@ export default function AdminPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title (Japanese)</label>
                 <input
                   type="text"
-                  value={project.title.japanese || ''}
+                  value={typeof project.title === 'object' && project.title?.japanese ? project.title.japanese : ''}
                   onChange={(e) => updateProject(project.id, { title: { ...project.title, japanese: e.target.value } })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
@@ -1627,7 +1627,7 @@ export default function AdminPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
                 <textarea
-                  value={project.description.english || ''}
+                  value={typeof project.description === 'object' && project.description?.english ? project.description.english : (typeof project.description === 'string' ? project.description : '')}
                   onChange={(e) => updateProject(project.id, { description: { ...project.description, english: e.target.value } })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -1637,7 +1637,7 @@ export default function AdminPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description (Japanese)</label>
                 <textarea
-                  value={project.description.japanese || ''}
+                  value={typeof project.description === 'object' && project.description?.japanese ? project.description.japanese : ''}
                   onChange={(e) => updateProject(project.id, { description: { ...project.description, japanese: e.target.value } })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -2359,10 +2359,10 @@ export default function AdminPage() {
                 <h3>Education</h3>
                 {data.education.map((edu, index) => (
                   <div key={edu.id} className="mb-4">
-                    <h4>{edu.institution.english}</h4>
-                    <p><strong>{edu.degree.english}</strong></p>
-                    <p>{edu.period.english}</p>
-                    <p>{edu.description.english}</p>
+                    <h4>{typeof edu.institution === 'object' && edu.institution?.english ? edu.institution.english : (typeof edu.institution === 'string' ? edu.institution : '')}</h4>
+                    <p><strong>{typeof edu.degree === 'object' && edu.degree?.english ? edu.degree.english : (typeof edu.degree === 'string' ? edu.degree : '')}</strong></p>
+                    <p>{typeof edu.period === 'object' && edu.period?.english ? edu.period.english : (typeof edu.period === 'string' ? edu.period : '')}</p>
+                    <p>{typeof edu.description === 'object' && edu.description?.english ? edu.description.english : (typeof edu.description === 'string' ? edu.description : '')}</p>
                   </div>
                 ))}
                 
