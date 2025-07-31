@@ -747,7 +747,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                {portfolioData?.hero?.name?.[language] || (language === 'en' ? "Hi, I'm Mushabbir" : "こんにちは、ムサビルです")}
+                {portfolioData?.hero?.name?.[language === 'en' ? 'english' : 'japanese'] || (language === 'en' ? "Hi, I'm Mushabbir" : "こんにちは、ムサビルです")}
               </motion.h1>
 
               <motion.h2
@@ -756,7 +756,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                {portfolioData?.hero?.title?.[language] || (language === 'en' ? "AI Specialist & Software Engineer" : "AIスペシャリスト・ソフトウェアエンジニア")}
+                {portfolioData?.hero?.title?.[language === 'en' ? 'english' : 'japanese'] || (language === 'en' ? "AI Specialist & Software Engineer" : "AIスペシャリスト・ソフトウェアエンジニア")}
               </motion.h2>
 
               <motion.p
@@ -765,7 +765,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
-                {portfolioData?.hero?.description?.[language] || (language === 'en' 
+                {portfolioData?.hero?.description?.[language === 'en' ? 'english' : 'japanese'] || (language === 'en' 
                   ? "I'm a results-driven AI Engineer and Full-Stack Developer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan."
                   : "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIエンジニア・フルスタック開発者です。"
                 )}
@@ -889,7 +889,7 @@ export default function HomePage() {
                       <div className="w-full h-full">
                         <img
                           src={typeof portfolioData.hero.profilePicture === 'string' ? portfolioData.hero.profilePicture : ''}
-                          alt={portfolioData?.hero?.name?.[language] || "Profile"}
+                          alt={portfolioData?.hero?.name?.[language === 'en' ? 'english' : 'japanese'] || "Profile"}
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -903,7 +903,7 @@ export default function HomePage() {
                           }}
                           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                         >
-                          {portfolioData?.hero?.name?.[language]?.charAt(0) || "M"}
+                          {portfolioData?.hero?.name?.[language === 'en' ? 'english' : 'japanese']?.charAt(0) || "M"}
                         </motion.div>
                       </div>
                     )}
@@ -1069,7 +1069,7 @@ export default function HomePage() {
                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       {language === 'en' ? 'Name' : '名前'}
                     </span>
-                    <p className="text-gray-900 dark:text-white font-medium">{portfolioData?.hero?.name?.[language] || "Mushabbir Ahmed"}</p>
+                    <p className="text-gray-900 dark:text-white font-medium">{portfolioData?.hero?.name?.[language === 'en' ? 'english' : 'japanese'] || "Mushabbir Ahmed"}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
