@@ -567,11 +567,20 @@ export default function AdminPage() {
       
       console.log('Sanitized data:', sanitizedData);
       
+      // Compress the data by removing unnecessary whitespace
+      const compressedData = JSON.stringify(sanitizedData, null, 0);
+      console.log('Compressed data size:', compressedData.length, 'bytes');
+      
+      // Check if data is too large
+      if (compressedData.length > 10 * 1024 * 1024) { // 10MB
+        console.warn('Data size is very large:', compressedData.length, 'bytes');
+      }
+      
       // Save to API
       const response = await fetch('/api/portfolio', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sanitizedData)
+        body: compressedData
       });
       
       if (response.ok) {

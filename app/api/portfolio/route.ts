@@ -331,12 +331,12 @@ export async function PUT(request: NextRequest) {
   try {
     console.log('PUT /api/portfolio - Updating portfolio data');
     
-    // Check content length
+    // Check content length with increased limit
     const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) { // 10MB limit
+    if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) { // 50MB limit
       console.log('Payload too large:', contentLength);
       return NextResponse.json(
-        { error: 'Payload too large. Maximum size is 10MB.' },
+        { error: 'Payload too large. Maximum size is 50MB.' },
         { status: 413 }
       );
     }
@@ -382,12 +382,12 @@ export async function POST(request: NextRequest) {
   try {
     console.log('POST /api/portfolio - Creating portfolio data');
     
-    // Check content length
+    // Check content length with increased limit
     const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) { // 10MB limit
+    if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) { // 50MB limit
       console.log('Payload too large:', contentLength);
       return NextResponse.json(
-        { error: 'Payload too large. Maximum size is 10MB.' },
+        { error: 'Payload too large. Maximum size is 50MB.' },
         { status: 413 }
       );
     }
