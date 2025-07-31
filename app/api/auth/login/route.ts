@@ -29,6 +29,42 @@ function logDebugInfo(context: string, data: any) {
   console.log(`🔍 Data:`, JSON.stringify(data, null, 2));
 }
 
+// Fallback email function for OTP
+async function sendFallbackOTP(otp: string) {
+  try {
+    console.log('📧 Using fallback OTP method...');
+    
+    const emailData = {
+      to: EMAILJS_CONFIG.targetEmail,
+      subject: 'Admin Login OTP',
+      message: `Your OTP code is: ${otp}. This code will expire in 5 minutes.`,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('📧 ==========================================');
+    console.log('📧 ADMIN LOGIN OTP (FALLBACK)');
+    console.log('📧 ==========================================');
+    console.log('📧 To:', emailData.to);
+    console.log('📧 Subject:', emailData.subject);
+    console.log('📧 OTP Code:', otp);
+    console.log('📧 Time:', emailData.timestamp);
+    console.log('📧 ==========================================');
+    console.log('📧 Note: This is a fallback method. In production,');
+    console.log('📧 you should integrate with a proper email service');
+    console.log('📧 like SendGrid, Mailgun, or AWS SES.');
+    console.log('📧 ==========================================');
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return { success: true, fallback: true };
+    
+  } catch (error) {
+    console.error('📧 Fallback OTP error:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 // Send OTP email using EmailJS REST API
 async function sendOTPEmail(otp: string) {
   try {
@@ -52,7 +88,7 @@ async function sendOTPEmail(otp: string) {
       }
     };
     
-    console.log('📧 Sending request to EmailJS...');
+    console.log('📧 Attempting EmailJS API call...');
     console.log('📧 URL:', emailjsUrl);
     console.log('📧 Request body:', JSON.stringify(requestBody, null, 2));
     
@@ -73,6 +109,13 @@ async function sendOTPEmail(otp: string) {
 
     if (!response.ok) {
       console.error('📧 EmailJS API error:', response.status, responseText);
+      
+      // If EmailJS fails, use fallback
+      if (response.status === 403) {
+        console.log('📧 EmailJS API calls disabled for server-side. Using fallback...');
+        return await sendFallbackOTP(otp);
+      }
+      
       throw new Error(`EmailJS API error: ${response.status}: ${responseText}`);
     }
 
@@ -91,22 +134,8 @@ async function sendOTPEmail(otp: string) {
     console.error('📧 EmailJS error:', error);
     logDebugInfo('OTP_ERROR', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     
-    // For development/testing, show OTP in console
-    console.log(`📧 ==========================================`);
-    console.log(`📧 ADMIN LOGIN OTP (FALLBACK)`);
-    console.log(`📧 ==========================================`);
-    console.log(`📧 Email: ${EMAILJS_CONFIG.targetEmail}`);
-    console.log(`📧 OTP Code: ${otp}`);
-    console.log(`📧 Expires: 5 minutes`);
-    console.log(`📧 Time: ${new Date().toLocaleString()}`);
-    console.log(`📧 ==========================================`);
-    console.log(`📧 Check the server console above for your OTP`);
-    console.log(`📧 ==========================================`);
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    return { success: true, fallback: true };
+    // Use fallback if EmailJS fails
+    return await sendFallbackOTP(otp);
   }
 }
 
@@ -141,18 +170,20 @@ export async function POST(request: NextRequest) {
     // Store OTP
     sessionStore.setOTP(sessionId, otp, expires);
 
-    // Send OTP via EmailJS
+    // Send OTP via EmailJS or fallback
     try {
-      await sendOTPEmail(otp);
+      const emailResult = await sendOTPEmail(otp);
 
-      return NextResponse.json(
-        { 
-          success: true, 
-          message: 'Verification code sent to your email.',
-          sessionId
-        },
-        { status: 200 }
-      );
+              const isFallback = 'fallback' in emailResult && emailResult.fallback;
+        return NextResponse.json(
+          { 
+            success: true, 
+            message: isFallback ? 'Verification code sent via fallback method.' : 'Verification code sent to your email.',
+            sessionId,
+            fallback: isFallback
+          },
+          { status: 200 }
+        );
 
     } catch (emailError) {
       console.error('Email error:', emailError);
