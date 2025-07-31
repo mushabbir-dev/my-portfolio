@@ -88,13 +88,73 @@ export default function HomePage() {
       const response = await fetch('/api/portfolio');
       if (response.ok) {
         const data = await response.json();
-        setPortfolioData(data);
+        
+        // Ensure data structure is correct
+        const sanitizedData = {
+          ...data,
+          hero: {
+            ...data.hero,
+            name: typeof data.hero?.name === 'string' 
+              ? { english: data.hero.name, japanese: data.hero.name }
+              : data.hero?.name || { english: "Mushabbir Ahmed", japanese: "ムサビル・アハメド" },
+            title: typeof data.hero?.title === 'string'
+              ? { english: data.hero.title, japanese: data.hero.title }
+              : data.hero?.title || { english: "AI Specialist & Software Engineer", japanese: "AIスペシャリスト・ソフトウェアエンジニア" },
+            subtitle: typeof data.hero?.subtitle === 'string'
+              ? { english: data.hero.subtitle, japanese: data.hero.subtitle }
+              : data.hero?.subtitle || { english: "Passionate about creating innovative solutions", japanese: "革新的なソリューションの創造に情熱を注ぐ" },
+            description: typeof data.hero?.description === 'string'
+              ? { english: data.hero.description, japanese: data.hero.description }
+              : data.hero?.description || { english: "I'm a results-driven AI Specialist and Software Engineer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan.", japanese: "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIスペシャリスト・ソフトウェアエンジニアです。" },
+            profilePicture: typeof data.hero?.profilePicture === 'string' ? data.hero.profilePicture : null,
+            tools: Array.isArray(data.hero?.tools) ? data.hero.tools : []
+          },
+          about: {
+            ...data.about,
+            english: typeof data.about?.english === 'string' ? data.about.english : "",
+            japanese: typeof data.about?.japanese === 'string' ? data.about.japanese : "",
+            location: typeof data.about?.location === 'string' ? data.about.location : "",
+            status: typeof data.about?.status === 'string' ? data.about.status : "",
+            education: typeof data.about?.education === 'string' ? data.about.education : ""
+          },
+          education: Array.isArray(data.education) ? data.education.map((edu: any) => ({
+            ...edu,
+            institution: typeof edu.institution === 'string'
+              ? { english: edu.institution, japanese: edu.institution }
+              : edu.institution || { english: "", japanese: "" },
+            degree: typeof edu.degree === 'string'
+              ? { english: edu.degree, japanese: edu.degree }
+              : edu.degree || { english: "", japanese: "" },
+            period: typeof edu.period === 'string'
+              ? { english: edu.period, japanese: edu.period }
+              : edu.period || { english: "", japanese: "" },
+            description: typeof edu.description === 'string'
+              ? { english: edu.description, japanese: edu.description }
+              : edu.description || { english: "", japanese: "" },
+            achievements: {
+              english: Array.isArray(edu.achievements?.english) ? edu.achievements.english : [],
+              japanese: Array.isArray(edu.achievements?.japanese) ? edu.achievements.japanese : []
+            }
+          })) : [],
+          projects: Array.isArray(data.projects) ? data.projects.map((project: any) => ({
+            ...project,
+            title: typeof project.title === 'string'
+              ? { english: project.title, japanese: project.title }
+              : project.title || { english: "", japanese: "" },
+            description: typeof project.description === 'string'
+              ? { english: project.description, japanese: project.description }
+              : project.description || { english: "", japanese: "" },
+            technologies: Array.isArray(project.technologies) ? project.technologies : [],
+            images: Array.isArray(project.images) ? project.images : []
+          })) : []
+        };
+        
+        setPortfolioData(sanitizedData);
       } else {
-        setPortfolioData(null);
+        console.error('Failed to fetch portfolio data');
       }
     } catch (error) {
       console.error('Error fetching portfolio data:', error);
-      setPortfolioData(null);
     } finally {
       setIsLoading(false);
     }

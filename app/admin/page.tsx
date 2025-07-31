@@ -421,31 +421,75 @@ export default function AdminPage() {
       try {
         const response = await fetch('/api/portfolio');
         if (response.ok) {
-          const savedData = await response.json();
+          const fetchedData = await response.json();
           
-          // Ensure papers is always an array and handle all edge cases
-          if (!savedData.papers) {
-            savedData.papers = [];
-          } else if (!Array.isArray(savedData.papers)) {
-            savedData.papers = [];
-          }
+          // Sanitize the fetched data to ensure correct structure
+          const sanitizedData = {
+            ...fetchedData,
+            hero: {
+              ...fetchedData.hero,
+              name: typeof fetchedData.hero?.name === 'string' 
+                ? { english: fetchedData.hero.name, japanese: fetchedData.hero.name }
+                : fetchedData.hero?.name || { english: "Mushabbir Ahmed", japanese: "ムサビル・アハメド" },
+              title: typeof fetchedData.hero?.title === 'string'
+                ? { english: fetchedData.hero.title, japanese: fetchedData.hero.title }
+                : fetchedData.hero?.title || { english: "AI Specialist & Software Engineer", japanese: "AIスペシャリスト・ソフトウェアエンジニア" },
+              subtitle: typeof fetchedData.hero?.subtitle === 'string'
+                ? { english: fetchedData.hero.subtitle, japanese: fetchedData.hero.subtitle }
+                : fetchedData.hero?.subtitle || { english: "Passionate about creating innovative solutions", japanese: "革新的なソリューションの創造に情熱を注ぐ" },
+              description: typeof fetchedData.hero?.description === 'string'
+                ? { english: fetchedData.hero.description, japanese: fetchedData.hero.description }
+                : fetchedData.hero?.description || { english: "I'm a results-driven AI Specialist and Software Engineer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan.", japanese: "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIスペシャリスト・ソフトウェアエンジニアです。" },
+              profilePicture: typeof fetchedData.hero?.profilePicture === 'string' ? fetchedData.hero.profilePicture : null,
+              tools: Array.isArray(fetchedData.hero?.tools) ? fetchedData.hero.tools : []
+            },
+            about: {
+              english: typeof fetchedData.about?.english === 'string' ? fetchedData.about.english : "",
+              japanese: typeof fetchedData.about?.japanese === 'string' ? fetchedData.about.japanese : "",
+              location: typeof fetchedData.about?.location === 'string' ? fetchedData.about.location : "",
+              status: typeof fetchedData.about?.status === 'string' ? fetchedData.about.status : "",
+              education: typeof fetchedData.about?.education === 'string' ? fetchedData.about.education : ""
+            },
+            education: Array.isArray(fetchedData.education) ? fetchedData.education.map((edu: any) => ({
+              ...edu,
+              institution: typeof edu.institution === 'string'
+                ? { english: edu.institution, japanese: edu.institution }
+                : edu.institution || { english: "", japanese: "" },
+              degree: typeof edu.degree === 'string'
+                ? { english: edu.degree, japanese: edu.degree }
+                : edu.degree || { english: "", japanese: "" },
+              period: typeof edu.period === 'string'
+                ? { english: edu.period, japanese: edu.period }
+                : edu.period || { english: "", japanese: "" },
+              description: typeof edu.description === 'string'
+                ? { english: edu.description, japanese: edu.description }
+                : edu.description || { english: "", japanese: "" },
+              achievements: {
+                english: Array.isArray(edu.achievements?.english) ? edu.achievements.english : [],
+                japanese: Array.isArray(edu.achievements?.japanese) ? edu.achievements.japanese : []
+              }
+            })) : [],
+            projects: Array.isArray(fetchedData.projects) ? fetchedData.projects.map((project: any) => ({
+              ...project,
+              title: typeof project.title === 'string'
+                ? { english: project.title, japanese: project.title }
+                : project.title || { english: "", japanese: "" },
+              description: typeof project.description === 'string'
+                ? { english: project.description, japanese: project.description }
+                : project.description || { english: "", japanese: "" },
+              technologies: Array.isArray(project.technologies) ? project.technologies : [],
+              images: Array.isArray(project.images) ? project.images : []
+            })) : []
+          };
           
-          setData(savedData);
+          setData(sanitizedData);
         } else {
-          // If no data exists, create initial data
-          const postResponse = await fetch('/api/portfolio', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(defaultData)
-          });
-          if (postResponse.ok) {
-            setData(defaultData);
-          } else {
-            console.error('Failed to initialize data on backend.');
-          }
+          console.error('Failed to fetch portfolio data');
+          setData(defaultData);
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error fetching portfolio data:', error);
+        setData(defaultData);
       }
     };
 
@@ -459,11 +503,72 @@ export default function AdminPage() {
       console.log('Profile picture type:', typeof data.hero.profilePicture);
       console.log('Profile picture value:', data.hero.profilePicture);
       
+      // Sanitize data before saving to ensure correct structure
+      const sanitizedData = {
+        ...data,
+        hero: {
+          ...data.hero,
+          name: typeof data.hero.name === 'object' && data.hero.name?.english && data.hero.name?.japanese
+            ? data.hero.name
+            : { english: "Mushabbir Ahmed", japanese: "ムサビル・アハメド" },
+          title: typeof data.hero.title === 'object' && data.hero.title?.english && data.hero.title?.japanese
+            ? data.hero.title
+            : { english: "AI Specialist & Software Engineer", japanese: "AIスペシャリスト・ソフトウェアエンジニア" },
+          subtitle: typeof data.hero.subtitle === 'object' && data.hero.subtitle?.english && data.hero.subtitle?.japanese
+            ? data.hero.subtitle
+            : { english: "Passionate about creating innovative solutions", japanese: "革新的なソリューションの創造に情熱を注ぐ" },
+          description: typeof data.hero.description === 'object' && data.hero.description?.english && data.hero.description?.japanese
+            ? data.hero.description
+            : { english: "I'm a results-driven AI Specialist and Software Engineer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan.", japanese: "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIスペシャリスト・ソフトウェアエンジニアです。" },
+          profilePicture: typeof data.hero.profilePicture === 'string' ? data.hero.profilePicture : null,
+          tools: Array.isArray(data.hero.tools) ? data.hero.tools : []
+        },
+        about: {
+          english: typeof data.about.english === 'string' ? data.about.english : "",
+          japanese: typeof data.about.japanese === 'string' ? data.about.japanese : "",
+          location: typeof data.about.location === 'string' ? data.about.location : "",
+          status: typeof data.about.status === 'string' ? data.about.status : "",
+          education: typeof data.about.education === 'string' ? data.about.education : ""
+        },
+        education: Array.isArray(data.education) ? data.education.map((edu: any) => ({
+          ...edu,
+          institution: typeof edu.institution === 'object' && edu.institution?.english && edu.institution?.japanese
+            ? edu.institution
+            : { english: "", japanese: "" },
+          degree: typeof edu.degree === 'object' && edu.degree?.english && edu.degree?.japanese
+            ? edu.degree
+            : { english: "", japanese: "" },
+          period: typeof edu.period === 'object' && edu.period?.english && edu.period?.japanese
+            ? edu.period
+            : { english: "", japanese: "" },
+          description: typeof edu.description === 'object' && edu.description?.english && edu.description?.japanese
+            ? edu.description
+            : { english: "", japanese: "" },
+          achievements: {
+            english: Array.isArray(edu.achievements?.english) ? edu.achievements.english : [],
+            japanese: Array.isArray(edu.achievements?.japanese) ? edu.achievements.japanese : []
+          }
+        })) : [],
+        projects: Array.isArray(data.projects) ? data.projects.map((project: any) => ({
+          ...project,
+          title: typeof project.title === 'object' && project.title?.english && project.title?.japanese
+            ? project.title
+            : { english: "", japanese: "" },
+          description: typeof project.description === 'object' && project.description?.english && project.description?.japanese
+            ? project.description
+            : { english: "", japanese: "" },
+          technologies: Array.isArray(project.technologies) ? project.technologies : [],
+          images: Array.isArray(project.images) ? project.images : []
+        })) : []
+      };
+      
+      console.log('Sanitized data:', sanitizedData);
+      
       // Save to API
       const response = await fetch('/api/portfolio', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(sanitizedData)
       });
       
       if (response.ok) {
