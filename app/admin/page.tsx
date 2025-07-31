@@ -933,14 +933,30 @@ export default function AdminPage() {
             id="profile-picture-input"
             type="file"
             accept="image/*"
-            onChange={(e) => {
+            onChange={async (e) => {
               const file = e.target.files?.[0];
               if (file) {
-                const reader = new FileReader();
-                reader.onload = () => {
-                  updateData('hero', { profilePicture: reader.result as string });
-                };
-                reader.readAsDataURL(file);
+                try {
+                  const formData = new FormData();
+                  formData.append('file', file);
+
+                  const response = await fetch('/api/profile-picture-upload', {
+                    method: 'POST',
+                    body: formData,
+                  });
+
+                  const result = await response.json();
+
+                  if (result.success) {
+                    updateData('hero', { profilePicture: result.url });
+                    alert('Profile picture uploaded successfully!');
+                  } else {
+                    alert('Failed to upload profile picture: ' + result.error);
+                  }
+                } catch (error) {
+                  console.error('Profile picture upload error:', error);
+                  alert('Failed to upload profile picture. Please try again.');
+                }
               }
             }}
             className="hidden"
