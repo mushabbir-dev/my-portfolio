@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// EmailJS configuration (Using Private Key for server-side API)
+// EmailJS configuration (Using both Public and Private Keys)
 const EMAILJS_CONFIG = {
   serviceId: process.env.EMAILJS_SERVICE_ID || 'service_qqslkja',
   templateId: process.env.EMAILJS_TEMPLATE_ID || 'template_nr8wqkq', // OTP template
-  privateKey: process.env.EMAILJS_PRIVATE_KEY || '1jyIruPWFATPFQKrubr2x', // Using private key for server-side
+  publicKey: process.env.EMAILJS_PUBLIC_KEY || 'ZEtjUcYhfbut0g2wY', // Public key for user_id
+  privateKey: process.env.EMAILJS_PRIVATE_KEY || '1jyIruPWFATPFQKrubr2x', // Private key for authentication
   targetEmail: process.env.EMAILJS_TARGET_EMAIL || 'mushabbirahmed99@gmail.com'
 };
 
@@ -14,6 +15,7 @@ function logDebugInfo(context: string, data: any) {
   console.log(`🔍 Environment Variables:`);
   console.log(`🔍   EMAILJS_SERVICE_ID: ${process.env.EMAILJS_SERVICE_ID || 'NOT SET'}`);
   console.log(`🔍   EMAILJS_TEMPLATE_ID: ${process.env.EMAILJS_TEMPLATE_ID || 'NOT SET'}`);
+  console.log(`🔍   EMAILJS_PUBLIC_KEY: ${process.env.EMAILJS_PUBLIC_KEY ? 'SET' : 'NOT SET'}`);
   console.log(`🔍   EMAILJS_PRIVATE_KEY: ${process.env.EMAILJS_PRIVATE_KEY ? 'SET' : 'NOT SET'}`);
   console.log(`🔍   EMAILJS_TARGET_EMAIL: ${process.env.EMAILJS_TARGET_EMAIL || 'NOT SET'}`);
   console.log(`🔍 Data:`, JSON.stringify(data, null, 2));
@@ -25,11 +27,11 @@ export async function GET() {
     
     const emailjsUrl = `https://api.emailjs.com/api/v1.0/email/send`;
     
-    // Correct EmailJS API format with Private Key
+    // Correct EmailJS API format for server-side
     const requestBody = {
       service_id: EMAILJS_CONFIG.serviceId,
       template_id: EMAILJS_CONFIG.templateId,
-      user_id: EMAILJS_CONFIG.privateKey, // Use private key for server-side
+      user_id: EMAILJS_CONFIG.publicKey, // Use public key for user_id
       template_params: {
         to_email: EMAILJS_CONFIG.targetEmail,
         to_name: 'Test User',
@@ -49,7 +51,8 @@ export async function GET() {
     const response = await fetch(emailjsUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${EMAILJS_CONFIG.privateKey}` // Use private key for authentication
       },
       body: JSON.stringify(requestBody)
     });
