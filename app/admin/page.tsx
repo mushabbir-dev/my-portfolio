@@ -458,6 +458,23 @@ export default function AdminPage() {
               status: typeof fetchedData.about?.status === 'string' ? fetchedData.about.status : "",
               education: typeof fetchedData.about?.education === 'string' ? fetchedData.about.education : ""
             },
+            // Normalize contact fields.  Contact location may be stored as an object with
+            // `english`/`japanese` keys; ensure it becomes a plain string here.  Similarly,
+            // ensure all social links are strings to avoid passing objects into input values.
+            contact: {
+              email: typeof fetchedData.contact?.email === 'string' ? fetchedData.contact.email : "",
+              phone: typeof fetchedData.contact?.phone === 'string' ? fetchedData.contact.phone : "",
+              location: typeof fetchedData.contact?.location === 'string'
+                ? fetchedData.contact.location
+                : fetchedData.contact?.location?.english || fetchedData.contact?.location?.japanese || "",
+              social: {
+                github: typeof fetchedData.contact?.social?.github === 'string' ? fetchedData.contact.social.github : "",
+                linkedin: typeof fetchedData.contact?.social?.linkedin === 'string' ? fetchedData.contact.social.linkedin : "",
+                whatsapp: typeof fetchedData.contact?.social?.whatsapp === 'string' ? fetchedData.contact.social.whatsapp : "",
+                facebook: typeof fetchedData.contact?.social?.facebook === 'string' ? fetchedData.contact.social.facebook : "",
+                indeed: typeof fetchedData.contact?.social?.indeed === 'string' ? fetchedData.contact.social.indeed : ""
+              }
+            },
             education: Array.isArray(fetchedData.education) ? fetchedData.education.map((edu: any) => ({
               ...edu,
               institution: typeof edu.institution === 'string'
