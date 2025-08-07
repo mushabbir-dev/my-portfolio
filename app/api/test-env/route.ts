@@ -9,7 +9,13 @@ export async function GET() {
       environment: string | undefined;
       platform: string;
       cwd: string;
-      tests: Record<string, string>;
+      tests: {
+        directoryCreation?: string;
+        fileWriting?: string;
+        uploadsDirectory?: string;
+        dataDirectory?: string;
+        [key: string]: string | undefined;
+      };
     } = {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
