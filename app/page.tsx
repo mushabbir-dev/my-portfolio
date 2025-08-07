@@ -167,14 +167,14 @@ export default function HomePage() {
           },
           cv: {
             english: {
-              url: typeof data.cv?.english === 'string' ? data.cv.english : (typeof data.cv?.english?.url === 'string' ? data.cv.english.url : "/cv/mushabbir-en.pdf"),
-              filename: typeof data.cv?.english?.filename === 'string' ? data.cv.english.filename : "mushabbir-en.pdf",
-              isActive: typeof data.cv?.english?.isActive === 'boolean' ? data.cv.english.isActive : true
+              url: data.cv?.english?.url || (typeof data.cv?.english === 'string' ? data.cv.english : "/cv/mushabbir-en.pdf"),
+              filename: data.cv?.english?.filename || "mushabbir-en.pdf",
+              isActive: data.cv?.english?.isActive !== false
             },
             japanese: {
-              url: typeof data.cv?.japanese === 'string' ? data.cv.japanese : (typeof data.cv?.japanese?.url === 'string' ? data.cv.japanese.url : "/cv/mushabbir-ja.pdf"),
-              filename: typeof data.cv?.japanese?.filename === 'string' ? data.cv.japanese.filename : "mushabbir-ja.pdf",
-              isActive: typeof data.cv?.japanese?.isActive === 'boolean' ? data.cv.japanese.isActive : true
+              url: data.cv?.japanese?.url || (typeof data.cv?.japanese === 'string' ? data.cv.japanese : "/cv/mushabbir-ja.pdf"),
+              filename: data.cv?.japanese?.filename || "mushabbir-ja.pdf",
+              isActive: data.cv?.japanese?.isActive !== false
             }
           },
           education: Array.isArray(data.education) ? data.education.map((edu: any) => ({
@@ -305,6 +305,20 @@ export default function HomePage() {
   // Contact form functions
   // NEW CV Download Function
   const downloadCV = (language: 'en' | 'ja') => {
+    // Check if portfolio data is loaded
+    if (!portfolioData) {
+      setMessagePopupContent(
+        language === 'en' 
+          ? 'Loading portfolio data... Please try again.' 
+          : 'ポートフォリオデータを読み込み中... もう一度お試しください。'
+      );
+      setMessagePopupType('error');
+      setShowMessagePopup(true);
+      setTimeout(() => setShowMessagePopup(false), 3000);
+      setShowCVModal(false);
+      return;
+    }
+    
     const cvData = portfolioData?.cv?.[language];
     
     // Handle both string and object formats for backward compatibility
