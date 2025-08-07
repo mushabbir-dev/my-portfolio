@@ -305,8 +305,12 @@ export default function HomePage() {
   // Contact form functions
   // NEW CV Download Function
   const downloadCV = (language: 'en' | 'ja') => {
+    console.log('downloadCV called with language:', language);
+    console.log('portfolioData:', portfolioData);
+    
     // Check if portfolio data is loaded
     if (!portfolioData) {
+      console.log('portfolioData is null/undefined');
       setMessagePopupContent(
         language === 'en' 
           ? 'Loading portfolio data... Please try again.' 
@@ -320,6 +324,7 @@ export default function HomePage() {
     }
     
     const cvData = portfolioData?.cv?.[language];
+    console.log('cvData for language', language, ':', cvData);
     
     // Handle both string and object formats for backward compatibility
     let cvUrl = '';
@@ -331,14 +336,21 @@ export default function HomePage() {
       cvUrl = cvData;
       cvFilename = `cv-${language}.pdf`;
       isActive = true; // Assume active if it's a string URL
+      console.log('Using string format - cvUrl:', cvUrl, 'isActive:', isActive);
     } else if (cvData && typeof cvData === 'object') {
       // New format: object with url, filename, isActive
       cvUrl = cvData.url || '';
       cvFilename = cvData.filename || `cv-${language}.pdf`;
       isActive = cvData.isActive !== false; // Default to true if not specified
+      console.log('Using object format - cvUrl:', cvUrl, 'cvFilename:', cvFilename, 'isActive:', isActive);
+    } else {
+      console.log('cvData is neither string nor object:', cvData);
     }
     
+    console.log('Final values - cvUrl:', cvUrl, 'isActive:', isActive);
+    
     if (!cvUrl || !isActive) {
+      console.log('CV not available - cvUrl:', cvUrl, 'isActive:', isActive);
       setMessagePopupContent(
         language === 'en' 
           ? 'CV not available. Please upload a CV first.' 
