@@ -56,7 +56,10 @@ interface PortfolioData {
   about: {
     english: string;
     japanese: string;
-    location: string;
+    location: {
+      english: string;
+      japanese: string;
+    };
     status: string;
     education: string;
   };
@@ -103,10 +106,19 @@ interface PortfolioData {
   };
   papers: Array<{
     id: string;
-    title: string;
+    title: {
+      english: string;
+      japanese: string;
+    };
     type: 'poster' | 'oral';
-    date: string;
-    conference: string;
+    date: {
+      english: string;
+      japanese: string;
+    };
+    conference: {
+      english: string;
+      japanese: string;
+    };
     paperPdf: string;
     paperFilename: string;
     posterPdf?: string;
@@ -133,16 +145,28 @@ interface PortfolioData {
   }>;
   certifications: Array<{
     id: string;
-    title: string;
-    issuer: string;
-    date: string;
+    name: {
+      english: string;
+      japanese: string;
+    };
+    issuer: {
+      english: string;
+      japanese: string;
+    };
+    date: {
+      english: string;
+      japanese: string;
+    };
     image: string;
     pdf: string;
   }>;
   contact: {
     email: string;
     phone: string;
-    location: string;
+    location: {
+      english: string;
+      japanese: string;
+    };
     social: {
       github: string;
       linkedin: string;
@@ -185,7 +209,10 @@ const defaultData: PortfolioData = {
   about: {
     english: "I'm Mushabbir Ahmed, a results-driven AI Specialist and Software Engineer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan (Graduating March 2026). With a strong foundation in Software Engineering from Qingdao University, China, I specialize in developing secure, scalable systems using React, Flask, MongoDB, and advanced encryption methods like AES‑256 and RSA‑2048. My hands-on projects include a secure medical data simulation system and a movie recommendation engine. I'm also serving as an International Student Tutor and was appointed as a Saga City International Tourism Ambassador in July 2025. I'm passionate about delivering data-driven, AI-powered solutions that create real-world impact.",
     japanese: "私はムサビル・アハメドと申します。現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程（2026年3月修了予定）に在籍しています。中国の青島大学でソフトウェア工学を学び、Python・JavaScript・React・Flask・MongoDBを活用したソフトウェア開発および、AES-256・RSA-2048などの高度な暗号技術を用いたセキュアなシステム構築を得意としています。医療データ暗号化シミュレーションや映画レコメンデーションシステムの開発経験があり、現在は佐賀大学の技術サポートチューターとしても活動中です。2025年7月には佐賀市国際観光アンバサダーにも任命され、地域貢献にも力を入れています。",
-    location: "",
+    location: {
+      english: "Saga, Japan",
+      japanese: "佐賀県、日本"
+    },
     status: "Actively looking for full-time opportunities in Japan",
     education: "Master's Student at Saga University"
   },
@@ -280,55 +307,23 @@ const defaultData: PortfolioData = {
       { id: '7', name: 'NetBeans', icon: '☕' }
     ]
   },
-  certifications: [
-    {
-      id: "1",
-      title: "AI Foundations for Everyone",
-      issuer: "IBM",
-      date: "2024",
-      image: "/certifications/AI Foundations for Everyone.jpg",
-      pdf: "/certifications/AI Foundations for Everyone.pdf"
-    },
-    {
-      id: "2",
-      title: "Building AI Powered Chatbots Without Programming",
-      issuer: "IBM",
-      date: "2024",
-      image: "/certifications/Building AI Powered Chatbots Without Programming.jpg",
-      pdf: "/certifications/Building AI Powered Chatbots Without Programming.pdf"
-    },
-    {
-      id: "3",
-      title: "Generative AI Introduction and Applications",
-      issuer: "IBM",
-      date: "2024",
-      image: "/certifications/Generative AI Introduction and Applications.jpg",
-      pdf: "/certifications/Generative AI Introduction and Applications.pdf"
-    },
-    {
-      id: "4",
-      title: "Generative AI Prompt Engineering Basics",
-      issuer: "IBM",
-      date: "2024",
-      image: "/certifications/Generative AI Prompt Engineering Basics.jpg",
-      pdf: "/certifications/Generative AI Prompt Engineering Basics.pdf"
-    },
-    {
-      id: "5",
-      title: "Introduction to Artificial Intelligence (AI)",
-      issuer: "IBM",
-      date: "2024",
-      image: "/certifications/Introduction to Artificial Intelligence (AI).jpg",
-      pdf: "/certifications/Introduction to Artificial Intelligence (AI).pdf"
-    }
-  ],
+
   papers: [
     {
       id: "1",
-      title: "AI in Healthcare",
+      title: {
+        english: "AI in Healthcare",
+        japanese: "医療におけるAI"
+      },
       type: 'oral',
-      date: "2024",
-      conference: "IEEE International Conference on Artificial Intelligence",
+      date: {
+        english: "2024",
+        japanese: "2024年"
+      },
+      conference: {
+        english: "IEEE International Conference on Artificial Intelligence",
+        japanese: "IEEE人工知能国際会議"
+      },
       paperPdf: "",
       paperFilename: "",
       presentationPdf: "",
@@ -336,10 +331,19 @@ const defaultData: PortfolioData = {
     },
     {
       id: "2",
-      title: "Deep Learning for Computer Vision",
+      title: {
+        english: "Deep Learning for Computer Vision",
+        japanese: "コンピュータビジョンのためのディープラーニング"
+      },
       type: 'poster',
-      date: "2024",
-      conference: "Computer Vision Conference",
+      date: {
+        english: "2024",
+        japanese: "2024年"
+      },
+      conference: {
+        english: "Computer Vision Conference",
+        japanese: "コンピュータビジョン会議"
+      },
       paperPdf: "",
       paperFilename: "",
       posterPdf: "",
@@ -382,10 +386,49 @@ const defaultData: PortfolioData = {
       images: []
     }
   ],
+  certifications: [
+    {
+      id: "1",
+      name: {
+        english: "AI Foundations for Everyone",
+        japanese: "AI基礎（全員向け）"
+      },
+      issuer: {
+        english: "IBM",
+        japanese: "IBM"
+      },
+      date: {
+        english: "2023",
+        japanese: "2023年"
+      },
+      image: "/certifications/AI Foundations for Everyone.jpg",
+      pdf: "/certifications/AI Foundations for Everyone.pdf"
+    },
+    {
+      id: "2",
+      name: {
+        english: "Building AI Powered Chatbots Without Programming",
+        japanese: "プログラミングなしでAI駆動チャットボットを構築"
+      },
+      issuer: {
+        english: "IBM",
+        japanese: "IBM"
+      },
+      date: {
+        english: "2023",
+        japanese: "2023年"
+      },
+      image: "/certifications/Building AI Powered Chatbots Without Programming.jpg",
+      pdf: "/certifications/Building AI Powered Chatbots Without Programming.pdf"
+    }
+  ],
   contact: {
     email: "mushabbir@example.com",
     phone: "+81 90-XXXX-XXXX",
-    location: "",
+    location: {
+      english: "Saga, Japan",
+      japanese: "佐賀県、日本"
+    },
     social: {
       github: "https://github.com/mushabbir",
       linkedin: "https://linkedin.com/in/mushabbir",
@@ -855,9 +898,18 @@ export default function AdminPage() {
   const addCertification = () => {
     const newCert = {
       id: uuidv4(),
-      title: "",
-      issuer: "",
-      date: "",
+      name: {
+        english: "",
+        japanese: ""
+      },
+      issuer: {
+        english: "",
+        japanese: ""
+      },
+      date: {
+        english: "",
+        japanese: ""
+      },
       image: "",
       pdf: ""
     };
@@ -1081,10 +1133,19 @@ export default function AdminPage() {
   const addPaper = () => {
     const newPaper = {
       id: uuidv4(),
-      title: "",
+      title: {
+        english: "",
+        japanese: ""
+      },
       type: "oral" as 'poster' | 'oral',
-      date: "",
-      conference: "",
+      date: {
+        english: "",
+        japanese: ""
+      },
+      conference: {
+        english: "",
+        japanese: ""
+      },
       paperPdf: "",
       paperFilename: "",
       posterPdf: "",
@@ -1407,12 +1468,24 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Location
+            Location (English)
           </label>
           <input
             type="text"
-            value={data.about.location}
-            onChange={(e) => updateData('about', { location: e.target.value })}
+            value={data.about.location.english}
+            onChange={(e) => updateData('about', { location: { ...data.about.location, english: e.target.value } })}
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Location (Japanese)
+          </label>
+          <input
+            type="text"
+            value={data.about.location.japanese}
+            onChange={(e) => updateData('about', { location: { ...data.about.location, japanese: e.target.value } })}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
@@ -1690,36 +1763,72 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title
+                  Name (English)
                 </label>
                 <input
                   type="text"
-                  value={cert.title}
-                  onChange={(e) => updateCertification(cert.id, { title: e.target.value })}
+                  value={cert.name.english}
+                  onChange={(e) => updateCertification(cert.id, { name: { ...cert.name, english: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Issuer
+                  Name (Japanese)
                 </label>
                 <input
                   type="text"
-                  value={cert.issuer}
-                  onChange={(e) => updateCertification(cert.id, { issuer: e.target.value })}
+                  value={cert.name.japanese}
+                  onChange={(e) => updateCertification(cert.id, { name: { ...cert.name, japanese: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date
+                  Issuer (English)
                 </label>
                 <input
                   type="text"
-                  value={cert.date}
-                  onChange={(e) => updateCertification(cert.id, { date: e.target.value })}
+                  value={cert.issuer.english}
+                  onChange={(e) => updateCertification(cert.id, { issuer: { ...cert.issuer, english: e.target.value } })}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Issuer (Japanese)
+                </label>
+                <input
+                  type="text"
+                  value={cert.issuer.japanese}
+                  onChange={(e) => updateCertification(cert.id, { issuer: { ...cert.issuer, japanese: e.target.value } })}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date (English)
+                </label>
+                <input
+                  type="text"
+                  value={cert.date.english}
+                  onChange={(e) => updateCertification(cert.id, { date: { ...cert.date, english: e.target.value } })}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Date (Japanese)
+                </label>
+                <input
+                  type="text"
+                  value={cert.date.japanese}
+                  onChange={(e) => updateCertification(cert.id, { date: { ...cert.date, japanese: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -1799,7 +1908,7 @@ export default function AdminPage() {
                   <div className="aspect-video bg-gray-200 dark:bg-gray-600 rounded-lg overflow-hidden">
                     <img
                       src={cert.image}
-                      alt={cert.title}
+                      alt={cert.name.english}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
@@ -2072,12 +2181,24 @@ export default function AdminPage() {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Location
+            Location (English)
           </label>
           <input
             type="text"
-            value={data.contact.location}
-            onChange={(e) => updateData('contact', { location: e.target.value })}
+            value={data.contact.location.english}
+            onChange={(e) => updateData('contact', { location: { ...data.contact.location, english: e.target.value } })}
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Location (Japanese)
+          </label>
+          <input
+            type="text"
+            value={data.contact.location.japanese}
+            onChange={(e) => updateData('contact', { location: { ...data.contact.location, japanese: e.target.value } })}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
@@ -2305,7 +2426,7 @@ export default function AdminPage() {
             <div key={paper.id} className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {paper.title || 'Untitled Paper'}
+                  {paper.title.english || 'Untitled Paper'}
                 </h3>
                 <div className="flex items-center space-x-2">
                   <button
@@ -2324,11 +2445,22 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title (English)</label>
                   <input
                     type="text"
-                    value={paper.title || ''}
-                    onChange={(e) => updatePaper(paper.id, { title: e.target.value })}
+                    value={paper.title.english || ''}
+                    onChange={(e) => updatePaper(paper.id, { title: { ...paper.title, english: e.target.value } })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="Paper title"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title (Japanese)</label>
+                  <input
+                    type="text"
+                    value={paper.title.japanese || ''}
+                    onChange={(e) => updatePaper(paper.id, { title: { ...paper.title, japanese: e.target.value } })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
                     placeholder="Paper title"
                   />
@@ -2347,21 +2479,44 @@ export default function AdminPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date (English)</label>
                   <input
-                    type="date"
-                    value={paper.date || ''}
-                    onChange={(e) => updatePaper(paper.id, { date: e.target.value })}
+                    type="text"
+                    value={paper.date.english || ''}
+                    onChange={(e) => updatePaper(paper.id, { date: { ...paper.date, english: e.target.value } })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="2024"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date (Japanese)</label>
+                  <input
+                    type="text"
+                    value={paper.date.japanese || ''}
+                    onChange={(e) => updatePaper(paper.id, { date: { ...paper.date, japanese: e.target.value } })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="2024年"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Conference</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Conference (English)</label>
                   <input
                     type="text"
-                    value={paper.conference || ''}
-                    onChange={(e) => updatePaper(paper.id, { conference: e.target.value })}
+                    value={paper.conference.english || ''}
+                    onChange={(e) => updatePaper(paper.id, { conference: { ...paper.conference, english: e.target.value } })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="Conference name"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Conference (Japanese)</label>
+                  <input
+                    type="text"
+                    value={paper.conference.japanese || ''}
+                    onChange={(e) => updatePaper(paper.id, { conference: { ...paper.conference, japanese: e.target.value } })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
                     placeholder="Conference name"
                   />
@@ -2665,7 +2820,7 @@ export default function AdminPage() {
                 <p>{data.hero.description.english}</p>
                 
                 <h3>About Me</h3>
-                <p><strong>Location:</strong> {data.about.location}</p>
+                <p><strong>Location:</strong> {data.about.location.english}</p>
                 <p><strong>Status:</strong> {data.about.status}</p>
                 <p><strong>Education:</strong> {data.about.education}</p>
                 
@@ -2700,8 +2855,8 @@ export default function AdminPage() {
                 <h3>Certifications</h3>
                 {data.certifications.map((cert, index) => (
                   <div key={cert.id} className="mb-4">
-                    <h4>{cert.title}</h4>
-                    <p>{cert.issuer} • {cert.date}</p>
+                    <h4>{cert.name.english}</h4>
+                    <p>{cert.issuer.english} • {cert.date.english}</p>
                   </div>
                 ))}
                 
@@ -2710,7 +2865,7 @@ export default function AdminPage() {
                 <h3>Contact</h3>
                 <p><strong>Email:</strong> {data.contact.email}</p>
                 <p><strong>Phone:</strong> {data.contact.phone}</p>
-                <p><strong>Location:</strong> {data.contact.location}</p>
+                <p><strong>Location:</strong> {data.contact.location.english}</p>
                 
                 <h4>Social Media</h4>
                 <ul>

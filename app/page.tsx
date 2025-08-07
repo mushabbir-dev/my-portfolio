@@ -222,10 +222,10 @@ export default function HomePage() {
               : paper.title || { english: "", japanese: "" },
             conference: typeof paper.conference === 'string'
               ? { english: paper.conference, japanese: paper.conference }
-              : paper.conference || { english: "", japanese: "" },
+              : (typeof paper.journal === 'string' ? { english: paper.journal, japanese: paper.journal } : paper.conference || { english: "", japanese: "" }),
             date: typeof paper.date === 'string'
               ? { english: paper.date, japanese: paper.date }
-              : paper.date || { english: "", japanese: "" }
+              : (typeof paper.year === 'string' ? { english: paper.year, japanese: paper.year } : paper.date || { english: "", japanese: "" })
           })) : [],
           skills: {
             languages: Array.isArray(data.skills?.languages) ? data.skills.languages : [],
@@ -251,18 +251,14 @@ export default function HomePage() {
             location: typeof data.contact?.location === 'string' 
               ? { english: data.contact.location, japanese: data.contact.location }
               : data.contact?.location || { english: "", japanese: "" },
-            social: data.contact?.social ? {
-              github: typeof data.contact.social.github === 'string' ? data.contact.social.github : "",
-              linkedin: typeof data.contact.social.linkedin === 'string' ? data.contact.social.linkedin : "",
-              whatsapp: typeof data.contact.social.whatsapp === 'string' ? data.contact.social.whatsapp : "",
-              facebook: typeof data.contact.social.facebook === 'string' ? data.contact.social.facebook : "",
-              indeed: typeof data.contact.social.indeed === 'string' ? data.contact.social.indeed : ""
-            } : {
-              github: "",
-              linkedin: "",
-              whatsapp: "",
-              facebook: "",
-              indeed: ""
+            social: {
+              github: typeof data.contact?.github === 'string' ? data.contact.github : 
+                     (typeof data.contact?.social?.github === 'string' ? data.contact.social.github : ""),
+              linkedin: typeof data.contact?.linkedin === 'string' ? data.contact.linkedin : 
+                       (typeof data.contact?.social?.linkedin === 'string' ? data.contact.social.linkedin : ""),
+              whatsapp: typeof data.contact?.social?.whatsapp === 'string' ? data.contact.social.whatsapp : "",
+              facebook: typeof data.contact?.social?.facebook === 'string' ? data.contact.social.facebook : "",
+              indeed: typeof data.contact?.social?.indeed === 'string' ? data.contact.social.indeed : ""
             }
           }
         };
