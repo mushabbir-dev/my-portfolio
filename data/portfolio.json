@@ -341,9 +341,9 @@
   ],
   "cv": {
     "english": {
-      "url": "",
-      "filename": "",
-      "isActive": false
+      "url": "/cv/mushabbir-en.pdf",
+      "filename": "mushabbir-en.pdf",
+      "isActive": true
     },
     "japanese": {
       "url": "/cv/mushabbir-ja.pdf",
