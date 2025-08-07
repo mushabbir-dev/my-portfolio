@@ -1,26 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { writeFile, mkdir, access } from 'fs/promises';
+import path from 'path';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const envCheck = {
-      RESEND_API_KEY: process.env.RESEND_API_KEY ? 'Set' : 'Not set',
-      ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'Not set',
-      CONTACT_EMAIL: process.env.CONTACT_EMAIL || 'Not set',
-      NODE_ENV: process.env.NODE_ENV,
-      timestamp: new Date().toISOString()
+    const results: {
+      timestamp: string;
+      environment: string | undefined;
+      platform: string;
+      cwd: string;
+      tests: Record<string, string>;
+    } = {
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      platform: process.platform,
+      cwd: process.cwd(),
+      tests: {}
     };
 
-    console.log('🔍 Environment check:', envCheck);
+    // Test 1: Check if we can create directories
+    try {
+      const testDir = path.join(process.cwd(), 'public', 'test-uploads');
+      await mkdir(testDir, { recursive: true });
+      results.tests.directoryCreation = 'PASS';
+    } catch (error) {
+      results.tests.directoryCreation = `FAIL: ${error instanceof Error ? error.message : String(error)}`;
+    }
 
-    return NextResponse.json({
-      success: true,
-      environment: envCheck
-    });
+    // Test 2: Check if we can write files
+    try {
+      const testFile = path.join(process.cwd(), 'public', 'test-uploads', 'test.txt');
+      await writeFile(testFile, 'Test file content');
+      results.tests.fileWriting = 'PASS';
+    } catch (error) {
+      results.tests.fileWriting = `FAIL: ${error instanceof Error ? error.message : String(error)}`;
+    }
 
+    // Test 3: Check uploads directory
+    try {
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'profile');
+      await mkdir(uploadsDir, { recursive: true });
+      await access(uploadsDir, 2); // Check write permission
+      results.tests.uploadsDirectory = 'PASS';
+    } catch (error) {
+      results.tests.uploadsDirectory = `FAIL: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    // Test 4: Check data directory
+    try {
+      const dataDir = path.join(process.cwd(), 'data');
+      await mkdir(dataDir, { recursive: true });
+      await access(dataDir, 2); // Check write permission
+      results.tests.dataDirectory = 'PASS';
+    } catch (error) {
+      results.tests.dataDirectory = `FAIL: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    return NextResponse.json(results);
   } catch (error) {
-    console.error('Environment check error:', error);
     return NextResponse.json(
-      { error: 'Failed to check environment' },
+      { 
+        error: 'Test failed', 
+        details: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
   }

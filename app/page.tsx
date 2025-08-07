@@ -1630,7 +1630,7 @@ export default function HomePage() {
                     <div className="relative h-full">
                       <img
                         src={project.images[0]}
-                        alt={project.title?.[language === 'en' ? 'english' : 'japanese'] || project.title?.english || "Project"}
+                        alt={typeof project.title === 'string' ? project.title : project.title?.[language === 'en' ? 'english' : 'japanese'] || project.title?.english || "Project"}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/40"></div>
@@ -1646,8 +1646,8 @@ export default function HomePage() {
                       <div className="absolute inset-0 bg-black/20"></div>
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center text-white">
-                          <h3 className="text-2xl font-bold mb-2">{project.title?.[language === 'en' ? 'english' : 'japanese'] || project.title?.english || "Project"}</h3>
-                          <p className="text-white/80">{project.description?.[language === 'en' ? 'english' : 'japanese'] || project.description?.english || ""}</p>
+                          <h3 className="text-2xl font-bold mb-2">{typeof project.title === 'string' ? project.title : project.title?.[language === 'en' ? 'english' : 'japanese'] || project.title?.english || "Project"}</h3>
+                          <p className="text-white/80">{typeof project.description === 'string' ? project.description : project.description?.[language === 'en' ? 'english' : 'japanese'] || project.description?.english || ""}</p>
                         </div>
                       </div>
                     </>
@@ -1668,14 +1668,14 @@ export default function HomePage() {
                       whileHover={{ scale: 1.02 }}
                     >
                       {language === 'en' 
-                        ? (project.title?.english || project.title)
-                        : (project.title?.japanese || project.title?.english || project.title)
+                        ? (typeof project.title === 'string' ? project.title : project.title?.english || 'Project')
+                        : (typeof project.title === 'string' ? project.title : project.title?.japanese || project.title?.english || 'Project')
                       }
                     </motion.h3>
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
                       {language === 'en' 
-                        ? (project.description?.english || project.description)
-                        : (project.description?.japanese || project.description?.english || project.description)
+                        ? (typeof project.description === 'string' ? project.description : project.description?.english || '')
+                        : (typeof project.description === 'string' ? project.description : project.description?.japanese || project.description?.english || '')
                       }
                     </p>
                     <div className="flex flex-wrap gap-2 mb-4">

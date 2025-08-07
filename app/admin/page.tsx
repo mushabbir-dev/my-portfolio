@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { v4 as uuidv4 } from 'uuid';
+import { toast, Toaster } from 'sonner';
 import { 
   Save, 
   Eye, 
@@ -24,7 +26,8 @@ import {
   CheckCircle,
   Circle,
   FileImage,
-  Presentation
+  Presentation,
+  RotateCcw
 } from 'lucide-react';
 
 import CVUploadModal from '../components/CVUploadModal';
@@ -48,7 +51,7 @@ interface PortfolioData {
       japanese: string;
     };
     profilePicture: string | null;
-    tools: Array<{ name: string; icon: string }>;
+    tools: Array<{ id: string; name: string; icon: string }>;
   };
   about: {
     english: string;
@@ -93,10 +96,10 @@ interface PortfolioData {
     };
   }>;
   skills: {
-    languages: Array<{ name: string; icon: string }>;
-    frameworks: Array<{ name: string; icon: string }>;
-    databases: Array<{ name: string; icon: string }>;
-    tools: Array<{ name: string; icon: string }>;
+    languages: Array<{ id: string; name: string; icon: string }>;
+    frameworks: Array<{ id: string; name: string; icon: string }>;
+    databases: Array<{ id: string; name: string; icon: string }>;
+    tools: Array<{ id: string; name: string; icon: string }>;
   };
   papers: Array<{
     id: string;
@@ -170,13 +173,13 @@ const defaultData: PortfolioData = {
     },
     profilePicture: null,
     tools: [
-      { name: 'Git', icon: '📝' },
-      { name: 'VS Code', icon: '💻' },
-      { name: 'Postman', icon: '📮' },
-      { name: 'MATLAB', icon: '🔬' },
-      { name: 'IBM Watson', icon: '🤖' },
-      { name: 'Excel', icon: '📈' },
-      { name: 'NetBeans', icon: '☕' }
+      { id: '1', name: 'Git', icon: '📝' },
+      { id: '2', name: 'VS Code', icon: '💻' },
+      { id: '3', name: 'Postman', icon: '📮' },
+      { id: '4', name: 'MATLAB', icon: '🔬' },
+      { id: '5', name: 'IBM Watson', icon: '🤖' },
+      { id: '6', name: 'Excel', icon: '📈' },
+      { id: '7', name: 'NetBeans', icon: '☕' }
     ]
   },
   about: {
@@ -248,33 +251,33 @@ const defaultData: PortfolioData = {
   ],
   skills: {
     languages: [
-      { name: 'Python', icon: '🐍' },
-      { name: 'JavaScript', icon: '💛' },
-      { name: 'SQL', icon: '🗄️' },
-      { name: 'C++', icon: '⚡' },
-      { name: 'HTML', icon: '🌐' },
-      { name: 'CSS', icon: '🎨' }
+      { id: '1', name: 'Python', icon: '🐍' },
+      { id: '2', name: 'JavaScript', icon: '💛' },
+      { id: '3', name: 'SQL', icon: '🗄️' },
+      { id: '4', name: 'C++', icon: '⚡' },
+      { id: '5', name: 'HTML', icon: '🌐' },
+      { id: '6', name: 'CSS', icon: '🎨' }
     ],
     frameworks: [
-      { name: 'React', icon: '⚛️' },
-      { name: 'Flask', icon: '🔥' },
-      { name: 'Spring Boot', icon: '🍃' },
-      { name: 'NumPy', icon: '📊' },
-      { name: 'Bootstrap', icon: '🎨' }
+      { id: '1', name: 'React', icon: '⚛️' },
+      { id: '2', name: 'Flask', icon: '🔥' },
+      { id: '3', name: 'Spring Boot', icon: '🍃' },
+      { id: '4', name: 'NumPy', icon: '📊' },
+      { id: '5', name: 'Bootstrap', icon: '🎨' }
     ],
     databases: [
-      { name: 'MongoDB', icon: '🍃' },
-      { name: 'MongoDB Atlas', icon: '☁️' },
-      { name: 'MySQL', icon: '🐬' }
+      { id: '1', name: 'MongoDB', icon: '🍃' },
+      { id: '2', name: 'MongoDB Atlas', icon: '☁️' },
+      { id: '3', name: 'MySQL', icon: '🐬' }
     ],
     tools: [
-      { name: 'Git', icon: '📝' },
-      { name: 'VS Code', icon: '💻' },
-      { name: 'Postman', icon: '📮' },
-      { name: 'MATLAB', icon: '🔬' },
-      { name: 'IBM Watson', icon: '🤖' },
-      { name: 'Excel', icon: '📈' },
-      { name: 'NetBeans', icon: '☕' }
+      { id: '1', name: 'Git', icon: '📝' },
+      { id: '2', name: 'VS Code', icon: '💻' },
+      { id: '3', name: 'Postman', icon: '📮' },
+      { id: '4', name: 'MATLAB', icon: '🔬' },
+      { id: '5', name: 'IBM Watson', icon: '🤖' },
+      { id: '6', name: 'Excel', icon: '📈' },
+      { id: '7', name: 'NetBeans', icon: '☕' }
     ]
   },
   certifications: [
@@ -405,6 +408,9 @@ export default function AdminPage() {
   const [editingPaper, setEditingPaper] = useState<any>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalType, setSaveModalType] = useState<'success' | 'error'>('success');
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [adminLogs, setAdminLogs] = useState<any[]>([]);
+  const [showLogs, setShowLogs] = useState(false);
 
   // Get section from URL parameter
   useEffect(() => {
@@ -500,6 +506,19 @@ export default function AdminPage() {
     fetchData();
   }, []);
 
+  // Fetch admin logs
+  const fetchAdminLogs = async () => {
+    try {
+      const response = await fetch('/api/admin/logs?limit=50');
+      if (response.ok) {
+        const logs = await response.json();
+        setAdminLogs(logs);
+      }
+    } catch (error) {
+      console.error('Error fetching admin logs:', error);
+    }
+  };
+
   const saveData = async () => {
     setIsSaving(true);
     try {
@@ -571,55 +590,119 @@ export default function AdminPage() {
       const compressedData = JSON.stringify(sanitizedData, null, 0);
       console.log('Compressed data size:', compressedData.length, 'bytes');
       
-      // Check if data is too large
-      if (compressedData.length > 10 * 1024 * 1024) { // 10MB
-        console.warn('Data size is very large:', compressedData.length, 'bytes');
-      }
-      
-      // Save to API
-      const response = await fetch('/api/portfolio', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: compressedData
-      });
-      
-      if (response.ok) {
-        setSaveModalType('success');
-        setShowSaveModal(true);
-        setTimeout(() => setShowSaveModal(false), 3000);
+      // Check if data is too large and use section-specific API if needed
+      if (compressedData.length > 4 * 1024 * 1024) { // 4MB
+        console.warn('Data size is large, using section-specific updates:', compressedData.length, 'bytes');
+        
+        // Save sections individually to avoid size limits
+        const sections = Object.keys(sanitizedData);
+        const results = [];
+        
+        for (const section of sections) {
+          try {
+            const sectionData = sanitizedData[section as keyof typeof sanitizedData];
+            const sectionDataString = JSON.stringify(sectionData);
+            
+            // Skip sections that are too large (like hero with base64 image)
+            if (sectionDataString.length > 2 * 1024 * 1024) { // 2MB per section
+              console.warn(`Section ${section} is too large:`, sectionDataString.length, 'bytes');
+              toast.warning(`Section ${section} is too large and will be skipped. Consider removing large images.`);
+              continue;
+            }
+            
+            const response = await fetch('/api/portfolio/sections', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                section,
+                data: sectionData
+              })
+            });
+            
+            if (response.ok) {
+              results.push({ section, success: true });
+              console.log(`✅ Section ${section} saved successfully`);
+            } else {
+              const errorData = await response.json();
+              results.push({ section, success: false, error: errorData.error });
+              console.error(`❌ Section ${section} failed:`, errorData.error);
+            }
+          } catch (error) {
+            console.error(`Error saving section ${section}:`, error);
+            results.push({ section, success: false, error: error instanceof Error ? error.message : String(error) });
+          }
+        }
+        
+        const successfulSections = results.filter(r => r.success);
+        const failedSections = results.filter(r => !r.success);
+        
+        if (successfulSections.length > 0) {
+          toast.success(`Successfully saved ${successfulSections.length} sections!`);
+        }
+        
+        if (failedSections.length > 0) {
+          console.error('Some sections failed to save:', failedSections);
+          toast.error(`Failed to save: ${failedSections.map(f => f.section).join(', ')}`);
+        }
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save data');
+        // Use the regular API for smaller data
+        const response = await fetch('/api/portfolio', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: compressedData
+        });
+        
+        if (response.ok) {
+          toast.success('Portfolio updated successfully!');
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save data');
+        }
       }
     } catch (error) {
       console.error('Save error:', error);
-      setSaveModalType('error');
-      setShowSaveModal(true);
-      setTimeout(() => setShowSaveModal(false), 3000);
+      toast.error('Failed to save portfolio data. Please try again.');
     }
     setIsSaving(false);
   };
 
-  const updateData = (section: keyof PortfolioData, updates: any) => {
-    setData(prev => {
-      // Special handling for papers to ensure it's always an array
-      if (section === 'papers') {
+  const updateData = async (section: keyof PortfolioData, updates: any) => {
+    try {
+      setData(prev => {
+        // Special handling for papers to ensure it's always an array
+        if (section === 'papers') {
+          return {
+            ...prev,
+            papers: updates // Direct assignment for papers array
+          };
+        }
+        
         return {
           ...prev,
-          papers: updates // Direct assignment for papers array
+          [section]: { ...prev[section], ...updates }
         };
+      });
+
+      // Send update to API
+      const response = await fetch('/api/portfolio', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section, data: updates })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update data');
       }
-      
-      return {
-        ...prev,
-        [section]: { ...prev[section], ...updates }
-      };
-    });
+    } catch (error) {
+      console.error('Update data error:', error);
+      toast.error('Failed to update data. Please try again.');
+    }
   };
 
-  const addEducation = () => {
+  const addEducation = async () => {
     const newEducation = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       institution: {
         english: "",
         japanese: ""
@@ -641,10 +724,36 @@ export default function AdminPage() {
         japanese: []
       }
     };
+
+    // Optimistic update
+    const prevData = { ...data };
     setData(prev => ({
       ...prev,
       education: [...prev.education, newEducation]
     }));
+
+    try {
+      // Update the education section in the database
+      const response = await fetch('/api/portfolio', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section: 'education',
+          data: [...data.education, newEducation]
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Education entry added successfully!');
+        fetchAdminLogs(); // Refresh logs
+      } else {
+        throw new Error('Failed to save education entry');
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setData(prevData);
+      toast.error('Failed to add education entry. Please try again.');
+    }
   };
 
   const updateEducation = (id: string, updates: any) => {
@@ -656,15 +765,43 @@ export default function AdminPage() {
     }));
   };
 
-  const removeEducation = (id: string) => {
+  const removeEducation = async (id: string) => {
+    setIsDeleting(id);
+    
+    // Optimistic update
+    const prevData = { ...data };
+    const updatedEducation = data.education.filter(edu => edu.id !== id);
     setData(prev => ({
       ...prev,
-      education: prev.education.filter(edu => edu.id !== id)
+      education: updatedEducation
     }));
+
+    try {
+      const response = await fetch('/api/portfolio', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section: 'education', key: id })
+      });
+
+      if (response.ok) {
+        toast.success('Education entry removed successfully!');
+        fetchAdminLogs(); // Refresh logs
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove education entry');
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setData(prevData);
+      console.error('Remove education error:', error);
+      toast.error('Failed to remove education entry. Please try again.');
+    } finally {
+      setIsDeleting(null);
+    }
   };
 
   const addSkill = (category: keyof PortfolioData['skills']) => {
-    const newSkill = { name: '', icon: '🔧' };
+    const newSkill = { id: uuidv4(), name: '', icon: '🔧' };
     setData(prev => ({
       ...prev,
       skills: {
@@ -672,6 +809,7 @@ export default function AdminPage() {
         [category]: [...prev.skills[category], newSkill]
       }
     }));
+    toast.success(`${category} skill added successfully!`);
   };
 
   const updateSkill = (category: keyof PortfolioData['skills'], index: number, updates: any) => {
@@ -686,19 +824,37 @@ export default function AdminPage() {
     }));
   };
 
-  const removeSkill = (category: keyof PortfolioData['skills'], index: number) => {
-    setData(prev => ({
-      ...prev,
-      skills: {
-        ...prev.skills,
-        [category]: prev.skills[category].filter((_, i) => i !== index)
+  const removeSkill = async (category: keyof PortfolioData['skills'], index: number) => {
+    try {
+      const skillToRemove = data.skills[category][index];
+      const response = await fetch('/api/portfolio', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section: 'skills', key: skillToRemove.id || index.toString() })
+      });
+
+      if (response.ok) {
+        setData(prev => ({
+          ...prev,
+          skills: {
+            ...prev.skills,
+            [category]: prev.skills[category].filter((_, i) => i !== index)
+          }
+        }));
+        toast.success(`${category} skill removed successfully!`);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove skill');
       }
-    }));
+    } catch (error) {
+      console.error('Remove skill error:', error);
+      toast.error('Failed to remove skill. Please try again.');
+    }
   };
 
   const addCertification = () => {
     const newCert = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       title: "",
       issuer: "",
       date: "",
@@ -709,6 +865,7 @@ export default function AdminPage() {
       ...prev,
       certifications: [...prev.certifications, newCert]
     }));
+    toast.success('Certification added successfully!');
   };
 
   const updateCertification = (id: string, updates: any) => {
@@ -720,16 +877,36 @@ export default function AdminPage() {
     }));
   };
 
-  const removeCertification = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      certifications: prev.certifications.filter(cert => cert.id !== id)
-    }));
+  const removeCertification = async (id: string) => {
+    setIsDeleting(id);
+    try {
+      const response = await fetch('/api/portfolio', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section: 'certifications', key: id })
+      });
+
+      if (response.ok) {
+        setData(prev => ({
+          ...prev,
+          certifications: prev.certifications.filter(cert => cert.id !== id)
+        }));
+        toast.success('Certification removed successfully!');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove certification');
+      }
+    } catch (error) {
+      console.error('Remove certification error:', error);
+      toast.error('Failed to remove certification. Please try again.');
+    } finally {
+      setIsDeleting(null);
+    }
   };
 
   const addProject = () => {
     const newProject = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       title: {
         english: "",
         japanese: ""
@@ -749,6 +926,7 @@ export default function AdminPage() {
       ...prev,
       projects: [...prev.projects, newProject]
     }));
+    toast.success('Project added successfully!');
   };
 
   const updateProject = (id: string, updates: any) => {
@@ -760,11 +938,31 @@ export default function AdminPage() {
     }));
   };
 
-  const removeProject = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      projects: prev.projects.filter(project => project.id !== id)
-    }));
+  const removeProject = async (id: string) => {
+    setIsDeleting(id);
+    try {
+      const response = await fetch('/api/portfolio', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section: 'projects', key: id })
+      });
+
+      if (response.ok) {
+        setData(prev => ({
+          ...prev,
+          projects: prev.projects.filter(project => project.id !== id)
+        }));
+        toast.success('Project removed successfully!');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove project');
+      }
+    } catch (error) {
+      console.error('Remove project error:', error);
+      toast.error('Failed to remove project. Please try again.');
+    } finally {
+      setIsDeleting(null);
+    }
   };
 
   const addProjectImage = (projectId: string, imageUrl: string) => {
@@ -882,7 +1080,7 @@ export default function AdminPage() {
   // Papers Management Functions
   const addPaper = () => {
     const newPaper = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       title: "",
       type: "oral" as 'poster' | 'oral',
       date: "",
@@ -899,6 +1097,7 @@ export default function AdminPage() {
       ...prev,
       papers: [...(prev.papers || []), newPaper]
     }));
+    toast.success('Paper added successfully!');
   };
 
   const updatePaper = (id: string, updates: any) => {
@@ -910,11 +1109,31 @@ export default function AdminPage() {
     }));
   };
 
-  const removePaper = (id: string) => {
-    setData(prev => ({
-      ...prev,
-      papers: (prev.papers || []).filter(paper => paper.id !== id)
-    }));
+  const removePaper = async (id: string) => {
+    setIsDeleting(id);
+    try {
+      const response = await fetch('/api/portfolio', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section: 'papers', key: id })
+      });
+
+      if (response.ok) {
+        setData(prev => ({
+          ...prev,
+          papers: (prev.papers || []).filter(paper => paper.id !== id)
+        }));
+        toast.success('Paper removed successfully!');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove paper');
+      }
+    } catch (error) {
+      console.error('Remove paper error:', error);
+      toast.error('Failed to remove paper. Please try again.');
+    } finally {
+      setIsDeleting(null);
+    }
   };
 
   const handlePaperUpload = async (file: File, paperId: string, fileType: 'paper' | 'poster' | 'presentation') => {
@@ -1025,7 +1244,7 @@ export default function AdminPage() {
             </div>
           ) : (
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-              {data.hero.name.english.charAt(0)}
+              {data.hero.name?.english?.charAt(0) || 'M'}
             </div>
           )}
           <button
@@ -1271,9 +1490,14 @@ export default function AdminPage() {
               </h3>
               <button
                 onClick={() => removeEducation(edu.id)}
-                className="text-red-600 hover:text-red-700"
+                disabled={isDeleting === edu.id}
+                className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Trash2 className="h-5 w-5" />
+                {isDeleting === edu.id ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+                ) : (
+                  <Trash2 className="h-5 w-5" />
+                )}
               </button>
             </div>
             
@@ -1452,9 +1676,14 @@ export default function AdminPage() {
               </h3>
               <button
                 onClick={() => removeCertification(cert.id)}
-                className="text-red-600 hover:text-red-700"
+                disabled={isDeleting === cert.id}
+                className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Trash2 className="h-5 w-5" />
+                {isDeleting === cert.id ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+                ) : (
+                  <Trash2 className="h-5 w-5" />
+                )}
               </button>
             </div>
             
@@ -1606,9 +1835,14 @@ export default function AdminPage() {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{typeof project.title === 'object' && project.title?.english ? project.title.english : (typeof project.title === 'string' ? project.title : 'Untitled Project')}</h3>
               <button
                 onClick={() => removeProject(project.id)}
-                className="text-red-600 hover:text-red-700"
+                disabled={isDeleting === project.id}
+                className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Trash2 className="h-5 w-5" />
+                {isDeleting === project.id ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+                ) : (
+                  <Trash2 className="h-5 w-5" />
+                )}
               </button>
             </div>
 
@@ -2076,9 +2310,14 @@ export default function AdminPage() {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => removePaper(paper.id)}
-                    className="text-red-600 hover:text-red-700 transition-colors"
+                    disabled={isDeleting === paper.id}
+                    className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    <Trash2 className="h-5 w-5" />
+                    {isDeleting === paper.id ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+                    ) : (
+                      <Trash2 className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -2232,6 +2471,73 @@ export default function AdminPage() {
     );
   };
 
+  const renderLogsSection = () => {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Action Logs</h2>
+          <button
+            onClick={fetchAdminLogs}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+          >
+            <RotateCcw className="h-4 w-4" />
+            <span>Refresh Logs</span>
+          </button>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="space-y-4">
+            {adminLogs.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500 dark:text-gray-400">No admin logs found. Click &quot;Refresh Logs&quot; to load recent activity.</p>
+              </div>
+            ) : (
+              adminLogs.map((log) => (
+                <div key={log.id} className={`p-4 rounded-lg border ${
+                  log.success 
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                }`}>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          log.action === 'create' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                          log.action === 'update' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                          log.action === 'delete' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                          'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                        }`}>
+                          {log.action.toUpperCase()}
+                        </span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {new Date(log.time).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        Section: {log.section}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        By: {log.by}
+                      </p>
+                      {log.error_message && (
+                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                          Error: {log.error_message}
+                        </p>
+                      )}
+                    </div>
+                    <div className={`w-3 h-3 rounded-full ${
+                      log.success ? 'bg-green-500' : 'bg-red-500'
+                    }`}></div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderSection = () => {
     switch (activeSection) {
       case 'hero':
@@ -2253,6 +2559,8 @@ export default function AdminPage() {
         return renderContactSection();
       case 'papers':
         return renderPapersSection();
+      case 'logs':
+        return renderLogsSection();
       default:
         return <div>Select a section to edit</div>;
     }
@@ -2260,6 +2568,8 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6">
+      <Toaster position="top-right" richColors />
+      
       {/* Header Actions */}
       <div className="flex justify-between items-center">
         <div>
@@ -2302,11 +2612,11 @@ export default function AdminPage() {
               { id: 'cv', label: 'CV Management', icon: '📄' },
               { id: 'education', label: 'Education', icon: '🎓' },
               { id: 'skills', label: 'Skills', icon: '💻' },
-
               { id: 'projects', label: 'Projects', icon: '🚀' },
               { id: 'certifications', label: 'Certifications', icon: '🏆' },
               { id: 'contact', label: 'Contact', icon: '📞' },
-              { id: 'papers', label: 'Papers', icon: '📄' }
+              { id: 'papers', label: 'Papers', icon: '📄' },
+              { id: 'logs', label: 'Admin Logs', icon: '📊' }
             ].map((section) => (
               <motion.button
                 key={section.id}

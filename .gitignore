@@ -40,9 +40,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# data storage - allow portfolio.json but exclude sensitive files
+# data storage - exclude portfolio data files
+/data/portfolio.json
+/data/portfolio-backup.json
 /data/*.log
 /data/*.tmp
 /data/backup/
 
-.vercel
+# uploads - exclude uploaded files
+/public/uploads/
+/public/cv/
+/public/papers/
+
+# test files
+test-*.js

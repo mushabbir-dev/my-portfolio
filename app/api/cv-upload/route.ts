@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,23 +32,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert file to base64
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64 = buffer.toString('base64');
-    const dataUrl = `data:application/pdf;base64,${base64}`;
+    // Create cv directory if it doesn't exist
+    const cvDir = path.join(process.cwd(), 'public', 'cv');
+    await mkdir(cvDir, { recursive: true });
 
     // Determine filename based on language
     const filename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
+    const filePath = path.join(cvDir, filename);
 
-    console.log('CV uploaded successfully as base64');
+    // Convert file to buffer and save
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    await writeFile(filePath, buffer);
+
+    // Return the public URL
+    const publicUrl = `/cv/${filename}`;
+
+    console.log('CV uploaded successfully:', publicUrl);
 
     return NextResponse.json(
       { 
         success: true, 
         message: `CV uploaded successfully!`,
         filename: filename,
-        url: dataUrl
+        url: publicUrl
       },
       { status: 200 }
     );

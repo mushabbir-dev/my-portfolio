@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,22 +26,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 });
     }
 
-    // Convert file to base64
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64 = buffer.toString('base64');
-    const dataUrl = `data:application/pdf;base64,${base64}`;
+    // Create papers directory if it doesn't exist
+    const papersDir = path.join(process.cwd(), 'public', 'papers');
+    await mkdir(papersDir, { recursive: true });
 
     // Generate unique filename
     const timestamp = Date.now();
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filename = `${paperId}_${fileType}_${timestamp}_${originalName}`;
+    const filePath = path.join(papersDir, filename);
 
-    console.log('Paper uploaded successfully as base64');
+    // Convert file to buffer and save
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    await writeFile(filePath, buffer);
+
+    // Return the public URL
+    const publicUrl = `/papers/${filename}`;
+
+    console.log('Paper uploaded successfully:', publicUrl);
 
     return NextResponse.json({
       success: true,
-      url: dataUrl,
+      url: publicUrl,
       filename: filename,
       message: 'Paper uploaded successfully'
     });
