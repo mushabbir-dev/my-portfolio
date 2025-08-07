@@ -1115,17 +1115,22 @@ export default function AdminPage() {
 
   const handleCVUpload = async (file: File, language: 'en' | 'ja') => {
     try {
+      console.log('Starting CV upload:', { fileName: file.name, fileSize: file.size, language });
+      
       const formData = new FormData();
       formData.append('file', file);
       formData.append('language', language);
 
+      console.log('Sending request to /api/cv-upload...');
       const response = await fetch('/api/cv-upload', {
         method: 'POST',
         body: formData,
         // Don't set Content-Type header - let the browser set it automatically for FormData
       });
 
+      console.log('Response status:', response.status);
       const result = await response.json();
+      console.log('Response result:', result);
 
       if (response.ok && result.success) {
         // Update the CV data to reflect the new file
@@ -1143,14 +1148,15 @@ export default function AdminPage() {
           }
         }));
 
-        alert('CV uploaded successfully!');
+        alert(`CV uploaded successfully! File: ${result.filename}`);
+        console.log('CV upload completed successfully');
       } else {
         console.error('CV upload failed:', result.error);
         alert('Failed to upload CV: ' + result.error);
       }
     } catch (error) {
       console.error('Error uploading CV:', error);
-      alert('Error uploading CV. Please try again.');
+      alert('Error uploading CV. Please try again. Check console for details.');
     }
     
     setShowCVUploadModal(false);

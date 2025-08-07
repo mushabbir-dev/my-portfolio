@@ -6,11 +6,21 @@ import { existsSync, mkdirSync } from 'fs';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('CV upload request received');
+    
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const language = formData.get('language') as string;
 
+    console.log('Form data parsed:', { 
+      hasFile: !!file, 
+      fileName: file?.name, 
+      fileSize: file?.size, 
+      language 
+    });
+
     if (!file || !language) {
+      console.log('Missing file or language');
       return NextResponse.json(
         { error: 'File and language are required' },
         { status: 400 }
@@ -19,6 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Validate file type
     if (!file.name.toLowerCase().endsWith('.pdf')) {
+      console.log('Invalid file type:', file.name);
       return NextResponse.json(
         { error: 'Only PDF files are allowed' },
         { status: 400 }
@@ -28,6 +39,7 @@ export async function POST(request: NextRequest) {
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
+      console.log('File too large:', file.size);
       return NextResponse.json(
         { error: 'File too large. Maximum size is 10MB.' },
         { status: 400 }
@@ -39,29 +51,38 @@ export async function POST(request: NextRequest) {
     const cvDir = join(process.cwd(), 'public', 'cv');
     const filePath = join(cvDir, filename);
 
+    console.log('File paths:', { cvDir, filePath });
+
     // Ensure CV directory exists
     if (!existsSync(cvDir)) {
+      console.log('Creating CV directory:', cvDir);
       mkdirSync(cvDir, { recursive: true });
     }
 
     // Delete existing file if it exists
     try {
       await access(filePath);
+      console.log('Deleting existing file:', filePath);
       await unlink(filePath);
     } catch (error) {
-      // File doesn't exist, which is fine
+      console.log('No existing file to delete');
     }
 
     // Convert file to buffer and save
+    console.log('Converting file to buffer...');
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    
+    console.log('Writing file to disk:', filePath);
     await writeFile(filePath, buffer);
+    console.log('File written successfully');
 
     // Create the URL path for the file
     const fileUrl = `/cv/${filename}`;
 
     // Update the portfolio data with the new CV
     try {
+      console.log('Updating portfolio data...');
       const currentData = await PortfolioService.getPortfolioData();
       const updatedCV = {
         ...currentData.cv,
@@ -73,6 +94,7 @@ export async function POST(request: NextRequest) {
       };
       
       await PortfolioService.updateSection('cv', updatedCV);
+      console.log('Portfolio data updated successfully');
       
       return NextResponse.json(
         { 
@@ -85,9 +107,11 @@ export async function POST(request: NextRequest) {
       );
       
     } catch (updateError) {
+      console.error('Failed to update portfolio data:', updateError);
       // If portfolio update fails, delete the uploaded file
       try {
         await unlink(filePath);
+        console.log('Deleted uploaded file due to portfolio update failure');
       } catch (deleteError) {
         console.error('Failed to delete uploaded file after portfolio update failure:', deleteError);
       }
