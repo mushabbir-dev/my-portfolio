@@ -42,10 +42,6 @@ export default function HomePage() {
     if (typeof obj === 'object' && obj.english && obj.japanese) {
       return obj[language === 'en' ? 'english' : 'japanese'] || fallback;
     }
-    // Debug logging to catch any objects being passed
-    if (typeof obj === 'object') {
-      console.warn('Object being passed to getMultilingualText:', obj);
-    }
     return fallback;
   };
 
@@ -85,13 +81,6 @@ export default function HomePage() {
       console.log('Data validation failed: hero.description missing english or japanese', data.hero.description);
       return false;
     }
-    
-    // Debug: Log the data structure to see what might be causing issues
-    console.log('Data validation passed. Data structure:', {
-      hero: data.hero,
-      about: data.about,
-      contact: data.contact
-    });
     
     return true;
   };
@@ -174,9 +163,15 @@ export default function HomePage() {
             ...data.about,
             english: typeof data.about?.english === 'string' ? data.about.english : "",
             japanese: typeof data.about?.japanese === 'string' ? data.about.japanese : "",
-            location: typeof data.about?.location === 'string' ? data.about.location : "",
-            status: typeof data.about?.status === 'string' ? data.about.status : "",
-            education: typeof data.about?.education === 'string' ? data.about.education : ""
+            location: typeof data.about?.location === 'string'
+              ? { english: data.about.location, japanese: data.about.location }
+              : data.about?.location || { english: "", japanese: "" },
+            status: typeof data.about?.status === 'string'
+              ? { english: data.about.status, japanese: data.about.status }
+              : data.about?.status || { english: "", japanese: "" },
+            education: typeof data.about?.education === 'string'
+              ? { english: data.about.education, japanese: data.about.education }
+              : data.about?.education || { english: "", japanese: "" }
           },
           cv: {
             english: {
@@ -1141,14 +1136,14 @@ export default function HomePage() {
                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       {language === 'en' ? 'Location' : '所在地'}
                     </span>
-                    <p className="text-gray-900 dark:text-white font-medium">{portfolioData?.about?.location || "Saga, Japan"}</p>
+                    <p className="text-gray-900 dark:text-white font-medium">{getMultilingualText(portfolioData?.about?.location, language, "Saga, Japan")}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       {language === 'en' ? 'Education' : '学歴'}
                     </span>
                     <p className="text-gray-900 dark:text-white font-medium">
-                      {portfolioData?.about?.education || (language === 'en' ? "Master&apos;s Student at Saga University" : '佐賀大学大学院生')}
+                      {getMultilingualText(portfolioData?.about?.education, language, language === 'en' ? "Master&apos;s Student at Saga University" : '佐賀大学大学院生')}
                     </p>
                   </div>
                   <div>
@@ -1156,7 +1151,7 @@ export default function HomePage() {
                       {language === 'en' ? 'Status' : '状況'}
                     </span>
                     <p className="text-gray-900 dark:text-white font-medium">
-                      {portfolioData?.about?.status || (language === 'en' ? 'Actively looking for full-time opportunities in Japan' : '日本でのフルタイム機会を積極的に探しています')}
+                      {getMultilingualText(portfolioData?.about?.status, language, language === 'en' ? 'Actively looking for full-time opportunities in Japan' : '日本でのフルタイム機会を積極的に探しています')}
                     </p>
                   </div>
                 </div>
