@@ -505,7 +505,38 @@ export default function AdminPage() {
               technologies: Array.isArray(project.technologies) ? project.technologies : [],
               images: Array.isArray(project.images) ? project.images : []
             })) : [],
-            papers: Array.isArray(fetchedData.papers) ? fetchedData.papers : []
+            // Normalize the papers array.  Papers may be stored with nested
+            // translation objects (e.g. title.english/japanese) or with
+            // additional metadata (authors, journal, etc.).  The admin UI
+            // expects a flat structure with simple string properties.  Map
+            // each paper object to ensure all fields used by the editor are
+            // plain strings.  Unknown fields are preserved so they aren’t
+            // lost during editing.
+            papers: Array.isArray(fetchedData.papers) ? fetchedData.papers.map((paper: any) => {
+              return {
+                ...paper,
+                // Title: pick the english title if available, otherwise japanese or empty string
+                title: typeof paper.title === 'string'
+                  ? paper.title
+                  : paper.title?.english || paper.title?.japanese || '',
+                // Type: default to 'oral' if not provided
+                type: typeof paper.type === 'string' ? paper.type : 'oral',
+                // Date: ensure it’s a string
+                date: typeof paper.date === 'string' ? paper.date : '',
+                // Conference/journal: depending on your data model you might have
+                // a `conference`, `journal` or similar.  Use whichever exists and
+                // fall back to an empty string.
+                conference: typeof paper.conference === 'string'
+                  ? paper.conference
+                  : (typeof paper.journal === 'string' ? paper.journal : ''),
+                paperPdf: typeof paper.paperPdf === 'string' ? paper.paperPdf : '',
+                posterPdf: typeof paper.posterPdf === 'string' ? paper.posterPdf : '',
+                presentationPdf: typeof paper.presentationPdf === 'string' ? paper.presentationPdf : '',
+                paperFilename: typeof paper.paperFilename === 'string' ? paper.paperFilename : '',
+                posterFilename: typeof paper.posterFilename === 'string' ? paper.posterFilename : '',
+                presentationFilename: typeof paper.presentationFilename === 'string' ? paper.presentationFilename : ''
+              };
+            }) : []
           };
           
           console.log('Sanitized data:', sanitizedData);
@@ -598,7 +629,25 @@ export default function AdminPage() {
           technologies: Array.isArray(project.technologies) ? project.technologies : [],
           images: Array.isArray(project.images) ? project.images : []
         })) : [],
-        papers: Array.isArray(data.papers) ? data.papers : []
+        // Pass the papers array through unchanged on save.  The array already
+        // contains plain string fields thanks to our normalization in
+        // fetchData.  If data.papers is not an array, use an empty array.
+        papers: Array.isArray(data.papers) ? data.papers : [],
+        // Ensure contact fields are plain strings when saving.  Without this,
+        // objects might be persisted back into the portfolio which would
+        // trigger React errors on subsequent renders.
+        contact: {
+          email: typeof (data as any).contact?.email === 'string' ? (data as any).contact.email : '',
+          phone: typeof (data as any).contact?.phone === 'string' ? (data as any).contact.phone : '',
+          location: typeof (data as any).contact?.location === 'string' ? (data as any).contact.location : '',
+          social: {
+            github: typeof (data as any).contact?.social?.github === 'string' ? (data as any).contact.social.github : '',
+            linkedin: typeof (data as any).contact?.social?.linkedin === 'string' ? (data as any).contact.social.linkedin : '',
+            whatsapp: typeof (data as any).contact?.social?.whatsapp === 'string' ? (data as any).contact.social.whatsapp : '',
+            facebook: typeof (data as any).contact?.social?.facebook === 'string' ? (data as any).contact.social.facebook : '',
+            indeed: typeof (data as any).contact?.social?.indeed === 'string' ? (data as any).contact.social.indeed : '',
+          },
+        }
       };
       
       console.log('Sanitized data:', sanitizedData);
