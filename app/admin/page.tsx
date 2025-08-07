@@ -1156,19 +1156,7 @@ export default function AdminPage() {
     setShowCVUploadModal(false);
   };
 
-  const toggleCVActive = (language: 'en' | 'ja') => {
-    const cvKey = language === 'en' ? 'english' : 'japanese';
-    setData(prev => ({
-      ...prev,
-      cv: {
-        ...prev.cv,
-        [cvKey]: {
-          ...prev.cv[cvKey],
-          isActive: !prev.cv[cvKey].isActive
-        }
-      }
-    }));
-  };
+
 
   const removeCV = async (language: 'en' | 'ja') => {
     try {
@@ -2402,18 +2390,7 @@ export default function AdminPage() {
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="english-cv-active"
-                checked={data.cv.english.isActive}
-                onChange={() => toggleCVActive('en')}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label htmlFor="english-cv-active" className="text-sm text-gray-700 dark:text-gray-300">
-                Show on main site
-              </label>
-            </div>
+
           </div>
         </div>
 
@@ -2460,18 +2437,7 @@ export default function AdminPage() {
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="japanese-cv-active"
-                checked={data.cv.japanese.isActive}
-                onChange={() => toggleCVActive('ja')}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label htmlFor="japanese-cv-active" className="text-sm text-gray-700 dark:text-gray-300">
-                Show on main site
-              </label>
-            </div>
+
           </div>
         </div>
       </div>
