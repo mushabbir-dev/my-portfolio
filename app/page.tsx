@@ -35,13 +35,52 @@ import {
 } from 'lucide-react';
 
 export default function HomePage() {
+  // Helper function to safely extract multilingual text
+  const getMultilingualText = (obj: any, language: 'en' | 'ja', fallback: string = '') => {
+    if (!obj) return fallback;
+    if (typeof obj === 'string') return obj;
+    if (typeof obj === 'object' && obj.english && obj.japanese) {
+      return obj[language === 'en' ? 'english' : 'japanese'] || fallback;
+    }
+    return fallback;
+  };
+
   // Helper function to validate data structure
   const isValidData = (data: any) => {
-    if (!data || typeof data !== 'object') return false;
-    if (!data.hero || typeof data.hero !== 'object') return false;
-    if (!data.hero.name || typeof data.hero.name !== 'object') return false;
-    if (!data.hero.title || typeof data.hero.title !== 'object') return false;
-    if (!data.hero.description || typeof data.hero.description !== 'object') return false;
+    if (!data || typeof data !== 'object') {
+      console.log('Data validation failed: data is not an object', data);
+      return false;
+    }
+    if (!data.hero || typeof data.hero !== 'object') {
+      console.log('Data validation failed: hero is not an object', data.hero);
+      return false;
+    }
+    // Check if hero properties exist and are objects (for multilingual support)
+    if (!data.hero.name || typeof data.hero.name !== 'object') {
+      console.log('Data validation failed: hero.name is not an object', data.hero.name);
+      return false;
+    }
+    if (!data.hero.title || typeof data.hero.title !== 'object') {
+      console.log('Data validation failed: hero.title is not an object', data.hero.title);
+      return false;
+    }
+    if (!data.hero.description || typeof data.hero.description !== 'object') {
+      console.log('Data validation failed: hero.description is not an object', data.hero.description);
+      return false;
+    }
+    // Additional validation to ensure the objects have the required properties
+    if (!data.hero.name.english || !data.hero.name.japanese) {
+      console.log('Data validation failed: hero.name missing english or japanese', data.hero.name);
+      return false;
+    }
+    if (!data.hero.title.english || !data.hero.title.japanese) {
+      console.log('Data validation failed: hero.title missing english or japanese', data.hero.title);
+      return false;
+    }
+    if (!data.hero.description.english || !data.hero.description.japanese) {
+      console.log('Data validation failed: hero.description missing english or japanese', data.hero.description);
+      return false;
+    }
     return true;
   };
 
@@ -191,6 +230,7 @@ export default function HomePage() {
           }
         };
         
+        console.log('Setting portfolio data:', sanitizedData);
         setPortfolioData(sanitizedData);
       } else {
         console.error('Failed to fetch portfolio data');
@@ -528,7 +568,8 @@ export default function HomePage() {
   ];
 
   // Show loading state while data is being fetched
-  if (isLoading || !portfolioData || !isValidData(portfolioData)) {
+  console.log('Loading check:', { isLoading, hasPortfolioData: !!portfolioData, isValid: isValidData(portfolioData) });
+  if (isLoading || !portfolioData || !isValidData(portfolioData) || !isClient) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300 flex items-center justify-center">
         <div className="text-center">
@@ -757,14 +798,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                {(() => {
-                  const name = portfolioData?.hero?.name;
-                  if (typeof name === 'string') return name;
-                  if (name && typeof name === 'object') {
-                    return name[language === 'en' ? 'english' : 'japanese'] || '';
-                  }
-                  return language === 'en' ? "Hi, I'm Mushabbir" : "こんにちは、ムサビルです";
-                })()}
+                {getMultilingualText(portfolioData?.hero?.name, language, language === 'en' ? "Hi, I'm Mushabbir" : "こんにちは、ムサビルです")}
               </motion.h1>
 
               <motion.h2
@@ -773,14 +807,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                {(() => {
-                  const title = portfolioData?.hero?.title;
-                  if (typeof title === 'string') return title;
-                  if (title && typeof title === 'object') {
-                    return title[language === 'en' ? 'english' : 'japanese'] || '';
-                  }
-                  return language === 'en' ? "AI Specialist & Software Engineer" : "AIスペシャリスト・ソフトウェアエンジニア";
-                })()}
+                {getMultilingualText(portfolioData?.hero?.title, language, language === 'en' ? "AI Specialist & Software Engineer" : "AIスペシャリスト・ソフトウェアエンジニア")}
               </motion.h2>
 
               <motion.p
@@ -789,16 +816,9 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
-                {(() => {
-                  const description = portfolioData?.hero?.description;
-                  if (typeof description === 'string') return description;
-                  if (description && typeof description === 'object') {
-                    return description[language === 'en' ? 'english' : 'japanese'] || '';
-                  }
-                  return language === 'en' 
-                    ? "I'm a results-driven AI Engineer and Full-Stack Developer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan."
-                    : "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIエンジニア・フルスタック開発者です。";
-                })()}
+                {getMultilingualText(portfolioData?.hero?.description, language, language === 'en' 
+                  ? "I'm a results-driven AI Engineer and Full-Stack Developer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan."
+                  : "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIエンジニア・フルスタック開発者です。")}
               </motion.p>
 
               {/* Enhanced Action Buttons */}
@@ -919,7 +939,7 @@ export default function HomePage() {
                       <div className="w-full h-full">
                         <img
                           src={typeof portfolioData.hero.profilePicture === 'string' ? portfolioData.hero.profilePicture : ''}
-                          alt={portfolioData?.hero?.name?.[language === 'en' ? 'english' : 'japanese'] || "Profile"}
+                          alt={getMultilingualText(portfolioData?.hero?.name, language, "Profile")}
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -933,7 +953,7 @@ export default function HomePage() {
                           }}
                           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                         >
-                          {portfolioData?.hero?.name?.[language === 'en' ? 'english' : 'japanese']?.charAt(0) || "M"}
+                          {getMultilingualText(portfolioData?.hero?.name, language, "M").charAt(0)}
                         </motion.div>
                       </div>
                     )}
@@ -1253,14 +1273,7 @@ export default function HomePage() {
                       transition={{ duration: 0.4, delay: 0.1 }}
                       viewport={{ once: true }}
                     >
-                      {(() => {
-                        const institution = edu.institution;
-                        if (typeof institution === 'string') return institution;
-                        if (institution && typeof institution === 'object') {
-                          return institution[language === 'en' ? 'english' : 'japanese'] || institution.english || '';
-                        }
-                        return '';
-                      })()}
+                      {getMultilingualText(edu.institution, language, '')}
                     </motion.h3>
                     <motion.p 
                       className="text-blue-600 dark:text-blue-400 font-medium text-lg"
@@ -1269,14 +1282,7 @@ export default function HomePage() {
                       transition={{ duration: 0.4, delay: 0.2 }}
                       viewport={{ once: true }}
                     >
-                      {(() => {
-                        const degree = edu.degree;
-                        if (typeof degree === 'string') return degree;
-                        if (degree && typeof degree === 'object') {
-                          return degree[language === 'en' ? 'english' : 'japanese'] || degree.english || '';
-                        }
-                        return '';
-                      })()}
+                      {getMultilingualText(edu.degree, language, '')}
                     </motion.p>
                     <motion.p 
                       className="text-gray-600 dark:text-gray-400 text-sm"
@@ -1285,14 +1291,7 @@ export default function HomePage() {
                       transition={{ duration: 0.4, delay: 0.3 }}
                       viewport={{ once: true }}
                     >
-                      {(() => {
-                        const period = edu.period;
-                        if (typeof period === 'string') return period;
-                        if (period && typeof period === 'object') {
-                          return period[language === 'en' ? 'english' : 'japanese'] || period.english || '';
-                        }
-                        return '';
-                      })()}
+                      {getMultilingualText(edu.period, language, '')}
                     </motion.p>
                   </div>
                 </div>
@@ -1305,14 +1304,7 @@ export default function HomePage() {
                     transition={{ duration: 0.5, delay: 0.4 }}
                     viewport={{ once: true }}
                   >
-                    {(() => {
-                      const description = edu.description;
-                      if (typeof description === 'string') return description;
-                      if (description && typeof description === 'object') {
-                        return description[language === 'en' ? 'english' : 'japanese'] || description.english || '';
-                      }
-                      return '';
-                    })()}
+                    {getMultilingualText(edu.description, language, '')}
                   </motion.p>
                   
                   {edu.achievements && (
@@ -1685,7 +1677,7 @@ export default function HomePage() {
                     <div className="relative h-full">
                       <img
                         src={project.images[0]}
-                        alt={typeof project.title === 'string' ? project.title : project.title?.[language === 'en' ? 'english' : 'japanese'] || project.title?.english || "Project"}
+                        alt={getMultilingualText(project.title, language, "Project")}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/40"></div>
@@ -1701,8 +1693,8 @@ export default function HomePage() {
                       <div className="absolute inset-0 bg-black/20"></div>
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center text-white">
-                          <h3 className="text-2xl font-bold mb-2">{typeof project.title === 'string' ? project.title : project.title?.[language === 'en' ? 'english' : 'japanese'] || project.title?.english || "Project"}</h3>
-                          <p className="text-white/80">{typeof project.description === 'string' ? project.description : project.description?.[language === 'en' ? 'english' : 'japanese'] || project.description?.english || ""}</p>
+                          <h3 className="text-2xl font-bold mb-2">{getMultilingualText(project.title, language, "Project")}</h3>
+                          <p className="text-white/80">{getMultilingualText(project.description, language, "")}</p>
                         </div>
                       </div>
                     </>
@@ -1722,24 +1714,10 @@ export default function HomePage() {
                       className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300"
                       whileHover={{ scale: 1.02 }}
                     >
-                      {(() => {
-                        const title = project.title;
-                        if (typeof title === 'string') return title;
-                        if (title && typeof title === 'object') {
-                          return title[language === 'en' ? 'english' : 'japanese'] || title.english || 'Project';
-                        }
-                        return 'Project';
-                      })()}
+                      {getMultilingualText(project.title, language, 'Project')}
                     </motion.h3>
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      {(() => {
-                        const description = project.description;
-                        if (typeof description === 'string') return description;
-                        if (description && typeof description === 'object') {
-                          return description[language === 'en' ? 'english' : 'japanese'] || description.english || '';
-                        }
-                        return '';
-                      })()}
+                      {getMultilingualText(project.description, language, '')}
                     </p>
                     <div className="flex flex-wrap gap-2 mb-4">
                       {(project.technologies || []).map((tech: string, techIndex: number) => (
