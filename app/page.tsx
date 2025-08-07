@@ -48,37 +48,29 @@ export default function HomePage() {
   // Helper function to validate data structure
   const isValidData = (data: any) => {
     if (!data || typeof data !== 'object') {
-      console.log('Data validation failed: data is not an object', data);
       return false;
     }
     if (!data.hero || typeof data.hero !== 'object') {
-      console.log('Data validation failed: hero is not an object', data.hero);
       return false;
     }
     // Check if hero properties exist and are objects (for multilingual support)
     if (!data.hero.name || typeof data.hero.name !== 'object') {
-      console.log('Data validation failed: hero.name is not an object', data.hero.name);
       return false;
     }
     if (!data.hero.title || typeof data.hero.title !== 'object') {
-      console.log('Data validation failed: hero.title is not an object', data.hero.title);
       return false;
     }
     if (!data.hero.description || typeof data.hero.description !== 'object') {
-      console.log('Data validation failed: hero.description is not an object', data.hero.description);
       return false;
     }
     // Additional validation to ensure the objects have the required properties
     if (!data.hero.name.english || !data.hero.name.japanese) {
-      console.log('Data validation failed: hero.name missing english or japanese', data.hero.name);
       return false;
     }
     if (!data.hero.title.english || !data.hero.title.japanese) {
-      console.log('Data validation failed: hero.title missing english or japanese', data.hero.title);
       return false;
     }
     if (!data.hero.description.english || !data.hero.description.japanese) {
-      console.log('Data validation failed: hero.description missing english or japanese', data.hero.description);
       return false;
     }
     
@@ -263,13 +255,12 @@ export default function HomePage() {
           }
         };
         
-        console.log('Setting portfolio data:', sanitizedData);
         setPortfolioData(sanitizedData);
       } else {
-        console.error('Failed to fetch portfolio data');
+        // Failed to fetch portfolio data
       }
     } catch (error) {
-      console.error('Error fetching portfolio data:', error);
+      // Error fetching portfolio data
     } finally {
       setIsLoading(false);
     }
@@ -384,7 +375,7 @@ export default function HomePage() {
       setTimeout(() => setShowMessagePopup(false), 3000);
       setShowCVModal(false);
     } catch (error) {
-      console.error('CV download error:', error);
+      // CV download error
       setMessagePopupContent(
         language === 'en' 
           ? 'Failed to download CV. Please try again.' 
@@ -478,7 +469,7 @@ export default function HomePage() {
         throw new Error(data.error || 'Failed to send message');
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      // Error sending message
       setMessagePopupContent(
         language === 'en' 
           ? 'Failed to send message. Please try again.' 
@@ -593,7 +584,6 @@ export default function HomePage() {
   ];
 
   // Show loading state while data is being fetched
-  console.log('Loading check:', { isLoading, hasPortfolioData: !!portfolioData, isValid: isValidData(portfolioData) });
   if (isLoading || !portfolioData || !isValidData(portfolioData) || !isClient) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300 flex items-center justify-center">

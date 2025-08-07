@@ -54,9 +54,6 @@ export async function POST(request: NextRequest) {
       
       await PortfolioService.updateSection('cv', updatedCV);
       
-      console.log('CV uploaded successfully:', filename);
-      console.log('CV data URL length:', dataUrl.length);
-      
       return NextResponse.json(
         { 
           success: true, 
@@ -68,7 +65,6 @@ export async function POST(request: NextRequest) {
       );
       
     } catch (updateError) {
-      console.error('Error updating CV data:', updateError);
       return NextResponse.json(
         { error: 'Failed to update CV data' },
         { status: 500 }
@@ -76,7 +72,6 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('CV upload error:', error);
     return NextResponse.json(
       { error: 'Failed to upload CV' },
       { status: 500 }
@@ -110,8 +105,6 @@ export async function DELETE(request: NextRequest) {
       
       await PortfolioService.updateSection('cv', updatedCV);
       
-      console.log('CV deleted successfully');
-      
       return NextResponse.json(
         { 
           success: true, 
@@ -121,7 +114,6 @@ export async function DELETE(request: NextRequest) {
       );
       
     } catch (updateError) {
-      console.error('Error updating CV data:', updateError);
       return NextResponse.json(
         { error: 'Failed to update CV data' },
         { status: 500 }
@@ -129,7 +121,6 @@ export async function DELETE(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('CV delete error:', error);
     return NextResponse.json(
       { error: 'Failed to delete CV' },
       { status: 500 }
