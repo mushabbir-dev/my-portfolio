@@ -1188,9 +1188,13 @@ export default function HomePage() {
                       transition={{ duration: 0.4, delay: 0.1 }}
                       viewport={{ once: true }}
                     >
-                      {language === 'en' 
-                        ? (edu.institution?.english || edu.institution)
-                        : (edu.institution?.japanese || edu.institution?.english || edu.institution)
+                      {language === 'en'
+                        // Only render strings – never fall back to the entire object. If the specific
+                        // language key is falsy (e.g. an empty string), fall back to an empty string
+                        // instead of the whole object to avoid passing an object into JSX (which causes
+                        // React error #31).  See: https://react.dev/errors/31
+                        ? (edu.institution?.english || '')
+                        : (edu.institution?.japanese || edu.institution?.english || '')
                       }
                     </motion.h3>
                     <motion.p 
@@ -1200,9 +1204,9 @@ export default function HomePage() {
                       transition={{ duration: 0.4, delay: 0.2 }}
                       viewport={{ once: true }}
                     >
-                      {language === 'en' 
-                        ? (edu.degree?.english || edu.degree)
-                        : (edu.degree?.japanese || edu.degree?.english || edu.degree)
+                      {language === 'en'
+                        ? (edu.degree?.english || '')
+                        : (edu.degree?.japanese || edu.degree?.english || '')
                       }
                     </motion.p>
                     <motion.p 
@@ -1212,9 +1216,9 @@ export default function HomePage() {
                       transition={{ duration: 0.4, delay: 0.3 }}
                       viewport={{ once: true }}
                     >
-                      {language === 'en' 
-                        ? (edu.period?.english || edu.period)
-                        : (edu.period?.japanese || edu.period?.english || edu.period)
+                      {language === 'en'
+                        ? (edu.period?.english || '')
+                        : (edu.period?.japanese || edu.period?.english || '')
                       }
                     </motion.p>
                   </div>
@@ -1228,9 +1232,9 @@ export default function HomePage() {
                     transition={{ duration: 0.5, delay: 0.4 }}
                     viewport={{ once: true }}
                   >
-                    {language === 'en' 
-                      ? (edu.description?.english || edu.description)
-                      : (edu.description?.japanese || edu.description?.english || edu.description)
+                    {language === 'en'
+                      ? (edu.description?.english || '')
+                      : (edu.description?.japanese || edu.description?.english || '')
                     }
                   </motion.p>
                   
