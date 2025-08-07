@@ -230,7 +230,12 @@
         "english": "A machine learning application that analyzes market trends and provides investment recommendations",
         "japanese": "市場動向を分析し投資推奨を提供する機械学習アプリケーション"
       },
-      "technologies": ["Python", "TensorFlow", "React", "Node.js"],
+      "technologies": [
+        "Python",
+        "TensorFlow",
+        "React",
+        "Node.js"
+      ],
       "github": "https://github.com/mushabbir-ahmed/portfolio-manager",
       "demo": "https://portfolio-manager-demo.com",
       "image": "/uploads/projects/project-1-1753969354257.jpg"
@@ -245,7 +250,12 @@
         "english": "A real-time messaging application with end-to-end encryption and file sharing capabilities",
         "japanese": "エンドツーエンド暗号化とファイル共有機能を備えたリアルタイムメッセージングアプリケーション"
       },
-      "technologies": ["React", "Socket.io", "Node.js", "MongoDB"],
+      "technologies": [
+        "React",
+        "Socket.io",
+        "Node.js",
+        "MongoDB"
+      ],
       "github": "https://github.com/mushabbir-ahmed/chat-app",
       "demo": "https://chat-app-demo.com",
       "image": "/uploads/projects/project-2-1753969362029.jpg"
@@ -258,7 +268,10 @@
         "english": "Deep Learning Approaches for Natural Language Processing",
         "japanese": "自然言語処理のためのディープラーニングアプローチ"
       },
-      "authors": ["Mushabbir Ahmed", "Dr. Tanaka"],
+      "authors": [
+        "Mushabbir Ahmed",
+        "Dr. Tanaka"
+      ],
       "journal": "International Journal of Computer Science",
       "year": "2022",
       "abstract": {
@@ -327,7 +340,15 @@
     }
   ],
   "cv": {
-    "english": "/cv/mushabbir-en.pdf",
-    "japanese": "/cv/mushabbir-ja.pdf"
+    "english": {
+      "url": "/cv/mushabbir-en.pdf",
+      "filename": "mushabbir-en.pdf",
+      "isActive": true
+    },
+    "japanese": {
+      "url": "/cv/mushabbir-ja.pdf",
+      "filename": "mushabbir-ja.pdf",
+      "isActive": true
+    }
   }
 }

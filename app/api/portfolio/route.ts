@@ -331,8 +331,16 @@ const defaultPortfolioData = {
     }
   ],
   "cv": {
-    "english": "/cv/mushabbir-en.pdf",
-    "japanese": "/cv/mushabbir-ja.pdf"
+    "english": {
+      "url": "/cv/mushabbir-en.pdf",
+      "filename": "mushabbir-en.pdf",
+      "isActive": true
+    },
+    "japanese": {
+      "url": "/cv/mushabbir-ja.pdf",
+      "filename": "mushabbir-ja.pdf",
+      "isActive": true
+    }
   }
 };
 

@@ -125,9 +125,9 @@ export default function HomePage() {
     setIsClient(true);
   }, []);
 
-  const fetchPortfolioData = async () => {
-    try {
-      const response = await fetch('/api/portfolio');
+            const fetchPortfolioData = async () => {
+            try {
+              const response = await fetch('/api/portfolio');
       if (response.ok) {
         const data = await response.json();
         
@@ -167,14 +167,14 @@ export default function HomePage() {
           },
           cv: {
             english: {
-              url: typeof data.cv?.english === 'string' ? data.cv.english : (typeof data.cv?.english?.url === 'string' ? data.cv.english.url : ""),
+              url: typeof data.cv?.english === 'string' ? data.cv.english : (typeof data.cv?.english?.url === 'string' ? data.cv.english.url : "/cv/mushabbir-en.pdf"),
               filename: typeof data.cv?.english?.filename === 'string' ? data.cv.english.filename : "mushabbir-en.pdf",
-              isActive: typeof data.cv?.english?.isActive === 'boolean' ? data.cv.english.isActive : (typeof data.cv?.english === 'string' && data.cv.english !== "" ? true : false)
+              isActive: typeof data.cv?.english?.isActive === 'boolean' ? data.cv.english.isActive : true
             },
             japanese: {
-              url: typeof data.cv?.japanese === 'string' ? data.cv.japanese : (typeof data.cv?.japanese?.url === 'string' ? data.cv.japanese.url : ""),
+              url: typeof data.cv?.japanese === 'string' ? data.cv.japanese : (typeof data.cv?.japanese?.url === 'string' ? data.cv.japanese.url : "/cv/mushabbir-ja.pdf"),
               filename: typeof data.cv?.japanese?.filename === 'string' ? data.cv.japanese.filename : "mushabbir-ja.pdf",
-              isActive: typeof data.cv?.japanese?.isActive === 'boolean' ? data.cv.japanese.isActive : (typeof data.cv?.japanese === 'string' && data.cv.japanese !== "" ? true : false)
+              isActive: typeof data.cv?.japanese?.isActive === 'boolean' ? data.cv.japanese.isActive : true
             }
           },
           education: Array.isArray(data.education) ? data.education.map((edu: any) => ({
@@ -307,7 +307,24 @@ export default function HomePage() {
   const downloadCV = (language: 'en' | 'ja') => {
     const cvData = portfolioData?.cv?.[language];
     
-    if (!cvData || !cvData.url || !cvData.isActive) {
+    // Handle both string and object formats for backward compatibility
+    let cvUrl = '';
+    let cvFilename = '';
+    let isActive = false;
+    
+    if (typeof cvData === 'string') {
+      // Old format: simple string URL
+      cvUrl = cvData;
+      cvFilename = `cv-${language}.pdf`;
+      isActive = true; // Assume active if it's a string URL
+    } else if (cvData && typeof cvData === 'object') {
+      // New format: object with url, filename, isActive
+      cvUrl = cvData.url || '';
+      cvFilename = cvData.filename || `cv-${language}.pdf`;
+      isActive = cvData.isActive !== false; // Default to true if not specified
+    }
+    
+    if (!cvUrl || !isActive) {
       setMessagePopupContent(
         language === 'en' 
           ? 'CV not available. Please upload a CV first.' 
@@ -322,9 +339,9 @@ export default function HomePage() {
 
     try {
       // Handle base64 data URL
-      if (cvData.url.startsWith('data:application/pdf;base64,')) {
+      if (cvUrl.startsWith('data:application/pdf;base64,')) {
         // Extract base64 data
-        const base64Data = cvData.url.split(',')[1];
+        const base64Data = cvUrl.split(',')[1];
         const binaryData = atob(base64Data);
         
         // Convert to Uint8Array
@@ -339,7 +356,7 @@ export default function HomePage() {
         
         const link = document.createElement('a');
         link.href = url;
-        link.download = cvData.filename || `cv-${language}.pdf`;
+        link.download = cvFilename;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         
@@ -352,16 +369,16 @@ export default function HomePage() {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       } else {
         // Handle regular URL (including relative URLs)
-        let downloadUrl = cvData.url;
+        let downloadUrl = cvUrl;
         
         // If it's a relative URL, make it absolute
-        if (cvData.url.startsWith('/')) {
-          downloadUrl = `${window.location.origin}${cvData.url}`;
+        if (cvUrl.startsWith('/')) {
+          downloadUrl = `${window.location.origin}${cvUrl}`;
         }
         
         const link = document.createElement('a');
         link.href = downloadUrl;
-        link.download = cvData.filename || `cv-${language}.pdf`;
+        link.download = cvFilename;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         
