@@ -305,141 +305,32 @@ export default function HomePage() {
   // Contact form functions
   // NEW CV Download Function
   const downloadCV = (language: 'en' | 'ja') => {
-    // Check if portfolio data is loaded
-    if (!portfolioData) {
-      setMessagePopupContent(
-        language === 'en' 
-          ? 'Loading portfolio data... Please try again.' 
-          : 'ポートフォリオデータを読み込み中... もう一度お試しください。'
-      );
-      setMessagePopupType('error');
-      setShowMessagePopup(true);
-      setTimeout(() => setShowMessagePopup(false), 3000);
-      setShowCVModal(false);
-      return;
-    }
+    // TEMPORARY: Use hardcoded URLs for testing
+    const cvUrl = language === 'en' ? '/cv/mushabbir-en.pdf' : '/cv/mushabbir-ja.pdf';
+    const cvFilename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
     
-    // Debug: Log the current state
     console.log('downloadCV called with language:', language);
-    console.log('portfolioData.cv:', portfolioData.cv);
-    console.log('cvData for language:', portfolioData.cv?.[language]);
+    console.log('Using hardcoded URL:', cvUrl);
     
-    const cvData = portfolioData?.cv?.[language];
-    
-    // Handle both string and object formats for backward compatibility
-    let cvUrl = '';
-    let cvFilename = '';
-    let isActive = false;
-    
-    if (typeof cvData === 'string') {
-      // Old format: simple string URL
-      cvUrl = cvData;
-      cvFilename = `cv-${language}.pdf`;
-      isActive = true; // Assume active if it's a string URL
-    } else if (cvData && typeof cvData === 'object') {
-      // New format: object with url, filename, isActive
-      cvUrl = cvData.url || '';
-      cvFilename = cvData.filename || `cv-${language}.pdf`;
-      // Explicitly check isActive - if it's undefined, null, or true, consider it active
-      isActive = cvData.isActive === undefined || cvData.isActive === null || cvData.isActive === true;
-    }
-    
-    // TEMPORARY TEST: Use hardcoded URLs to test if download works
-    const testUrl = language === 'en' ? '/cv/mushabbir-en.pdf' : '/cv/mushabbir-ja.pdf';
-    const testFilename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
-    
-    if (!cvUrl || !isActive) {
-      console.log('CV not available - cvUrl:', cvUrl, 'isActive:', isActive);
-      console.log('Using test URL:', testUrl);
-      
-      // Try with hardcoded URL for testing
-      try {
-        const link = document.createElement('a');
-        link.href = testUrl;
-        link.download = testFilename;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setMessagePopupContent(
-          language === 'en' 
-            ? 'CV download started! (Test mode)' 
-            : 'CVのダウンロードを開始しました！（テストモード）'
-        );
-        setMessagePopupType('success');
-        setShowMessagePopup(true);
-        setTimeout(() => setShowMessagePopup(false), 3000);
-        setShowCVModal(false);
-        return;
-      } catch (error) {
-        console.error('Test download failed:', error);
-      }
-      
-      setMessagePopupContent(
-        language === 'en' 
-          ? 'CV not available. Please upload a CV first.' 
-          : 'CVが利用できません。先にCVをアップロードしてください。'
-      );
-      setMessagePopupType('error');
-      setShowMessagePopup(true);
-      setTimeout(() => setShowMessagePopup(false), 3000);
-      setShowCVModal(false);
-      return;
-    }
-
     try {
-      // Handle base64 data URL
-      if (cvUrl.startsWith('data:application/pdf;base64,')) {
-        // Extract base64 data
-        const base64Data = cvUrl.split(',')[1];
-        const binaryData = atob(base64Data);
-        
-        // Convert to Uint8Array
-        const bytes = new Uint8Array(binaryData.length);
-        for (let i = 0; i < binaryData.length; i++) {
-          bytes[i] = binaryData.charCodeAt(i);
-        }
-        
-        // Create blob and download
-        const blob = new Blob([bytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = cvFilename;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        
-        // Add to DOM, click, and remove
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Clean up blob URL
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      } else {
-        // Handle regular URL (including relative URLs)
-        let downloadUrl = cvUrl;
-        
-        // If it's a relative URL, make it absolute
-        if (cvUrl.startsWith('/')) {
-          downloadUrl = `${window.location.origin}${cvUrl}`;
-        }
-        
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = cvFilename;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        
-        // Add to DOM, click, and remove
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      // Handle regular URL (including relative URLs)
+      let downloadUrl = cvUrl;
+      
+      // If it's a relative URL, make it absolute
+      if (cvUrl.startsWith('/')) {
+        downloadUrl = `${window.location.origin}${cvUrl}`;
       }
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = cvFilename;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      
+      // Add to DOM, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       // Show success message
       setMessagePopupContent(
