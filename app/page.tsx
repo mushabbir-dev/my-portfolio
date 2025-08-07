@@ -1120,14 +1120,7 @@ export default function HomePage() {
                       {language === 'en' ? 'Name' : '名前'}
                     </span>
                     <p className="text-gray-900 dark:text-white font-medium">
-                      {(() => {
-                        const name = portfolioData?.hero?.name;
-                        if (typeof name === 'string') return name;
-                        if (name && typeof name === 'object') {
-                          return name[language === 'en' ? 'english' : 'japanese'] || name.english || "Mushabbir Ahmed";
-                        }
-                        return "Mushabbir Ahmed";
-                      })()}
+                      {getMultilingualText(portfolioData?.hero?.name, language, "Mushabbir Ahmed")}
                     </p>
                   </div>
                   <div>
