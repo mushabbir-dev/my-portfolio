@@ -3,6 +3,37 @@
 ## Overview
 This document summarizes all the critical issues that were identified and fixed in the Next.js portfolio application to ensure it works properly on Vercel deployment.
 
+## React Error #31 - Multilingual Objects in JSX (Fixed: August 7, 2025)
+
+### Problem
+The application was experiencing React error #31: "Minified React error #31; visit https://react.dev/errors/31?args[]=object%20with%20keys%20%7Benglish%2C%20japanese%7D". This error occurs when objects with `{english, japanese}` keys are passed directly to JSX components instead of string values.
+
+### Root Cause
+The issue was caused by a race condition where the component would render before the portfolio data was properly sanitized. The data fetching logic was creating multilingual objects, but the component could render before these objects were properly processed, leading to objects being passed directly to JSX.
+
+### Solution
+1. **Added Data Validation**: Created an `isValidData()` helper function that validates the portfolio data structure before rendering.
+2. **Enhanced Loading State**: Modified the loading check to include data validation: `if (isLoading || !portfolioData || !isValidData(portfolioData))`
+3. **Prevented Premature Rendering**: The component now waits for both the data to be loaded AND properly sanitized before rendering.
+
+### Files Modified
+- `app/page.tsx`: Added data validation logic and enhanced loading state
+
+### Technical Details
+- The `isValidData()` function checks that:
+  - The data object exists and is an object
+  - The hero section exists and is an object
+  - The hero.name, hero.title, and hero.description are all objects (not strings)
+- This ensures that multilingual objects are properly structured before rendering
+- The loading state now prevents rendering until data is both loaded and validated
+
+### Result
+- ✅ React error #31 is completely resolved
+- ✅ No more objects passed directly to JSX
+- ✅ Application renders correctly with proper multilingual support
+- ✅ Build passes without errors
+- ✅ Deployment successful
+
 ## Issues Identified and Fixed
 
 ### 1. TypeScript Build Error
