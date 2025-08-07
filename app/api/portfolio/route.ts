@@ -338,13 +338,13 @@ const defaultPortfolioData = {
 
 export async function GET() {
   try {
-    console.log('GET /api/portfolio - Loading portfolio data from database');
+
     
     const data = await PortfolioService.getPortfolioData();
     
     // If no data exists, initialize with default data
     if (!data || Object.keys(data).length === 0) {
-      console.log('No portfolio data found, initializing with default data');
+      
       try {
         await PortfolioService.initializePortfolioData(defaultPortfolioData);
         return NextResponse.json(defaultPortfolioData);
@@ -355,7 +355,7 @@ export async function GET() {
       }
     }
     
-    console.log('Portfolio data loaded successfully from database');
+    
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error loading portfolio data:', error);
@@ -363,7 +363,7 @@ export async function GET() {
     // Check if it's a database connection issue
     if (error instanceof Error && error.message.includes('relation') || 
         error instanceof Error && error.message.includes('table')) {
-      console.log('Database tables may not exist yet');
+
       return NextResponse.json(
         { 
           error: 'Database not configured. Please run the database setup first.',
@@ -382,12 +382,12 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    console.log('PUT /api/portfolio - Updating portfolio data');
+
     
     // Check content length - Vercel has a 4.5MB limit for serverless functions
     const contentLength = request.headers.get('content-length');
     if (contentLength && parseInt(contentLength) > 4 * 1024 * 1024) {
-      console.log('Payload too large:', contentLength);
+      
       return NextResponse.json(
         { error: 'Payload too large. Maximum size is 4MB. Please update sections individually.' },
         { status: 413 }
@@ -395,11 +395,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('Received portfolio data:', Object.keys(body));
+    
     
     // Validate the data structure
     if (!body || typeof body !== 'object') {
-      console.log('Invalid data format received');
+      
       return NextResponse.json(
         { error: 'Invalid data format' },
         { status: 400 }
@@ -417,7 +417,7 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      console.log(`Section ${body.section} updated successfully`);
+      
       return NextResponse.json({ 
         message: `Section ${body.section} updated successfully`,
         success: true
@@ -467,7 +467,7 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    console.log('Portfolio data updated successfully');
+    
     return NextResponse.json({ 
       message: 'Portfolio data updated successfully',
       success: true
@@ -483,14 +483,14 @@ export async function PUT(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('POST /api/portfolio - Creating portfolio data');
+
     
     const body = await request.json();
-    console.log('Received portfolio data:', Object.keys(body));
+    
     
     // Validate the data structure
     if (!body || typeof body !== 'object') {
-      console.log('Invalid data format received');
+      
       return NextResponse.json(
         { error: 'Invalid data format' },
         { status: 400 }
@@ -500,7 +500,7 @@ export async function POST(request: NextRequest) {
     // Initialize portfolio data
     await PortfolioService.initializePortfolioData(body);
     
-    console.log('Portfolio data created successfully');
+    
     return NextResponse.json({ 
       message: 'Portfolio data created successfully'
     });
@@ -515,14 +515,14 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    console.log('DELETE /api/portfolio - Deleting item from section');
+
     
     const { section, key } = await request.json();
-    console.log('Delete request:', { section, key });
+    
 
     await PortfolioService.deleteItem(section, key);
     
-    console.log('Item deleted successfully');
+    
     return NextResponse.json({ 
       message: "Deleted successfully"
     });

@@ -3,25 +3,25 @@ import { PortfolioService } from '../../lib/portfolioService';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Profile picture upload started');
+  
     
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
     if (!file) {
-      console.log('No file provided');
+
       return NextResponse.json(
         { error: 'No file provided' },
         { status: 400 }
       );
     }
 
-    console.log('File received:', file.name, 'Size:', file.size, 'Type:', file.type);
+    
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      console.log('Invalid file type:', file.type);
+      
       return NextResponse.json(
         { error: 'Invalid file type. Only JPEG, PNG, and WebP images are allowed.' },
         { status: 400 }
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      console.log('File too large:', file.size);
+      
       return NextResponse.json(
         { error: 'File too large. Maximum size is 5MB.' },
         { status: 400 }
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const base64String = buffer.toString('base64');
     const dataUrl = `data:${file.type};base64,${base64String}`;
     
-    console.log('File converted to base64 successfully');
+    
 
     // Update the portfolio data with the new profile picture
     try {
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       
       await PortfolioService.updateSection('hero', updatedHero);
       
-      console.log('Profile picture updated in portfolio data');
+      
       
       return NextResponse.json({
         success: true,

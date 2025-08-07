@@ -30,31 +30,14 @@ export interface EmailData {
 
 export async function sendEmail(emailData: EmailData) {
   try {
-    console.log('📧 Email service called with:', {
-      to: emailData.to,
-      subject: emailData.subject,
-      hasApiKey: !!process.env.RESEND_API_KEY
-    });
+
 
     // Get Resend client (lazy-loaded)
     const resendClient = getResendClient();
 
     // Check if Resend is available
     if (!resendClient) {
-      console.log('📧 Resend API key not configured. Using fallback method.');
-      
-      // Fallback: Log email details for development
-      console.log('📧 ==========================================');
-      console.log('📧 EMAIL SENT (FALLBACK)');
-      console.log('📧 ==========================================');
-      console.log('📧 To:', emailData.to);
-      console.log('📧 Subject:', emailData.subject);
-      console.log('📧 Content:', emailData.html.replace(/<[^>]*>/g, ''));
-      console.log('📧 Time:', new Date().toISOString());
-      console.log('📧 ==========================================');
-      console.log('📧 Note: Set RESEND_API_KEY environment variable');
-      console.log('📧 to enable actual email sending.');
-      console.log('📧 ==========================================');
+
       
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -62,7 +45,7 @@ export async function sendEmail(emailData: EmailData) {
       return { success: true, fallback: true };
     }
 
-    console.log('📧 Attempting to send email via Resend...');
+
 
     const { data, error } = await resendClient.emails.send({
       from: 'onboarding@resend.dev', // Use Resend's default domain
@@ -77,7 +60,7 @@ export async function sendEmail(emailData: EmailData) {
       return { success: false, error: error.message };
     }
 
-    console.log('📧 Email sent successfully:', data);
+
     return { success: true, data };
   } catch (error) {
     console.error('📧 Email service error:', error);

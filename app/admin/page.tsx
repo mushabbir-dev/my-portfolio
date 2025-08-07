@@ -468,11 +468,11 @@ export default function AdminPage() {
     // Load saved data from API
     const fetchData = async () => {
       try {
-        console.log('Fetching portfolio data from API...');
+    
         const response = await fetch('/api/portfolio');
         if (response.ok) {
           const fetchedData = await response.json();
-          console.log('Fetched data:', fetchedData);
+  
           
           // Sanitize the fetched data to ensure correct structure
           const sanitizedData = {
@@ -608,7 +608,7 @@ export default function AdminPage() {
             }
           };
           
-          console.log('Sanitized data:', sanitizedData);
+  
           setData(sanitizedData);
         } else {
           console.error('Failed to fetch portfolio data');
@@ -639,7 +639,7 @@ export default function AdminPage() {
   const saveData = async () => {
     setIsSaving(true);
     try {
-      console.log('Saving portfolio data:', data);
+      
       
       // Ensure data structure is correct before saving
       const sanitizedData = {
@@ -701,11 +701,11 @@ export default function AdminPage() {
         papers: Array.isArray(data.papers) ? data.papers : []
       };
       
-      console.log('Sanitized data:', sanitizedData);
+      
       
       // Compress the data by removing unnecessary whitespace
       const compressedData = JSON.stringify(sanitizedData, null, 0);
-      console.log('Compressed data size:', compressedData.length, 'bytes');
+      
       
       // Check if data is too large and use section-specific API if needed
       if (compressedData.length > 4 * 1024 * 1024) { // 4MB
@@ -738,7 +738,7 @@ export default function AdminPage() {
             
             if (response.ok) {
               results.push({ section, success: true });
-              console.log(`✅ Section ${section} saved successfully`);
+      
             } else {
               const errorData = await response.json();
               results.push({ section, success: false, error: errorData.error });
@@ -1407,8 +1407,7 @@ export default function AdminPage() {
                   const result = await response.json();
 
                   if (result.success) {
-                    console.log('Profile picture upload successful:', result.url);
-                    console.log('Profile picture type:', typeof result.url);
+                    
                     updateData('hero', { profilePicture: result.url });
                     alert('Profile picture uploaded successfully!');
                   } else {

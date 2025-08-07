@@ -351,9 +351,16 @@ export default function HomePage() {
         // Clean up blob URL
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       } else {
-        // Handle regular URL
+        // Handle regular URL (including relative URLs)
+        let downloadUrl = cvData.url;
+        
+        // If it's a relative URL, make it absolute
+        if (cvData.url.startsWith('/')) {
+          downloadUrl = `${window.location.origin}${cvData.url}`;
+        }
+        
         const link = document.createElement('a');
-        link.href = cvData.url;
+        link.href = downloadUrl;
         link.download = cvData.filename || `cv-${language}.pdf`;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';

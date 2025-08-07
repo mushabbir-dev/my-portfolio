@@ -7,13 +7,13 @@ const TARGET_EMAIL = process.env.CONTACT_EMAIL || 'mushabbirahmed99@gmail.com';
 // Send contact form email using Resend
 async function sendContactEmail(name: string, email: string, message: string) {
   try {
-    console.log('📧 Sending contact form via Resend...');
+
     
     const emailData = createContactEmail(name, email, message, TARGET_EMAIL);
     const result = await sendEmail(emailData);
     
     if (result.success) {
-      console.log('📧 Contact form sent successfully via Resend');
+
       return { success: true };
     } else {
       console.error('📧 Failed to send contact form via Resend:', result.error);

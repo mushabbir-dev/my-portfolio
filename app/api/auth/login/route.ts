@@ -15,13 +15,13 @@ const TARGET_EMAIL = process.env.ADMIN_EMAIL || 'mushabbirahmed99@gmail.com';
 // Send OTP email using Resend
 async function sendOTPEmail(otp: string) {
   try {
-    console.log('📧 Sending OTP via Resend...');
+    
     
     const emailData = createOTPEmail(otp, TARGET_EMAIL);
     const result = await sendEmail(emailData);
     
     if (result.success) {
-      console.log('📧 OTP sent successfully via Resend');
+      
       return { success: true };
     } else {
       console.error('📧 Failed to send OTP via Resend:', result.error);

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       
       await PortfolioService.updateSection('papers', papers);
       
-      console.log('Paper uploaded successfully:', filename);
+      
       
       return NextResponse.json({
         success: true,
@@ -118,7 +118,7 @@ export async function DELETE(request: NextRequest) {
       
       await PortfolioService.updateSection('papers', papers);
       
-      console.log('Paper deleted successfully');
+      
       
       return NextResponse.json({
         success: true,

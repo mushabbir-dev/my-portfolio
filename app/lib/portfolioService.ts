@@ -23,7 +23,7 @@ async function saveToFile(data: any) {
   try {
     await ensureDataDirectory();
     await writeFile(DATA_FILE_PATH, JSON.stringify(data, null, 2));
-    console.log('✅ Data saved to file:', DATA_FILE_PATH);
+    
   } catch (error) {
     console.error('❌ Error saving to file:', error);
   }
@@ -33,10 +33,10 @@ async function loadFromFile(): Promise<any> {
   try {
     const data = await readFile(DATA_FILE_PATH, 'utf-8');
     const parsed = JSON.parse(data);
-    console.log('✅ Data loaded from file');
+    
     return parsed;
   } catch (error) {
-    console.log('📁 No existing file data, using defaults');
+    
     return null;
   }
 }
@@ -45,7 +45,7 @@ async function createBackup(data: any) {
   try {
     await ensureDataDirectory();
     await writeFile(BACKUP_FILE_PATH, JSON.stringify(data, null, 2));
-    console.log('✅ Backup created');
+    
   } catch (error) {
     console.error('❌ Error creating backup:', error);
   }
@@ -58,7 +58,7 @@ export class PortfolioService {
     try {
       // Check if Supabase is properly configured
       if (!supabase) {
-        console.log('Supabase not configured, loading from file');
+  
         if (!fallbackData) {
           fallbackData = await loadFromFile();
         }
@@ -71,7 +71,7 @@ export class PortfolioService {
         .order('section');
 
       if (error) {
-        console.log('Database error, loading from file:', error.message);
+  
         if (!fallbackData) {
           fallbackData = await loadFromFile();
         }
@@ -107,7 +107,6 @@ export class PortfolioService {
     try {
       // Check if Supabase is properly configured
       if (!supabase) {
-        console.log('Supabase not configured, updating file storage');
         fallbackData = fallbackData || {};
         fallbackData[section] = data;
         await saveToFile(fallbackData);
@@ -126,7 +125,7 @@ export class PortfolioService {
         });
 
       if (error) {
-        console.log('Database update failed, using file storage:', error.message);
+
         fallbackData = fallbackData || {};
         fallbackData[section] = data;
         await saveToFile(fallbackData);
@@ -161,7 +160,6 @@ export class PortfolioService {
     try {
       // Check if Supabase is properly configured
       if (!supabase) {
-        console.log('Supabase not configured, updating file storage');
         if (fallbackData && fallbackData[section]) {
           if (Array.isArray(fallbackData[section])) {
             fallbackData[section] = fallbackData[section].filter((item: any) => item.id !== key);
@@ -203,7 +201,7 @@ export class PortfolioService {
         .eq('section', section);
 
       if (error) {
-        console.log('Database delete failed, using file storage:', error.message);
+  
         // Use fallback
         if (fallbackData && fallbackData[section]) {
           if (Array.isArray(fallbackData[section])) {
@@ -248,7 +246,7 @@ export class PortfolioService {
   static async initializePortfolioData(defaultData: any) {
     try {
       if (!supabase) {
-        console.log('Supabase not configured, initializing file storage');
+  
         fallbackData = defaultData;
         await saveToFile(defaultData);
         await createBackup(defaultData);
@@ -269,7 +267,7 @@ export class PortfolioService {
         });
 
       if (error) {
-        console.log('Database initialization failed, using file storage:', error.message);
+  
         fallbackData = defaultData;
         await saveToFile(defaultData);
         await createBackup(defaultData);
@@ -306,7 +304,7 @@ export class PortfolioService {
   ) {
     try {
       if (!supabase) {
-        console.log('Supabase not configured, skipping admin log');
+  
         return;
       }
 
@@ -337,7 +335,7 @@ export class PortfolioService {
     try {
       // Check if Supabase is properly configured
       if (!supabase) {
-        console.log('Supabase not configured, returning empty logs');
+  
         return [];
       }
 

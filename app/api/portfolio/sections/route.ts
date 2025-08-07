@@ -4,7 +4,7 @@ import { PortfolioService } from '../../../lib/portfolioService';
 // Handle section-specific updates to avoid size limits
 export async function PUT(request: NextRequest) {
   try {
-    console.log('PUT /api/portfolio/sections - Updating specific section');
+
     
     const body = await request.json();
     
@@ -24,7 +24,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    console.log(`Section ${body.section} updated successfully`);
+    
     return NextResponse.json({ 
       message: `Section ${body.section} updated successfully`,
       success: true
