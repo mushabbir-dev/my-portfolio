@@ -215,14 +215,36 @@ export default function HomePage() {
             technologies: Array.isArray(project.technologies) ? project.technologies : [],
             images: Array.isArray(project.images) ? project.images : []
           })) : [],
-          papers: Array.isArray(data.papers) ? data.papers : [],
+          papers: Array.isArray(data.papers) ? data.papers.map((paper: any) => ({
+            ...paper,
+            title: typeof paper.title === 'string'
+              ? { english: paper.title, japanese: paper.title }
+              : paper.title || { english: "", japanese: "" },
+            conference: typeof paper.conference === 'string'
+              ? { english: paper.conference, japanese: paper.conference }
+              : paper.conference || { english: "", japanese: "" },
+            date: typeof paper.date === 'string'
+              ? { english: paper.date, japanese: paper.date }
+              : paper.date || { english: "", japanese: "" }
+          })) : [],
           skills: {
             languages: Array.isArray(data.skills?.languages) ? data.skills.languages : [],
             frameworks: Array.isArray(data.skills?.frameworks) ? data.skills.frameworks : [],
             databases: Array.isArray(data.skills?.databases) ? data.skills.databases : [],
             tools: Array.isArray(data.skills?.tools) ? data.skills.tools : []
           },
-          certifications: Array.isArray(data.certifications) ? data.certifications : [],
+          certifications: Array.isArray(data.certifications) ? data.certifications.map((cert: any) => ({
+            ...cert,
+            name: typeof cert.name === 'string'
+              ? { english: cert.name, japanese: cert.name }
+              : cert.name || { english: "", japanese: "" },
+            issuer: typeof cert.issuer === 'string'
+              ? { english: cert.issuer, japanese: cert.issuer }
+              : cert.issuer || { english: "", japanese: "" },
+            date: typeof cert.date === 'string'
+              ? { english: cert.date, japanese: cert.date }
+              : cert.date || { english: "", japanese: "" }
+          })) : [],
           contact: {
             email: typeof data.contact?.email === 'string' ? data.contact.email : "",
             phone: typeof data.contact?.phone === 'string' ? data.contact.phone : "",
@@ -1407,15 +1429,15 @@ export default function HomePage() {
                   </div>
 
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {paper.title}
+                    {getMultilingualText(paper.title, language, 'Paper')}
                   </h3>
                   
                   <p className="text-gray-600 dark:text-gray-400 mb-3">
-                    {paper.conference}
+                    {getMultilingualText(paper.conference, language, '')}
                   </p>
                   
                   <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
-                    {paper.date}
+                    {getMultilingualText(paper.date, language, '')}
                   </p>
 
                   <div className="flex flex-wrap gap-2 mb-4">
@@ -1660,7 +1682,7 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-8">
             {(portfolioData?.projects || projectsData).map((project: any, index: number) => (
               <motion.div
-                key={project.id || project.title}
+                key={project.id || getMultilingualText(project.title, language, 'Project')}
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.2 }}
@@ -1851,15 +1873,15 @@ export default function HomePage() {
                 <div className="aspect-video bg-gray-200 dark:bg-gray-600 rounded-lg mb-4 overflow-hidden">
                   <img
                     src={cert.image}
-                    alt={cert.title}
+                    alt={getMultilingualText(cert.name || cert.title, language, 'Certification')}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  {cert.title}
+                  {getMultilingualText(cert.name || cert.title, language, 'Certification')}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-2">{cert.issuer}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{cert.date}</p>
+                <p className="text-gray-600 dark:text-gray-300 mb-2">{getMultilingualText(cert.issuer, language, '')}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{getMultilingualText(cert.date, language, '')}</p>
                 <div className="flex space-x-2">
                   <button 
                     onClick={() => window.open(cert.image, '_blank')}
@@ -1872,7 +1894,7 @@ export default function HomePage() {
                     onClick={() => {
                       const link = document.createElement('a');
                       link.href = cert.pdf;
-                      link.download = cert.title + '.pdf';
+                      link.download = getMultilingualText(cert.name || cert.title, language, 'Certification') + '.pdf';
                       link.click();
                     }}
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
