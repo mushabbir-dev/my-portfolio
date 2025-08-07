@@ -303,7 +303,7 @@ export default function HomePage() {
   };
 
   // Contact form functions
-  // NEW CV Download Function
+  // NEW CV Download Function - Completely Rewritten
   const downloadCV = (language: 'en' | 'ja') => {
     // Check if portfolio data is loaded
     if (!portfolioData) {
@@ -321,7 +321,8 @@ export default function HomePage() {
 
     try {
       // Get CV data for the selected language
-      const cvData = portfolioData.cv?.[language];
+      const cvKey = language === 'en' ? 'english' : 'japanese';
+      const cvData = portfolioData.cv?.[cvKey];
       
       if (!cvData) {
         setMessagePopupContent(
@@ -336,25 +337,8 @@ export default function HomePage() {
         return;
       }
 
-      // Handle both old (string) and new (object) CV data formats
-      let cvUrl: string;
-      let cvFilename: string;
-      let isActive: boolean;
-
-      if (typeof cvData === 'string') {
-        // Old format: cvData is a string URL
-        cvUrl = cvData;
-        cvFilename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
-        isActive = true; // Default to active for old format
-      } else {
-        // New format: cvData is an object
-        cvUrl = cvData.url;
-        cvFilename = cvData.filename;
-        isActive = cvData.isActive === undefined || cvData.isActive === null || cvData.isActive === true;
-      }
-
       // Check if CV is active
-      if (!isActive) {
+      if (!cvData.isActive) {
         setMessagePopupContent(
           language === 'en' 
             ? 'CV is not available for download.' 
@@ -368,7 +352,7 @@ export default function HomePage() {
       }
 
       // Check if URL exists
-      if (!cvUrl) {
+      if (!cvData.url) {
         setMessagePopupContent(
           language === 'en' 
             ? 'CV not available. Please upload a CV first.' 
@@ -381,51 +365,25 @@ export default function HomePage() {
         return;
       }
 
-      // Handle base64 data URLs
-      if (cvUrl.startsWith('data:application/pdf;base64,')) {
-        const base64Data = cvUrl.split(',')[1];
-        const binaryData = atob(base64Data);
-        const bytes = new Uint8Array(binaryData.length);
-        for (let i = 0; i < binaryData.length; i++) {
-          bytes[i] = binaryData.charCodeAt(i);
-        }
-        
-        const blob = new Blob([bytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = cvFilename;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        
-        // Add to DOM, click, and remove
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Clean up the blob URL
-        URL.revokeObjectURL(url);
-      } else {
-        // Handle regular URL (including relative URLs)
-        let downloadUrl = cvUrl;
-        
-        // If it's a relative URL, make it absolute
-        if (cvUrl.startsWith('/')) {
-          downloadUrl = `${window.location.origin}${cvUrl}`;
-        }
-        
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = cvFilename;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        
-        // Add to DOM, click, and remove
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      // Create download URL
+      let downloadUrl = cvData.url;
+      
+      // If it's a relative URL, make it absolute
+      if (cvData.url.startsWith('/')) {
+        downloadUrl = `${window.location.origin}${cvData.url}`;
       }
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = cvData.filename || (language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf');
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      
+      // Add to DOM, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       // Show success message
       setMessagePopupContent(
@@ -438,7 +396,7 @@ export default function HomePage() {
       setTimeout(() => setShowMessagePopup(false), 3000);
       setShowCVModal(false);
     } catch (error) {
-      // CV download error
+      console.error('CV download error:', error);
       setMessagePopupContent(
         language === 'en' 
           ? 'Failed to download CV. Please try again.' 

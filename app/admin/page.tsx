@@ -1129,7 +1129,6 @@ export default function AdminPage() {
       if (response.ok && result.success) {
         // Update the CV data to reflect the new file
         const cvKey = language === 'en' ? 'english' : 'japanese';
-        const filename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
         
         setData(prev => ({
           ...prev,
@@ -1137,7 +1136,7 @@ export default function AdminPage() {
             ...prev.cv,
             [cvKey]: {
               url: result.url,
-              filename: filename,
+              filename: result.filename,
               isActive: true
             }
           }
