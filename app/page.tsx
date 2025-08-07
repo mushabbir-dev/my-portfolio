@@ -169,12 +169,12 @@ export default function HomePage() {
             english: {
               url: typeof data.cv?.english === 'string' ? data.cv.english : (typeof data.cv?.english?.url === 'string' ? data.cv.english.url : ""),
               filename: typeof data.cv?.english?.filename === 'string' ? data.cv.english.filename : "mushabbir-en.pdf",
-              isActive: typeof data.cv?.english?.isActive === 'boolean' ? data.cv.english.isActive : (typeof data.cv?.english === 'string' ? true : false)
+              isActive: typeof data.cv?.english?.isActive === 'boolean' ? data.cv.english.isActive : (typeof data.cv?.english === 'string' && data.cv.english !== "" ? true : false)
             },
             japanese: {
               url: typeof data.cv?.japanese === 'string' ? data.cv.japanese : (typeof data.cv?.japanese?.url === 'string' ? data.cv.japanese.url : ""),
               filename: typeof data.cv?.japanese?.filename === 'string' ? data.cv.japanese.filename : "mushabbir-ja.pdf",
-              isActive: typeof data.cv?.japanese?.isActive === 'boolean' ? data.cv.japanese.isActive : (typeof data.cv?.japanese === 'string' ? true : false)
+              isActive: typeof data.cv?.japanese?.isActive === 'boolean' ? data.cv.japanese.isActive : (typeof data.cv?.japanese === 'string' && data.cv.japanese !== "" ? true : false)
             }
           },
           education: Array.isArray(data.education) ? data.education.map((edu: any) => ({
@@ -306,6 +306,10 @@ export default function HomePage() {
   // NEW CV Download Function
   const downloadCV = (language: 'en' | 'ja') => {
     const cvData = portfolioData?.cv?.[language];
+    
+    // Debug: Log CV data structure
+    console.log('CV Data for', language, ':', cvData);
+    console.log('Portfolio Data CV:', portfolioData?.cv);
     
     if (!cvData || !cvData.url || !cvData.isActive) {
       setMessagePopupContent(
