@@ -6,6 +6,15 @@ import { existsSync, mkdirSync } from 'fs';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if the request has the correct content type
+    const contentType = request.headers.get('content-type');
+    if (!contentType || !contentType.includes('multipart/form-data')) {
+      return NextResponse.json(
+        { error: 'Content-Type must be multipart/form-data' },
+        { status: 400 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const language = formData.get('language') as string;

@@ -1122,6 +1122,7 @@ export default function AdminPage() {
       const response = await fetch('/api/cv-upload', {
         method: 'POST',
         body: formData,
+        // Don't set Content-Type header - let the browser set it automatically for FormData
       });
 
       const result = await response.json();
