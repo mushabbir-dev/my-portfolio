@@ -319,6 +319,11 @@ export default function HomePage() {
       return;
     }
     
+    // Debug: Log the current state
+    console.log('downloadCV called with language:', language);
+    console.log('portfolioData.cv:', portfolioData.cv);
+    console.log('cvData for language:', portfolioData.cv?.[language]);
+    
     const cvData = portfolioData?.cv?.[language];
     
     // Handle both string and object formats for backward compatibility
@@ -339,7 +344,40 @@ export default function HomePage() {
       isActive = cvData.isActive === undefined || cvData.isActive === null || cvData.isActive === true;
     }
     
+    // TEMPORARY TEST: Use hardcoded URLs to test if download works
+    const testUrl = language === 'en' ? '/cv/mushabbir-en.pdf' : '/cv/mushabbir-ja.pdf';
+    const testFilename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
+    
     if (!cvUrl || !isActive) {
+      console.log('CV not available - cvUrl:', cvUrl, 'isActive:', isActive);
+      console.log('Using test URL:', testUrl);
+      
+      // Try with hardcoded URL for testing
+      try {
+        const link = document.createElement('a');
+        link.href = testUrl;
+        link.download = testFilename;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setMessagePopupContent(
+          language === 'en' 
+            ? 'CV download started! (Test mode)' 
+            : 'CVのダウンロードを開始しました！（テストモード）'
+        );
+        setMessagePopupType('success');
+        setShowMessagePopup(true);
+        setTimeout(() => setShowMessagePopup(false), 3000);
+        setShowCVModal(false);
+        return;
+      } catch (error) {
+        console.error('Test download failed:', error);
+      }
+      
       setMessagePopupContent(
         language === 'en' 
           ? 'CV not available. Please upload a CV first.' 
