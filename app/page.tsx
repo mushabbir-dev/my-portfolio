@@ -175,14 +175,14 @@ export default function HomePage() {
           },
           cv: {
             english: {
-              url: typeof data.cv?.english?.url === 'string' ? data.cv.english.url : "",
-              filename: typeof data.cv?.english?.filename === 'string' ? data.cv.english.filename : "",
-              isActive: typeof data.cv?.english?.isActive === 'boolean' ? data.cv.english.isActive : false
+              url: typeof data.cv?.english === 'string' ? data.cv.english : (typeof data.cv?.english?.url === 'string' ? data.cv.english.url : ""),
+              filename: typeof data.cv?.english?.filename === 'string' ? data.cv.english.filename : "mushabbir-en.pdf",
+              isActive: typeof data.cv?.english?.isActive === 'boolean' ? data.cv.english.isActive : (typeof data.cv?.english === 'string' ? true : false)
             },
             japanese: {
-              url: typeof data.cv?.japanese?.url === 'string' ? data.cv.japanese.url : "",
-              filename: typeof data.cv?.japanese?.filename === 'string' ? data.cv.japanese.filename : "",
-              isActive: typeof data.cv?.japanese?.isActive === 'boolean' ? data.cv.japanese.isActive : false
+              url: typeof data.cv?.japanese === 'string' ? data.cv.japanese : (typeof data.cv?.japanese?.url === 'string' ? data.cv.japanese.url : ""),
+              filename: typeof data.cv?.japanese?.filename === 'string' ? data.cv.japanese.filename : "mushabbir-ja.pdf",
+              isActive: typeof data.cv?.japanese?.isActive === 'boolean' ? data.cv.japanese.isActive : (typeof data.cv?.japanese === 'string' ? true : false)
             }
           },
           education: Array.isArray(data.education) ? data.education.map((edu: any) => ({
@@ -251,12 +251,18 @@ export default function HomePage() {
             location: typeof data.contact?.location === 'string' 
               ? { english: data.contact.location, japanese: data.contact.location }
               : data.contact?.location || { english: "", japanese: "" },
-            social: {
-              github: typeof data.contact?.social?.github === 'string' ? data.contact.social.github : "",
-              linkedin: typeof data.contact?.social?.linkedin === 'string' ? data.contact.social.linkedin : "",
-              whatsapp: typeof data.contact?.social?.whatsapp === 'string' ? data.contact.social.whatsapp : "",
-              facebook: typeof data.contact?.social?.facebook === 'string' ? data.contact.social.facebook : "",
-              indeed: typeof data.contact?.social?.indeed === 'string' ? data.contact.social.indeed : ""
+            social: data.contact?.social ? {
+              github: typeof data.contact.social.github === 'string' ? data.contact.social.github : "",
+              linkedin: typeof data.contact.social.linkedin === 'string' ? data.contact.social.linkedin : "",
+              whatsapp: typeof data.contact.social.whatsapp === 'string' ? data.contact.social.whatsapp : "",
+              facebook: typeof data.contact.social.facebook === 'string' ? data.contact.social.facebook : "",
+              indeed: typeof data.contact.social.indeed === 'string' ? data.contact.social.indeed : ""
+            } : {
+              github: "",
+              linkedin: "",
+              whatsapp: "",
+              facebook: "",
+              indeed: ""
             }
           }
         };
@@ -312,69 +318,43 @@ export default function HomePage() {
   // Contact form functions
   // NEW CV Download Function
   const downloadCV = (language: 'en' | 'ja') => {
+    const cvData = portfolioData?.cv?.[language];
+    
+    if (!cvData || !cvData.url || !cvData.isActive) {
+      setMessagePopupContent(
+        language === 'en' 
+          ? 'CV not available. Please upload a CV first.' 
+          : 'CVが利用できません。先にCVをアップロードしてください。'
+      );
+      setMessagePopupType('error');
+      setShowMessagePopup(true);
+      setTimeout(() => setShowMessagePopup(false), 3000);
+      setShowCVModal(false);
+      return;
+    }
 
+    // Create download link
+    const link = document.createElement('a');
+    link.href = cvData.url;
+    link.download = cvData.filename || `cv-${language}.pdf`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
     
-    const filename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
-    const cvUrl = `/cv/${filename}`;
+    // Add to DOM, click, and remove
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     
-
-    
-    // First check if the file exists by making a HEAD request
-    fetch(cvUrl, { method: 'HEAD' })
-      .then(response => {
-        if (response.ok) {
-          // File exists, proceed with download
-          const link = document.createElement('a');
-          link.href = cvUrl;
-          link.download = filename;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          
-          // Add to DOM, click, and remove
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-  
-          
-          // Show success message
-          setMessagePopupContent(
-            language === 'en' 
-              ? 'CV download started!' 
-              : 'CVのダウンロードを開始しました！'
-          );
-          setMessagePopupType('success');
-          setShowMessagePopup(true);
-          setTimeout(() => setShowMessagePopup(false), 3000);
-        } else {
-          // File doesn't exist
-          console.error('CV file not found:', cvUrl);
-          setMessagePopupContent(
-            language === 'en' 
-              ? 'CV file not found. Please upload a CV first.' 
-              : 'CVファイルが見つかりません。先にCVをアップロードしてください。'
-          );
-          setMessagePopupType('error');
-          setShowMessagePopup(true);
-          setTimeout(() => setShowMessagePopup(false), 3000);
-        }
-      })
-      .catch(error => {
-        console.error('Error checking CV file:', error);
-        setMessagePopupContent(
-          language === 'en' 
-            ? 'Error checking CV file. Please try again.' 
-            : 'CVファイルの確認中にエラーが発生しました。もう一度お試しください。'
-        );
-        setMessagePopupType('error');
-        setShowMessagePopup(true);
-        setTimeout(() => setShowMessagePopup(false), 3000);
-      })
-      .finally(() => {
-        // Close modal
-        setShowCVModal(false);
-    
-      });
+    // Show success message
+    setMessagePopupContent(
+      language === 'en' 
+        ? 'CV download started!' 
+        : 'CVのダウンロードを開始しました！'
+    );
+    setMessagePopupType('success');
+    setShowMessagePopup(true);
+    setTimeout(() => setShowMessagePopup(false), 3000);
+    setShowCVModal(false);
   };
 
   // NEW Email Validation Function
