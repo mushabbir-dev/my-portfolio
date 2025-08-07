@@ -329,28 +329,72 @@ export default function HomePage() {
       return;
     }
 
-    // Create download link
-    const link = document.createElement('a');
-    link.href = cvData.url;
-    link.download = cvData.filename || `cv-${language}.pdf`;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    
-    // Add to DOM, click, and remove
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Show success message
-    setMessagePopupContent(
-      language === 'en' 
-        ? 'CV download started!' 
-        : 'CVのダウンロードを開始しました！'
-    );
-    setMessagePopupType('success');
-    setShowMessagePopup(true);
-    setTimeout(() => setShowMessagePopup(false), 3000);
-    setShowCVModal(false);
+    try {
+      // Handle base64 data URL
+      if (cvData.url.startsWith('data:application/pdf;base64,')) {
+        // Extract base64 data
+        const base64Data = cvData.url.split(',')[1];
+        const binaryData = atob(base64Data);
+        
+        // Convert to Uint8Array
+        const bytes = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) {
+          bytes[i] = binaryData.charCodeAt(i);
+        }
+        
+        // Create blob and download
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = cvData.filename || `cv-${language}.pdf`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        
+        // Add to DOM, click, and remove
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up blob URL
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } else {
+        // Handle regular URL
+        const link = document.createElement('a');
+        link.href = cvData.url;
+        link.download = cvData.filename || `cv-${language}.pdf`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        
+        // Add to DOM, click, and remove
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      // Show success message
+      setMessagePopupContent(
+        language === 'en' 
+          ? 'CV download started!' 
+          : 'CVのダウンロードを開始しました！'
+      );
+      setMessagePopupType('success');
+      setShowMessagePopup(true);
+      setTimeout(() => setShowMessagePopup(false), 3000);
+      setShowCVModal(false);
+    } catch (error) {
+      console.error('CV download error:', error);
+      setMessagePopupContent(
+        language === 'en' 
+          ? 'Failed to download CV. Please try again.' 
+          : 'CVのダウンロードに失敗しました。もう一度お試しください。'
+      );
+      setMessagePopupType('error');
+      setShowMessagePopup(true);
+      setTimeout(() => setShowMessagePopup(false), 3000);
+      setShowCVModal(false);
+    }
   };
 
   // NEW Email Validation Function
@@ -403,32 +447,7 @@ export default function HomePage() {
     }
 
     try {
-  
-      
-      // Simulate email sending for contact form
-      try {
-        // Simulate email sending for contact form
-        
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setMessagePopupContent(
-          language === 'en' 
-            ? 'Message sent successfully! I will get back to you soon.' 
-            : 'メッセージが正常に送信されました！すぐに返信いたします。'
-        );
-        setMessagePopupType('success');
-        setShowMessagePopup(true);
-        setTimeout(() => setShowMessagePopup(false), 3000);
-        
-        // Reset form
-        setContactForm({ name: '', email: '', message: '' });
-        return;
-      } catch (emailError) {
-        console.error('Email error:', emailError);
-      }
-
-      // Fallback to API method
+      // Send email via API
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
@@ -442,7 +461,6 @@ export default function HomePage() {
       });
 
       const data = await response.json();
-      
 
       if (response.ok && data.success) {
         setMessagePopupContent(

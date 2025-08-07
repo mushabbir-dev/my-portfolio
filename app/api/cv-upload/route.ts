@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
       await PortfolioService.updateSection('cv', updatedCV);
       
       console.log('CV uploaded successfully:', filename);
+      console.log('CV data URL length:', dataUrl.length);
       
       return NextResponse.json(
         { 
