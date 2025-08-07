@@ -1932,7 +1932,7 @@ export default function HomePage() {
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {language === 'en' ? 'Location' : '所在地'}
                       </p>
-                      <p className="text-gray-900 dark:text-white font-medium">{portfolioData?.contact?.location || "Saga, Japan"}</p>
+                      <p className="text-gray-900 dark:text-white font-medium">{getMultilingualText(portfolioData?.contact?.location, language, "Saga, Japan")}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
