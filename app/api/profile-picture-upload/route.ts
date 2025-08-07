@@ -4,6 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 // `PortfolioService`. The uploaded image is converted to a base64 Data URI
 // and stored directly in the `hero.profilePicture` field.
 import { PortfolioService } from '../../lib/portfolioService';
+// Import Supabase client for optional storage uploads. Using the service role
+// key allows writing to buckets without exposing the key on the client. If
+// `SUPABASE_SERVICE_ROLE` or `SUPABASE_SECRET_KEY` is not defined, the
+// fallback will be to store images as Data URIs in the JSON. Keeping large
+// images out of JSON prevents hitting the 4 MB body limit when updating
+// portfolio data on Vercel. See https://vercel.com/docs/limits/overview.
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,28 +49,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert the file to a base64 encoded Data URI. This avoids writing to
-    // disk, which is not possible on Vercel. Use the `file.type` to set the
-    // MIME correctly so it can be used directly in an <img> tag.
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64 = buffer.toString('base64');
-    const base64Url = `data:${file.type};base64,${base64}`;
+    // Read the file into a buffer to either upload to Supabase Storage or
+    // encode as base64. We do this once up front to avoid multiple reads.
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    // Load current portfolio hero and update the profile picture field
+    // Attempt to upload the image to Supabase Storage if a service key is
+    // configured. Using storage offloads large binary data away from the
+    // portfolio JSON and avoids exceeding the 4 MB payload limit on Vercel.
+    let publicUrl: string | null = null;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE || process.env.SUPABASE_SECRET_KEY;
+    if (supabaseUrl && serviceKey) {
+      try {
+        const supabase = createClient(supabaseUrl, serviceKey);
+        // Ensure there's a bucket named "images". If the bucket doesn't exist,
+        // the upload will fail; instruct the user to create it in Supabase.
+        const fileName = `profile_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-]/g, '_')}`;
+        const { error: uploadError } = await supabase.storage.from('images').upload(fileName, buffer, {
+          contentType: file.type,
+          upsert: true
+        });
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage.from('images').getPublicUrl(fileName);
+          publicUrl = urlData?.publicUrl ?? null;
+          console.log('Profile picture uploaded to Supabase Storage:', publicUrl);
+        } else {
+          console.error('Supabase Storage upload error:', uploadError.message);
+        }
+      } catch (err) {
+        console.error('Supabase Storage error:', err);
+      }
+    }
+
+    // Fallback: convert the file to a base64 encoded Data URI. This avoids
+    // writing to disk, which is not possible on Vercel. Use the `file.type`
+    // to set the MIME correctly so it can be used directly in an <img> tag.
+    const base64Url = `data:${file.type};base64,${buffer.toString('base64')}`;
+    const profilePictureUrl = publicUrl || base64Url;
+
+    // Update the hero section with either the storage URL or base64 Data URI.
     const portfolio = await PortfolioService.getPortfolioData();
     const hero = portfolio.hero ?? {};
     const updatedHero = {
       ...hero,
-      profilePicture: base64Url
+      profilePicture: profilePictureUrl
     };
     await PortfolioService.updateSection('hero', updatedHero);
 
-    console.log('Profile picture uploaded successfully via Data URI');
+    console.log('Profile picture uploaded successfully');
 
     return NextResponse.json({
       success: true,
-      url: base64Url,
+      url: profilePictureUrl,
       message: 'Profile picture uploaded successfully'
     });
 

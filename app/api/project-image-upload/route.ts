@@ -5,6 +5,12 @@ import { NextRequest, NextResponse } from 'next/server';
 // ensures compatibility with serverless environments where the file system
 // cannot be modified at runtime.
 import { PortfolioService } from '../../lib/portfolioService';
+// Import Supabase client to optionally store images in Supabase Storage. If a
+// service key is provided via environment variables (`SUPABASE_SERVICE_ROLE`
+// or `SUPABASE_SECRET_KEY`), images will be uploaded to the `images` bucket
+// and the returned public URL will be stored in the project instead of a
+// large base64 string. This avoids exceeding Vercel's 4 MB request limit.
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,11 +52,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert to base64 Data URI
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64 = buffer.toString('base64');
-    const base64Url = `data:${file.type};base64,${base64}`;
+    // Read the file into a buffer once, to use for both storage upload and
+    // base64 encoding.
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Try uploading to Supabase Storage if available. This keeps project
+    // objects small and avoids hitting payload limits when saving the
+    // portfolio. If the upload fails or no service key is configured, a
+    // base64 Data URI will be used instead.
+    let publicUrl: string | null = null;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE || process.env.SUPABASE_SECRET_KEY;
+    if (supabaseUrl && serviceKey) {
+      try {
+        const supabase = createClient(supabaseUrl, serviceKey);
+        const fileName = `project_${projectId}_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-]/g, '_')}`;
+        const { error: uploadError } = await supabase.storage.from('images').upload(fileName, buffer, {
+          contentType: file.type,
+          upsert: true
+        });
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage.from('images').getPublicUrl(fileName);
+          publicUrl = urlData?.publicUrl ?? null;
+          console.log('Project image uploaded to Supabase Storage:', publicUrl);
+        } else {
+          console.error('Supabase Storage upload error:', uploadError.message);
+        }
+      } catch (err) {
+        console.error('Supabase Storage error:', err);
+      }
+    }
+
+    // Fallback to base64 Data URI if no storage URL is available.
+    const base64Url = `data:${file.type};base64,${buffer.toString('base64')}`;
+    const imageUrl = publicUrl || base64Url;
 
     // Load existing portfolio and find the project by ID
     const portfolio = await PortfolioService.getPortfolioData();
@@ -61,13 +97,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Append the new image to the project's images array
+    // Append the new image (URL or base64) to the project's images array
     const updatedProjects = projects.map((project, idx) => {
       if (idx === projectIndex) {
         const images = Array.isArray(project.images) ? project.images : [];
         return {
           ...project,
-          images: [...images, base64Url]
+          images: [...images, imageUrl]
         };
       }
       return project;
@@ -75,11 +111,11 @@ export async function POST(request: NextRequest) {
 
     await PortfolioService.updateSection('projects', updatedProjects);
 
-    console.log('Project image uploaded successfully via Data URI');
+    console.log('Project image uploaded successfully');
 
     return NextResponse.json({
       success: true,
-      imageUrl: base64Url,
+      imageUrl,
       filename: file.name
     });
 
