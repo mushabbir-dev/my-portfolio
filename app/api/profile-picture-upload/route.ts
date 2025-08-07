@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir, access } from 'fs/promises';
-import path from 'path';
+import { PortfolioService } from '../../lib/portfolioService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,64 +38,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'profile');
-    console.log('Uploads directory path:', uploadsDir);
+    // Convert file to base64
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64String = buffer.toString('base64');
+    const dataUrl = `data:${file.type};base64,${base64String}`;
     
+    console.log('File converted to base64 successfully');
+
+    // Update the portfolio data with the new profile picture
     try {
-      await mkdir(uploadsDir, { recursive: true });
-      console.log('Directory created/verified successfully');
-    } catch (dirError) {
-      console.error('Error creating directory:', dirError);
+      const currentData = await PortfolioService.getPortfolioData();
+      const updatedHero = {
+        ...currentData.hero,
+        profilePicture: dataUrl
+      };
+      
+      await PortfolioService.updateSection('hero', updatedHero);
+      
+      console.log('Profile picture updated in portfolio data');
+      
+      return NextResponse.json({
+        success: true,
+        url: dataUrl,
+        message: 'Profile picture uploaded successfully'
+      });
+      
+    } catch (updateError) {
+      console.error('Error updating portfolio data:', updateError);
       return NextResponse.json(
-        { error: 'Failed to create upload directory' },
+        { error: 'Failed to update portfolio data' },
         { status: 500 }
       );
     }
-
-    // Check if directory is writable
-    try {
-      await access(uploadsDir, 2); // Check write permission
-      console.log('Directory is writable');
-    } catch (accessError) {
-      console.error('Directory not writable:', accessError);
-      return NextResponse.json(
-        { error: 'Upload directory not writable' },
-        { status: 500 }
-      );
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop() || 'jpg';
-    const filename = `profile-picture-${timestamp}.${fileExtension}`;
-    const filePath = path.join(uploadsDir, filename);
-    
-    console.log('File path:', filePath);
-
-    // Convert file to buffer and save
-    try {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await writeFile(filePath, buffer);
-      console.log('File written successfully');
-    } catch (writeError) {
-      console.error('Error writing file:', writeError);
-      return NextResponse.json(
-        { error: 'Failed to save file' },
-        { status: 500 }
-      );
-    }
-
-    // Return the public URL
-    const publicUrl = `/uploads/profile/${filename}`;
-    console.log('Profile picture uploaded successfully:', publicUrl);
-
-    return NextResponse.json({
-      success: true,
-      url: publicUrl,
-      message: 'Profile picture uploaded successfully'
-    });
 
   } catch (error) {
     console.error('Profile picture upload error:', error);

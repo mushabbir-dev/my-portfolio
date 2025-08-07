@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { PortfolioService } from '../../lib/portfolioService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,33 +31,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create cv directory if it doesn't exist
-    const cvDir = path.join(process.cwd(), 'public', 'cv');
-    await mkdir(cvDir, { recursive: true });
+    // Convert file to base64
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64String = buffer.toString('base64');
+    const dataUrl = `data:application/pdf;base64,${base64String}`;
 
     // Determine filename based on language
     const filename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
-    const filePath = path.join(cvDir, filename);
 
-    // Convert file to buffer and save
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
-
-    // Return the public URL
-    const publicUrl = `/cv/${filename}`;
-
-    console.log('CV uploaded successfully:', publicUrl);
-
-    return NextResponse.json(
-      { 
-        success: true, 
-        message: `CV uploaded successfully!`,
-        filename: filename,
-        url: publicUrl
-      },
-      { status: 200 }
-    );
+    // Update the portfolio data with the new CV
+    try {
+      const currentData = await PortfolioService.getPortfolioData();
+      const updatedCV = {
+        ...currentData.cv,
+        [language]: {
+          url: dataUrl,
+          filename: filename,
+          isActive: true
+        }
+      };
+      
+      await PortfolioService.updateSection('cv', updatedCV);
+      
+      console.log('CV uploaded successfully:', filename);
+      
+      return NextResponse.json(
+        { 
+          success: true, 
+          message: `CV uploaded successfully!`,
+          filename: filename,
+          url: dataUrl
+        },
+        { status: 200 }
+      );
+      
+    } catch (updateError) {
+      console.error('Error updating CV data:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update CV data' },
+        { status: 500 }
+      );
+    }
 
   } catch (error) {
     console.error('CV upload error:', error);
@@ -81,15 +95,37 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log('CV deleted successfully');
-
-    return NextResponse.json(
-      { 
-        success: true, 
-        message: `CV deleted successfully!`
-      },
-      { status: 200 }
-    );
+    // Update the portfolio data to remove the CV
+    try {
+      const currentData = await PortfolioService.getPortfolioData();
+      const updatedCV = {
+        ...currentData.cv,
+        [language]: {
+          url: '',
+          filename: '',
+          isActive: false
+        }
+      };
+      
+      await PortfolioService.updateSection('cv', updatedCV);
+      
+      console.log('CV deleted successfully');
+      
+      return NextResponse.json(
+        { 
+          success: true, 
+          message: `CV deleted successfully!`
+        },
+        { status: 200 }
+      );
+      
+    } catch (updateError) {
+      console.error('Error updating CV data:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update CV data' },
+        { status: 500 }
+      );
+    }
 
   } catch (error) {
     console.error('CV delete error:', error);

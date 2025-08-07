@@ -35,6 +35,16 @@ import {
 } from 'lucide-react';
 
 export default function HomePage() {
+  // Helper function to validate data structure
+  const isValidData = (data: any) => {
+    if (!data || typeof data !== 'object') return false;
+    if (!data.hero || typeof data.hero !== 'object') return false;
+    if (!data.hero.name || typeof data.hero.name !== 'object') return false;
+    if (!data.hero.title || typeof data.hero.title !== 'object') return false;
+    if (!data.hero.description || typeof data.hero.description !== 'object') return false;
+    return true;
+  };
+
   const [isDark, setIsDark] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSkillCategory, setActiveSkillCategory] = useState('languages');
@@ -518,7 +528,7 @@ export default function HomePage() {
   ];
 
   // Show loading state while data is being fetched
-  if (isLoading) {
+  if (isLoading || !portfolioData || !isValidData(portfolioData)) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300 flex items-center justify-center">
         <div className="text-center">
@@ -747,7 +757,14 @@ export default function HomePage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                {portfolioData?.hero?.name?.[language === 'en' ? 'english' : 'japanese'] || (language === 'en' ? "Hi, I'm Mushabbir" : "こんにちは、ムサビルです")}
+                {(() => {
+                  const name = portfolioData?.hero?.name;
+                  if (typeof name === 'string') return name;
+                  if (name && typeof name === 'object') {
+                    return name[language === 'en' ? 'english' : 'japanese'] || '';
+                  }
+                  return language === 'en' ? "Hi, I'm Mushabbir" : "こんにちは、ムサビルです";
+                })()}
               </motion.h1>
 
               <motion.h2
@@ -756,7 +773,14 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                {portfolioData?.hero?.title?.[language === 'en' ? 'english' : 'japanese'] || (language === 'en' ? "AI Specialist & Software Engineer" : "AIスペシャリスト・ソフトウェアエンジニア")}
+                {(() => {
+                  const title = portfolioData?.hero?.title;
+                  if (typeof title === 'string') return title;
+                  if (title && typeof title === 'object') {
+                    return title[language === 'en' ? 'english' : 'japanese'] || '';
+                  }
+                  return language === 'en' ? "AI Specialist & Software Engineer" : "AIスペシャリスト・ソフトウェアエンジニア";
+                })()}
               </motion.h2>
 
               <motion.p
@@ -765,10 +789,16 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
-                {portfolioData?.hero?.description?.[language === 'en' ? 'english' : 'japanese'] || (language === 'en' 
-                  ? "I'm a results-driven AI Engineer and Full-Stack Developer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan."
-                  : "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIエンジニア・フルスタック開発者です。"
-                )}
+                {(() => {
+                  const description = portfolioData?.hero?.description;
+                  if (typeof description === 'string') return description;
+                  if (description && typeof description === 'object') {
+                    return description[language === 'en' ? 'english' : 'japanese'] || '';
+                  }
+                  return language === 'en' 
+                    ? "I'm a results-driven AI Engineer and Full-Stack Developer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan."
+                    : "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIエンジニア・フルスタック開発者です。";
+                })()}
               </motion.p>
 
               {/* Enhanced Action Buttons */}
@@ -1069,7 +1099,16 @@ export default function HomePage() {
                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       {language === 'en' ? 'Name' : '名前'}
                     </span>
-                    <p className="text-gray-900 dark:text-white font-medium">{portfolioData?.hero?.name?.[language === 'en' ? 'english' : 'japanese'] || "Mushabbir Ahmed"}</p>
+                    <p className="text-gray-900 dark:text-white font-medium">
+                      {(() => {
+                        const name = portfolioData?.hero?.name;
+                        if (typeof name === 'string') return name;
+                        if (name && typeof name === 'object') {
+                          return name[language === 'en' ? 'english' : 'japanese'] || name.english || "Mushabbir Ahmed";
+                        }
+                        return "Mushabbir Ahmed";
+                      })()}
+                    </p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -1214,10 +1253,14 @@ export default function HomePage() {
                       transition={{ duration: 0.4, delay: 0.1 }}
                       viewport={{ once: true }}
                     >
-                      {language === 'en' 
-                        ? (edu.institution?.english || edu.institution)
-                        : (edu.institution?.japanese || edu.institution?.english || edu.institution)
-                      }
+                      {(() => {
+                        const institution = edu.institution;
+                        if (typeof institution === 'string') return institution;
+                        if (institution && typeof institution === 'object') {
+                          return institution[language === 'en' ? 'english' : 'japanese'] || institution.english || '';
+                        }
+                        return '';
+                      })()}
                     </motion.h3>
                     <motion.p 
                       className="text-blue-600 dark:text-blue-400 font-medium text-lg"
@@ -1226,10 +1269,14 @@ export default function HomePage() {
                       transition={{ duration: 0.4, delay: 0.2 }}
                       viewport={{ once: true }}
                     >
-                      {language === 'en' 
-                        ? (edu.degree?.english || edu.degree)
-                        : (edu.degree?.japanese || edu.degree?.english || edu.degree)
-                      }
+                      {(() => {
+                        const degree = edu.degree;
+                        if (typeof degree === 'string') return degree;
+                        if (degree && typeof degree === 'object') {
+                          return degree[language === 'en' ? 'english' : 'japanese'] || degree.english || '';
+                        }
+                        return '';
+                      })()}
                     </motion.p>
                     <motion.p 
                       className="text-gray-600 dark:text-gray-400 text-sm"
@@ -1238,10 +1285,14 @@ export default function HomePage() {
                       transition={{ duration: 0.4, delay: 0.3 }}
                       viewport={{ once: true }}
                     >
-                      {language === 'en' 
-                        ? (edu.period?.english || edu.period)
-                        : (edu.period?.japanese || edu.period?.english || edu.period)
-                      }
+                      {(() => {
+                        const period = edu.period;
+                        if (typeof period === 'string') return period;
+                        if (period && typeof period === 'object') {
+                          return period[language === 'en' ? 'english' : 'japanese'] || period.english || '';
+                        }
+                        return '';
+                      })()}
                     </motion.p>
                   </div>
                 </div>
@@ -1254,10 +1305,14 @@ export default function HomePage() {
                     transition={{ duration: 0.5, delay: 0.4 }}
                     viewport={{ once: true }}
                   >
-                    {language === 'en' 
-                      ? (edu.description?.english || edu.description)
-                      : (edu.description?.japanese || edu.description?.english || edu.description)
-                    }
+                    {(() => {
+                      const description = edu.description;
+                      if (typeof description === 'string') return description;
+                      if (description && typeof description === 'object') {
+                        return description[language === 'en' ? 'english' : 'japanese'] || description.english || '';
+                      }
+                      return '';
+                    })()}
                   </motion.p>
                   
                   {edu.achievements && (
@@ -1667,16 +1722,24 @@ export default function HomePage() {
                       className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300"
                       whileHover={{ scale: 1.02 }}
                     >
-                      {language === 'en' 
-                        ? (typeof project.title === 'string' ? project.title : project.title?.english || 'Project')
-                        : (typeof project.title === 'string' ? project.title : project.title?.japanese || project.title?.english || 'Project')
-                      }
+                      {(() => {
+                        const title = project.title;
+                        if (typeof title === 'string') return title;
+                        if (title && typeof title === 'object') {
+                          return title[language === 'en' ? 'english' : 'japanese'] || title.english || 'Project';
+                        }
+                        return 'Project';
+                      })()}
                     </motion.h3>
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      {language === 'en' 
-                        ? (typeof project.description === 'string' ? project.description : project.description?.english || '')
-                        : (typeof project.description === 'string' ? project.description : project.description?.japanese || project.description?.english || '')
-                      }
+                      {(() => {
+                        const description = project.description;
+                        if (typeof description === 'string') return description;
+                        if (description && typeof description === 'object') {
+                          return description[language === 'en' ? 'english' : 'japanese'] || description.english || '';
+                        }
+                        return '';
+                      })()}
                     </p>
                     <div className="flex flex-wrap gap-2 mb-4">
                       {(project.technologies || []).map((tech: string, techIndex: number) => (

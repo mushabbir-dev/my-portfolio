@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { PortfolioService } from '../../lib/portfolioService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,32 +25,57 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 });
     }
 
-    // Create papers directory if it doesn't exist
-    const papersDir = path.join(process.cwd(), 'public', 'papers');
-    await mkdir(papersDir, { recursive: true });
+    // Convert file to base64
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64String = buffer.toString('base64');
+    const dataUrl = `data:application/pdf;base64,${base64String}`;
 
     // Generate unique filename
     const timestamp = Date.now();
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filename = `${paperId}_${fileType}_${timestamp}_${originalName}`;
-    const filePath = path.join(papersDir, filename);
 
-    // Convert file to buffer and save
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    // Update the paper with the new file
+    try {
+      const currentData = await PortfolioService.getPortfolioData();
+      const papers = currentData.papers || [];
+      const paperIndex = papers.findIndex((p: any) => p.id === paperId);
+      
+      if (paperIndex === -1) {
+        return NextResponse.json(
+          { error: 'Paper not found' },
+          { status: 404 }
+        );
+      }
 
-    // Return the public URL
-    const publicUrl = `/papers/${filename}`;
+      // Update the paper with the new file
+      const updatedPaper = {
+        ...papers[paperIndex],
+        [fileType + 'Pdf']: dataUrl,
+        [fileType + 'Filename']: filename
+      };
 
-    console.log('Paper uploaded successfully:', publicUrl);
-
-    return NextResponse.json({
-      success: true,
-      url: publicUrl,
-      filename: filename,
-      message: 'Paper uploaded successfully'
-    });
+      papers[paperIndex] = updatedPaper;
+      
+      await PortfolioService.updateSection('papers', papers);
+      
+      console.log('Paper uploaded successfully:', filename);
+      
+      return NextResponse.json({
+        success: true,
+        url: dataUrl,
+        filename: filename,
+        message: 'Paper uploaded successfully'
+      });
+      
+    } catch (updateError) {
+      console.error('Error updating paper data:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update paper data' },
+        { status: 500 }
+      );
+    }
 
   } catch (error) {
     console.error('Error uploading paper:', error);
@@ -63,17 +87,51 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const filename = searchParams.get('filename');
+    const paperId = searchParams.get('paperId');
+    const fileType = searchParams.get('fileType');
 
-    if (!filename) {
-      return NextResponse.json({ error: 'No filename provided' }, { status: 400 });
+    if (!filename || !paperId || !fileType) {
+      return NextResponse.json({ error: 'Filename, paper ID, and file type are required' }, { status: 400 });
     }
 
-    console.log('Paper deleted successfully');
+    // Update the paper to remove the file
+    try {
+      const currentData = await PortfolioService.getPortfolioData();
+      const papers = currentData.papers || [];
+      const paperIndex = papers.findIndex((p: any) => p.id === paperId);
+      
+      if (paperIndex === -1) {
+        return NextResponse.json(
+          { error: 'Paper not found' },
+          { status: 404 }
+        );
+      }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Paper deleted successfully'
-    });
+      // Remove the file from the paper
+      const updatedPaper = {
+        ...papers[paperIndex],
+        [fileType + 'Pdf']: '',
+        [fileType + 'Filename']: ''
+      };
+
+      papers[paperIndex] = updatedPaper;
+      
+      await PortfolioService.updateSection('papers', papers);
+      
+      console.log('Paper deleted successfully');
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Paper deleted successfully'
+      });
+      
+    } catch (updateError) {
+      console.error('Error updating paper data:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update paper data' },
+        { status: 500 }
+      );
+    }
 
   } catch (error) {
     console.error('Error deleting paper:', error);
