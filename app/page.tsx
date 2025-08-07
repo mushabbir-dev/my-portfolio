@@ -307,10 +307,6 @@ export default function HomePage() {
   const downloadCV = (language: 'en' | 'ja') => {
     const cvData = portfolioData?.cv?.[language];
     
-    // Debug: Log CV data structure
-    console.log('CV Data for', language, ':', cvData);
-    console.log('Portfolio Data CV:', portfolioData?.cv);
-    
     if (!cvData || !cvData.url || !cvData.isActive) {
       setMessagePopupContent(
         language === 'en' 
