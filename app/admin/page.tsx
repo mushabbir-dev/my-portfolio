@@ -497,7 +497,11 @@ export default function AdminPage() {
             about: {
               english: typeof fetchedData.about?.english === 'string' ? fetchedData.about.english : "",
               japanese: typeof fetchedData.about?.japanese === 'string' ? fetchedData.about.japanese : "",
-              location: typeof fetchedData.about?.location === 'string' ? fetchedData.about.location : "",
+              location: typeof fetchedData.about?.location === 'string' 
+                ? { english: fetchedData.about.location, japanese: fetchedData.about.location }
+                : (typeof fetchedData.about?.location === 'object' && fetchedData.about?.location?.english && fetchedData.about?.location?.japanese)
+                ? fetchedData.about.location
+                : { english: "Saga, Japan", japanese: "佐賀県、日本" },
               status: typeof fetchedData.about?.status === 'string' ? fetchedData.about.status : "",
               education: typeof fetchedData.about?.education === 'string' ? fetchedData.about.education : ""
             },
@@ -531,7 +535,77 @@ export default function AdminPage() {
               technologies: Array.isArray(project.technologies) ? project.technologies : [],
               images: Array.isArray(project.images) ? project.images : []
             })) : [],
-            papers: Array.isArray(fetchedData.papers) ? fetchedData.papers : []
+            papers: Array.isArray(fetchedData.papers) ? fetchedData.papers.map((paper: any) => ({
+              ...paper,
+              title: typeof paper.title === 'string'
+                ? { english: paper.title, japanese: paper.title }
+                : (typeof paper.title === 'object' && paper.title?.english && paper.title?.japanese)
+                ? paper.title
+                : { english: "", japanese: "" },
+              date: typeof paper.date === 'string'
+                ? { english: paper.date, japanese: paper.date }
+                : (typeof paper.date === 'object' && paper.date?.english && paper.date?.japanese)
+                ? paper.date
+                : { english: "", japanese: "" },
+              conference: typeof paper.conference === 'string'
+                ? { english: paper.conference, japanese: paper.conference }
+                : (typeof paper.conference === 'object' && paper.conference?.english && paper.conference?.japanese)
+                ? paper.conference
+                : { english: "", japanese: "" }
+            })) : [],
+            certifications: Array.isArray(fetchedData.certifications) ? fetchedData.certifications.map((cert: any) => ({
+              ...cert,
+              name: typeof cert.name === 'string'
+                ? { english: cert.name, japanese: cert.name }
+                : (typeof cert.name === 'object' && cert.name?.english && cert.name?.japanese)
+                ? cert.name
+                : { english: "", japanese: "" },
+              issuer: typeof cert.issuer === 'string'
+                ? { english: cert.issuer, japanese: cert.issuer }
+                : (typeof cert.issuer === 'object' && cert.issuer?.english && cert.issuer?.japanese)
+                ? cert.issuer
+                : { english: "", japanese: "" },
+              date: typeof cert.date === 'string'
+                ? { english: cert.date, japanese: cert.date }
+                : (typeof cert.date === 'object' && cert.date?.english && cert.date?.japanese)
+                ? cert.date
+                : { english: "", japanese: "" }
+            })) : [],
+            contact: {
+              email: typeof fetchedData.contact?.email === 'string' ? fetchedData.contact.email : "",
+              phone: typeof fetchedData.contact?.phone === 'string' ? fetchedData.contact.phone : "",
+              location: typeof fetchedData.contact?.location === 'string'
+                ? { english: fetchedData.contact.location, japanese: fetchedData.contact.location }
+                : (typeof fetchedData.contact?.location === 'object' && fetchedData.contact?.location?.english && fetchedData.contact?.location?.japanese)
+                ? fetchedData.contact.location
+                : { english: "Saga, Japan", japanese: "佐賀県、日本" },
+              social: {
+                github: typeof fetchedData.contact?.github === 'string' ? fetchedData.contact.github :
+                       (typeof fetchedData.contact?.social?.github === 'string' ? fetchedData.contact.social.github : ""),
+                linkedin: typeof fetchedData.contact?.linkedin === 'string' ? fetchedData.contact.linkedin :
+                         (typeof fetchedData.contact?.social?.linkedin === 'string' ? fetchedData.contact.social.linkedin : ""),
+                whatsapp: typeof fetchedData.contact?.whatsapp === 'string' ? fetchedData.contact.whatsapp :
+                         (typeof fetchedData.contact?.social?.whatsapp === 'string' ? fetchedData.contact.social.whatsapp : ""),
+                facebook: typeof fetchedData.contact?.facebook === 'string' ? fetchedData.contact.facebook :
+                         (typeof fetchedData.contact?.social?.facebook === 'string' ? fetchedData.contact.social.facebook : ""),
+                indeed: typeof fetchedData.contact?.indeed === 'string' ? fetchedData.contact.indeed :
+                       (typeof fetchedData.contact?.social?.indeed === 'string' ? fetchedData.contact.social.indeed : "")
+              }
+            },
+            cv: {
+              english: {
+                url: typeof fetchedData.cv?.english === 'string' ? fetchedData.cv.english :
+                     (typeof fetchedData.cv?.english?.url === 'string' ? fetchedData.cv.english.url : ""),
+                filename: typeof fetchedData.cv?.english?.filename === 'string' ? fetchedData.cv.english.filename : "",
+                isActive: typeof fetchedData.cv?.english?.isActive === 'boolean' ? fetchedData.cv.english.isActive : false
+              },
+              japanese: {
+                url: typeof fetchedData.cv?.japanese === 'string' ? fetchedData.cv.japanese :
+                     (typeof fetchedData.cv?.japanese?.url === 'string' ? fetchedData.cv.japanese.url : ""),
+                filename: typeof fetchedData.cv?.japanese?.filename === 'string' ? fetchedData.cv.japanese.filename : "",
+                isActive: typeof fetchedData.cv?.japanese?.isActive === 'boolean' ? fetchedData.cv.japanese.isActive : false
+              }
+            }
           };
           
           console.log('Sanitized data:', sanitizedData);
