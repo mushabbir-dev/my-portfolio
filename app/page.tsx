@@ -346,32 +346,10 @@ export default function HomePage() {
     }
 
     try {
-  
-      
-      // Simulate email sending for contact form
-      try {
-        // Simulate email sending for contact form
-        
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setMessagePopupContent(
-          language === 'en' 
-            ? 'Message sent successfully! I will get back to you soon.' 
-            : 'メッセージが正常に送信されました！すぐに返信いたします。'
-        );
-        setMessagePopupType('success');
-        setShowMessagePopup(true);
-        setTimeout(() => setShowMessagePopup(false), 3000);
-        
-        // Reset form
-        setContactForm({ name: '', email: '', message: '' });
-        return;
-      } catch (emailError) {
-        console.error('Email error:', emailError);
-      }
-
-      // Fallback to API method
+      // Call the contact API directly. The previous implementation used a
+      // simulated delay and returned early, which meant no network request was
+      // ever made. Removing the simulation ensures the message is actually
+      // dispatched server‑side via the /api/contact endpoint.
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
@@ -383,20 +361,16 @@ export default function HomePage() {
           message: contactForm.message.trim(),
         }),
       });
-
       const data = await response.json();
-      
-
       if (response.ok && data.success) {
         setMessagePopupContent(
-          language === 'en' 
-            ? 'Message sent successfully! I will get back to you soon.' 
+          language === 'en'
+            ? 'Message sent successfully! I will get back to you soon.'
             : 'メッセージが正常に送信されました！すぐに返信いたします。'
         );
         setMessagePopupType('success');
         setShowMessagePopup(true);
         setTimeout(() => setShowMessagePopup(false), 3000);
-        
         // Reset form
         setContactForm({ name: '', email: '', message: '' });
       } else {
@@ -405,8 +379,8 @@ export default function HomePage() {
     } catch (error) {
       console.error('Error sending message:', error);
       setMessagePopupContent(
-        language === 'en' 
-          ? 'Failed to send message. Please try again.' 
+        language === 'en'
+          ? 'Failed to send message. Please try again.'
           : 'メッセージの送信に失敗しました。もう一度お試しください。'
       );
       setMessagePopupType('error');

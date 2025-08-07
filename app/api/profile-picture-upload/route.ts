@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir, access } from 'fs/promises';
-import path from 'path';
+// Instead of writing to the local file system (which is read‑only on Vercel
+// serverless functions), persist profile pictures in the portfolio via the
+// `PortfolioService`. The uploaded image is converted to a base64 Data URI
+// and stored directly in the `hero.profilePicture` field.
+import { PortfolioService } from '../../lib/portfolioService';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('Profile picture upload started');
-    
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -39,62 +42,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'profile');
-    console.log('Uploads directory path:', uploadsDir);
-    
-    try {
-      await mkdir(uploadsDir, { recursive: true });
-      console.log('Directory created/verified successfully');
-    } catch (dirError) {
-      console.error('Error creating directory:', dirError);
-      return NextResponse.json(
-        { error: 'Failed to create upload directory' },
-        { status: 500 }
-      );
-    }
+    // Convert the file to a base64 encoded Data URI. This avoids writing to
+    // disk, which is not possible on Vercel. Use the `file.type` to set the
+    // MIME correctly so it can be used directly in an <img> tag.
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64 = buffer.toString('base64');
+    const base64Url = `data:${file.type};base64,${base64}`;
 
-    // Check if directory is writable
-    try {
-      await access(uploadsDir, 2); // Check write permission
-      console.log('Directory is writable');
-    } catch (accessError) {
-      console.error('Directory not writable:', accessError);
-      return NextResponse.json(
-        { error: 'Upload directory not writable' },
-        { status: 500 }
-      );
-    }
+    // Load current portfolio hero and update the profile picture field
+    const portfolio = await PortfolioService.getPortfolioData();
+    const hero = portfolio.hero ?? {};
+    const updatedHero = {
+      ...hero,
+      profilePicture: base64Url
+    };
+    await PortfolioService.updateSection('hero', updatedHero);
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop() || 'jpg';
-    const filename = `profile-picture-${timestamp}.${fileExtension}`;
-    const filePath = path.join(uploadsDir, filename);
-    
-    console.log('File path:', filePath);
-
-    // Convert file to buffer and save
-    try {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await writeFile(filePath, buffer);
-      console.log('File written successfully');
-    } catch (writeError) {
-      console.error('Error writing file:', writeError);
-      return NextResponse.json(
-        { error: 'Failed to save file' },
-        { status: 500 }
-      );
-    }
-
-    // Return the public URL
-    const publicUrl = `/uploads/profile/${filename}`;
-    console.log('Profile picture uploaded successfully:', publicUrl);
+    console.log('Profile picture uploaded successfully via Data URI');
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: base64Url,
       message: 'Profile picture uploaded successfully'
     });
 

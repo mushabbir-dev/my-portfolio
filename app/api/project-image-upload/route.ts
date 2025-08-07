@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir, access } from 'fs/promises';
-import path from 'path';
+// Persist project images in the portfolio instead of writing to the file system.
+// Uploaded images are encoded as base64 Data URIs and stored directly in the
+// corresponding project's `images` array via the `PortfolioService`. This
+// ensures compatibility with serverless environments where the file system
+// cannot be modified at runtime.
+import { PortfolioService } from '../../lib/portfolioService';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('Project image upload started');
-    
+
     const formData = await request.formData();
     const file = formData.get('image') as File;
     const projectId = formData.get('projectId') as string;
@@ -42,63 +46,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'projects');
-    console.log('Uploads directory path:', uploadsDir);
-    
-    try {
-      await mkdir(uploadsDir, { recursive: true });
-      console.log('Directory created/verified successfully');
-    } catch (dirError) {
-      console.error('Error creating directory:', dirError);
-      return NextResponse.json(
-        { error: 'Failed to create upload directory' },
-        { status: 500 }
-      );
+    // Convert to base64 Data URI
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64 = buffer.toString('base64');
+    const base64Url = `data:${file.type};base64,${base64}`;
+
+    // Load existing portfolio and find the project by ID
+    const portfolio = await PortfolioService.getPortfolioData();
+    const projects: any[] = Array.isArray(portfolio.projects) ? portfolio.projects : [];
+    const projectIndex = projects.findIndex((p) => p.id === projectId);
+    if (projectIndex === -1) {
+      console.log('Project not found:', projectId);
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Check if directory is writable
-    try {
-      await access(uploadsDir, 2); // Check write permission
-      console.log('Directory is writable');
-    } catch (accessError) {
-      console.error('Directory not writable:', accessError);
-      return NextResponse.json(
-        { error: 'Upload directory not writable' },
-        { status: 500 }
-      );
-    }
+    // Append the new image to the project's images array
+    const updatedProjects = projects.map((project, idx) => {
+      if (idx === projectIndex) {
+        const images = Array.isArray(project.images) ? project.images : [];
+        return {
+          ...project,
+          images: [...images, base64Url]
+        };
+      }
+      return project;
+    });
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop() || 'jpg';
-    const filename = `project-${projectId}-${timestamp}.${fileExtension}`;
-    const filePath = path.join(uploadsDir, filename);
-    
-    console.log('File path:', filePath);
+    await PortfolioService.updateSection('projects', updatedProjects);
 
-    // Convert file to buffer and save
-    try {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await writeFile(filePath, buffer);
-      console.log('File written successfully');
-    } catch (writeError) {
-      console.error('Error writing file:', writeError);
-      return NextResponse.json(
-        { error: 'Failed to save file' },
-        { status: 500 }
-      );
-    }
+    console.log('Project image uploaded successfully via Data URI');
 
-    // Return the public URL
-    const publicUrl = `/uploads/projects/${filename}`;
-    console.log('Project image uploaded successfully:', publicUrl);
-
-    return NextResponse.json({ 
-      success: true, 
-      imageUrl: publicUrl,
-      filename: filename
+    return NextResponse.json({
+      success: true,
+      imageUrl: base64Url,
+      filename: file.name
     });
 
   } catch (error) {

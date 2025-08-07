@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+// Persist updates to the portfolio using the service layer instead of writing to the file system.
+import { PortfolioService } from '../../lib/portfolioService';
+
+// We no longer rely on Node's file system for persistence. Vercel's serverless
+// environment is read‑only at runtime, so writing into the `public` folder will
+// silently fail. Instead, we convert uploaded PDFs to base64 strings and
+// persist them in the portfolio data via the `PortfolioService`. This allows
+// uploaded CVs to be stored in the Supabase database (if configured) or the
+// JSON fallback file, both of which survive across requests.
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,30 +39,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create cv directory if it doesn't exist
-    const cvDir = path.join(process.cwd(), 'public', 'cv');
-    await mkdir(cvDir, { recursive: true });
-
-    // Determine filename based on language
-    const filename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
-    const filePath = path.join(cvDir, filename);
-
-    // Convert file to buffer and save
+    // Convert the file into a base64 encoded string. The File API exposes
+    // `.arrayBuffer()` which returns an ArrayBuffer. We convert this to
+    // a Buffer and then to a base64 string. When rendering on the client,
+    // the Data URI can be used directly as the `src` attribute for a link or
+    // embed component.
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    const base64 = buffer.toString('base64');
+    const base64Url = `data:application/pdf;base64,${base64}`;
 
-    // Return the public URL
-    const publicUrl = `/cv/${filename}`;
+    // Determine filename based on language. Keep the original naming scheme
+    // so the UI remains consistent, but the actual file contents are stored
+    // inline as a Data URI. The filename is only for display purposes.
+    const filename = language === 'en' ? 'mushabbir-en.pdf' : 'mushabbir-ja.pdf';
 
-    console.log('CV uploaded successfully:', publicUrl);
-
-    return NextResponse.json(
-      { 
-        success: true, 
-        message: `CV uploaded successfully!`,
+    // Load existing portfolio data and update the relevant CV field. The
+    // `cv` object has `english` and `japanese` sub objects. We update the
+    // selected language while preserving the other.
+    const portfolio = await PortfolioService.getPortfolioData();
+    const currentCv = portfolio.cv ?? { english: {}, japanese: {} };
+    const updatedCv = { ...currentCv } as any;
+    if (language === 'en') {
+      updatedCv.english = {
+        url: base64Url,
         filename: filename,
-        url: publicUrl
+        isActive: true
+      };
+    } else {
+      updatedCv.japanese = {
+        url: base64Url,
+        filename: filename,
+        isActive: true
+      };
+    }
+
+    // Persist the updated CV section
+    await PortfolioService.updateSection('cv', updatedCv);
+
+    console.log('CV uploaded successfully via Data URI');
+
+    // Return success with the Data URI. The admin UI will store this string in
+    // its state and persist it to the backend via `updateData`.
+    return NextResponse.json(
+      {
+        success: true,
+        message: `CV uploaded successfully!`,
+        filename,
+        url: base64Url
       },
       { status: 200 }
     );
@@ -71,6 +102,9 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // When deleting a CV, expect a `language` query parameter. We remove the
+    // corresponding Data URI and mark it as inactive. This updates the
+    // portfolio state so the admin UI reflects the change.
     const { searchParams } = new URL(request.url);
     const language = searchParams.get('language');
 
@@ -81,11 +115,30 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log('CV deleted successfully');
+    // Load current portfolio and update the CV section
+    const portfolio = await PortfolioService.getPortfolioData();
+    const currentCv = portfolio.cv ?? { english: {}, japanese: {} };
+    const updatedCv = { ...currentCv } as any;
+    if (language === 'en') {
+      updatedCv.english = {
+        url: '',
+        filename: '',
+        isActive: false
+      };
+    } else {
+      updatedCv.japanese = {
+        url: '',
+        filename: '',
+        isActive: false
+      };
+    }
+    await PortfolioService.updateSection('cv', updatedCv);
+
+    console.log(`CV for language ${language} deleted successfully`);
 
     return NextResponse.json(
-      { 
-        success: true, 
+      {
+        success: true,
         message: `CV deleted successfully!`
       },
       { status: 200 }

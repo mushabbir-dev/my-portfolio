@@ -8,7 +8,9 @@ export default function TestPage() {
 
   const runTests = async () => {
     setLoading(true);
-    const results = {
+    // Explicitly type `results` as `any` so that we can dynamically assign
+    // arbitrary properties on the `tests` object without TypeScript errors.
+    const results: any = {
       timestamp: new Date().toISOString(),
       tests: {}
     };
