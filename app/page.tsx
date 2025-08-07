@@ -219,7 +219,9 @@ export default function HomePage() {
           contact: {
             email: typeof data.contact?.email === 'string' ? data.contact.email : "",
             phone: typeof data.contact?.phone === 'string' ? data.contact.phone : "",
-            location: typeof data.contact?.location === 'string' ? data.contact.location : "",
+            location: typeof data.contact?.location === 'string' 
+              ? { english: data.contact.location, japanese: data.contact.location }
+              : data.contact?.location || { english: "", japanese: "" },
             social: {
               github: typeof data.contact?.social?.github === 'string' ? data.contact.social.github : "",
               linkedin: typeof data.contact?.social?.linkedin === 'string' ? data.contact.social.linkedin : "",
