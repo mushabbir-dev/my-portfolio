@@ -1589,7 +1589,8 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-8">
             {(portfolioData?.projects || projectsData).map((project: any, index: number) => (
               <motion.div
-                key={project.id || project.title}
+                // Ensure the key is always a string or number. If both id and title are falsy, fall back to the index (provided by map).
+                key={project.id || (typeof project.title === 'string' ? project.title : project.title?.english) || index}
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.2 }}
