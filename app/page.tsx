@@ -42,6 +42,10 @@ export default function HomePage() {
     if (typeof obj === 'object' && obj.english && obj.japanese) {
       return obj[language === 'en' ? 'english' : 'japanese'] || fallback;
     }
+    // Debug logging to catch any objects being passed
+    if (typeof obj === 'object') {
+      console.warn('Object being passed to getMultilingualText:', obj);
+    }
     return fallback;
   };
 
@@ -81,6 +85,14 @@ export default function HomePage() {
       console.log('Data validation failed: hero.description missing english or japanese', data.hero.description);
       return false;
     }
+    
+    // Debug: Log the data structure to see what might be causing issues
+    console.log('Data validation passed. Data structure:', {
+      hero: data.hero,
+      about: data.about,
+      contact: data.contact
+    });
+    
     return true;
   };
 
