@@ -99,6 +99,26 @@ interface PortfolioData {
       japanese: string[];
     };
   }>;
+  experience: Array<{
+    id: string;
+    title: {
+      english: string;
+      japanese: string;
+    };
+    company: {
+      english: string;
+      japanese: string;
+    };
+    period: {
+      english: string;
+      japanese: string;
+    };
+    description: {
+      english: string;
+      japanese: string;
+    };
+    technologies: string[];
+  }>;
   skills: {
     languages: Array<{ id: string; name: string; icon: string }>;
     frameworks: Array<{ id: string; name: string; icon: string }>;
@@ -275,6 +295,28 @@ const defaultData: PortfolioData = {
         english: [],
         japanese: []
       }
+    }
+  ],
+  experience: [
+    {
+      id: "1",
+      title: {
+        english: "Software Engineer",
+        japanese: "ソフトウェアエンジニア"
+      },
+      company: {
+        english: "Saga University",
+        japanese: "佐賀大学"
+      },
+      period: {
+        english: "April 2024 – Present",
+        japanese: "2024年4月 – 現在"
+      },
+      description: {
+        english: "Working as a Software Engineer at Saga University, focusing on developing secure and scalable systems using React, Flask, MongoDB, and advanced encryption methods like AES-256 and RSA-2048.",
+        japanese: "佐賀大学でソフトウェアエンジニアとして働いており、React、Flask、MongoDB、そしてAES-256とRSA-2048などの高度な暗号技術を使用したセキュアでスケーラブルなシステムの開発に専念しています。"
+      },
+      technologies: ["React", "Flask", "MongoDB", "Python", "AES-256", "RSA-2048"]
     }
   ],
   skills: {
@@ -821,26 +863,11 @@ export default function AdminPage() {
   const addEducation = async () => {
     const newEducation = {
       id: uuidv4(),
-      institution: {
-        english: "",
-        japanese: ""
-      },
-      degree: {
-        english: "",
-        japanese: ""
-      },
-      period: {
-        english: "",
-        japanese: ""
-      },
-      description: {
-        english: "",
-        japanese: ""
-      },
-      achievements: {
-        english: [],
-        japanese: []
-      }
+      institution: { english: '', japanese: '' },
+      degree: { english: '', japanese: '' },
+      period: { english: '', japanese: '' },
+      description: { english: '', japanese: '' },
+      achievements: { english: [], japanese: [] }
     };
 
     // Optimistic update
@@ -851,8 +878,7 @@ export default function AdminPage() {
     }));
 
     try {
-      // Update the education section in the database
-      const response = await fetch('/api/portfolio', {
+      const response = await fetch('/api/portfolio/sections', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -865,7 +891,8 @@ export default function AdminPage() {
         toast.success('Education entry added successfully!');
         fetchAdminLogs(); // Refresh logs
       } else {
-        throw new Error('Failed to save education entry');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add education entry');
       }
     } catch (error) {
       // Revert optimistic update on error
@@ -915,6 +942,90 @@ export default function AdminPage() {
       toast.error('Failed to remove education entry. Please try again.');
     } finally {
       setIsDeleting(null);
+    }
+  };
+
+  const addExperience = async () => {
+    const newExperience = {
+      id: uuidv4(),
+      title: { english: '', japanese: '' },
+      company: { english: '', japanese: '' },
+      period: { english: '', japanese: '' },
+      description: { english: '', japanese: '' },
+      technologies: []
+    };
+
+    // Optimistic update
+    const prevData = { ...data };
+    setData(prev => ({
+      ...prev,
+      experience: [...prev.experience, newExperience]
+    }));
+
+    try {
+      const response = await fetch('/api/portfolio/sections', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section: 'experience',
+          data: [...data.experience, newExperience]
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Experience entry added successfully!');
+        fetchAdminLogs(); // Refresh logs
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add experience entry');
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setData(prevData);
+      toast.error('Failed to add experience entry. Please try again.');
+    }
+  };
+
+  const updateExperience = (id: string, updates: any) => {
+    setData(prev => ({
+      ...prev,
+      experience: prev.experience.map(exp => 
+        exp.id === id ? { ...exp, ...updates } : exp
+      )
+    }));
+  };
+
+  const removeExperience = async (id: string) => {
+    // Optimistic update
+    const prevData = { ...data };
+    const updatedExperience = data.experience.filter(exp => exp.id !== id);
+    setData(prev => ({
+      ...prev,
+      experience: updatedExperience
+    }));
+
+    try {
+      const response = await fetch('/api/portfolio/sections', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section: 'experience',
+          data: updatedExperience
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Experience entry removed successfully!');
+        fetchAdminLogs(); // Refresh logs
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove experience entry');
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setData(prevData);
+      console.error('Remove experience error:', error);
+      toast.error('Failed to remove experience entry. Please try again.');
     }
   };
 
@@ -1624,7 +1735,7 @@ export default function AdminPage() {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Education Section</h2>
         <button
           onClick={addEducation}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
         >
           <Plus className="h-4 w-4" />
           <span>Add Education</span>
@@ -1635,19 +1746,12 @@ export default function AdminPage() {
         {data.education.map((edu, index) => (
           <div key={edu.id} className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Education #{index + 1}
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Education #{index + 1}</h3>
               <button
                 onClick={() => removeEducation(edu.id)}
-                disabled={isDeleting === edu.id}
-                className="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-red-600 hover:text-red-700 p-1"
               >
-                {isDeleting === edu.id ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
-                ) : (
-                  <Trash2 className="h-5 w-5" />
-                )}
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
             
@@ -1658,9 +1762,9 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={typeof edu.institution === 'object' && edu.institution?.english ? edu.institution.english : (typeof edu.institution === 'string' ? edu.institution : '')}
+                  value={edu.institution.english}
                   onChange={(e) => updateEducation(edu.id, { institution: { ...edu.institution, english: e.target.value } })}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
               
@@ -1670,9 +1774,9 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={typeof edu.institution === 'object' && edu.institution?.japanese ? edu.institution.japanese : ''}
+                  value={edu.institution.japanese}
                   onChange={(e) => updateEducation(edu.id, { institution: { ...edu.institution, japanese: e.target.value } })}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
               
@@ -1682,9 +1786,9 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={typeof edu.degree === 'object' && edu.degree?.english ? edu.degree.english : (typeof edu.degree === 'string' ? edu.degree : '')}
+                  value={edu.degree.english}
                   onChange={(e) => updateEducation(edu.id, { degree: { ...edu.degree, english: e.target.value } })}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
               
@@ -1694,9 +1798,9 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={typeof edu.degree === 'object' && edu.degree?.japanese ? edu.degree.japanese : ''}
+                  value={edu.degree.japanese}
                   onChange={(e) => updateEducation(edu.id, { degree: { ...edu.degree, japanese: e.target.value } })}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
               
@@ -1706,9 +1810,9 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={typeof edu.period === 'object' && edu.period?.english ? edu.period.english : (typeof edu.period === 'string' ? edu.period : '')}
+                  value={edu.period.english}
                   onChange={(e) => updateEducation(edu.id, { period: { ...edu.period, english: e.target.value } })}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
               
@@ -1718,9 +1822,9 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  value={typeof edu.period === 'object' && edu.period?.japanese ? edu.period.japanese : ''}
+                  value={edu.period.japanese}
                   onChange={(e) => updateEducation(edu.id, { period: { ...edu.period, japanese: e.target.value } })}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
             </div>
@@ -1730,10 +1834,10 @@ export default function AdminPage() {
                 Description (English)
               </label>
               <textarea
-                rows={3}
-                                  value={typeof edu.description === 'object' && edu.description?.english ? edu.description.english : (typeof edu.description === 'string' ? edu.description : '')}
+                value={edu.description.english}
                 onChange={(e) => updateEducation(edu.id, { description: { ...edu.description, english: e.target.value } })}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
             
@@ -1742,10 +1846,178 @@ export default function AdminPage() {
                 Description (Japanese)
               </label>
               <textarea
-                rows={3}
-                                  value={typeof edu.description === 'object' && edu.description?.japanese ? edu.description.japanese : ''}
+                value={edu.description.japanese}
                 onChange={(e) => updateEducation(edu.id, { description: { ...edu.description, japanese: e.target.value } })}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Achievements (English)
+              </label>
+              <textarea
+                value={edu.achievements.english.join('\n')}
+                onChange={(e) => updateEducation(edu.id, { achievements: { ...edu.achievements, english: e.target.value.split('\n').filter(item => item.trim()) } })}
+                rows={3}
+                placeholder="Enter achievements, one per line"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Achievements (Japanese)
+              </label>
+              <textarea
+                value={edu.achievements.japanese.join('\n')}
+                onChange={(e) => updateEducation(edu.id, { achievements: { ...edu.achievements, japanese: e.target.value.split('\n').filter(item => item.trim()) } })}
+                rows={3}
+                placeholder="Enter achievements, one per line"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderExperienceSection = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Experience Section</h2>
+        <button
+          onClick={addExperience}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Add Experience</span>
+        </button>
+      </div>
+      
+      <div className="space-y-6">
+        {data.experience.map((exp, index) => (
+          <div key={exp.id} className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Experience #{index + 1}</h3>
+              <button
+                onClick={() => removeExperience(exp.id)}
+                className="text-red-600 hover:text-red-700 p-1"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Title (English)
+                </label>
+                <input
+                  type="text"
+                  value={exp.title.english}
+                  onChange={(e) => updateExperience(exp.id, { title: { ...exp.title, english: e.target.value } })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Title (Japanese)
+                </label>
+                <input
+                  type="text"
+                  value={exp.title.japanese}
+                  onChange={(e) => updateExperience(exp.id, { title: { ...exp.title, japanese: e.target.value } })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Company (English)
+                </label>
+                <input
+                  type="text"
+                  value={exp.company.english}
+                  onChange={(e) => updateExperience(exp.id, { company: { ...exp.company, english: e.target.value } })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Company (Japanese)
+                </label>
+                <input
+                  type="text"
+                  value={exp.company.japanese}
+                  onChange={(e) => updateExperience(exp.id, { company: { ...exp.company, japanese: e.target.value } })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Period (English)
+                </label>
+                <input
+                  type="text"
+                  value={exp.period.english}
+                  onChange={(e) => updateExperience(exp.id, { period: { ...exp.period, english: e.target.value } })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Period (Japanese)
+                </label>
+                <input
+                  type="text"
+                  value={exp.period.japanese}
+                  onChange={(e) => updateExperience(exp.id, { period: { ...exp.period, japanese: e.target.value } })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Description (English)
+              </label>
+              <textarea
+                value={exp.description.english}
+                onChange={(e) => updateExperience(exp.id, { description: { ...exp.description, english: e.target.value } })}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Description (Japanese)
+              </label>
+              <textarea
+                value={exp.description.japanese}
+                onChange={(e) => updateExperience(exp.id, { description: { ...exp.description, japanese: e.target.value } })}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Technologies
+              </label>
+              <textarea
+                value={exp.technologies.join(', ')}
+                onChange={(e) => updateExperience(exp.id, { technologies: e.target.value.split(',').map(tech => tech.trim()).filter(tech => tech) })}
+                rows={2}
+                placeholder="Enter technologies, separated by commas"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
           </div>
@@ -2758,6 +3030,8 @@ export default function AdminPage() {
         return renderCVSection();
       case 'education':
         return renderEducationSection();
+      case 'experience':
+        return renderExperienceSection();
       case 'skills':
         return renderSkillsSection();
 
@@ -2823,6 +3097,7 @@ export default function AdminPage() {
               { id: 'about', label: 'About', icon: 'ℹ️' },
               { id: 'cv', label: 'CV Management', icon: '📄' },
               { id: 'education', label: 'Education', icon: '🎓' },
+              { id: 'experience', label: 'Experience', icon: '💼' },
               { id: 'skills', label: 'Skills', icon: '💻' },
               { id: 'projects', label: 'Projects', icon: '🚀' },
               { id: 'certifications', label: 'Certifications', icon: '🏆' },
