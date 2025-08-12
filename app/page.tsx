@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
+// Force dynamic rendering - no caching
+export const dynamic = 'force-dynamic';
+
 import { 
   Download, 
   Github, 
@@ -127,9 +130,10 @@ export default function HomePage() {
 
             const fetchPortfolioData = async () => {
             try {
-              const response = await fetch('/api/portfolio');
+              const response = await fetch('/api/portfolio', { cache: 'no-store' });
       if (response.ok) {
-        const data = await response.json();
+        const responseData = await response.json();
+        const data = responseData.data || responseData; // Handle both new and old API formats
         
         // Ensure data structure is correct
         const sanitizedData = {
@@ -573,36 +577,7 @@ export default function HomePage() {
     }
   ];
 
-  const certificationsData = [
-    {
-      title: 'AI Foundations for Everyone',
-      issuer: 'IBM',
-      date: '2024',
-      image: '/certifications/AI Foundations for Everyone.jpg',
-      pdf: '/certifications/AI Foundations for Everyone.pdf'
-    },
-    {
-      title: 'Building AI Powered Chatbots',
-      issuer: 'IBM',
-      date: '2024',
-      image: '/certifications/Building AI Powered Chatbots Without Programming.jpg',
-      pdf: '/certifications/Building AI Powered Chatbots Without Programming.pdf'
-    },
-    {
-      title: 'Generative AI Introduction',
-      issuer: 'IBM',
-      date: '2024',
-      image: '/certifications/Generative AI Introduction and Applications.jpg',
-      pdf: '/certifications/Generative AI Introduction and Applications.pdf'
-    },
-    {
-      title: 'Prompt Engineering Basics',
-      issuer: 'IBM',
-      date: '2024',
-      image: '/certifications/Generative AI Prompt Engineering Basics.jpg',
-      pdf: '/certifications/Generative AI Prompt Engineering Basics.pdf'
-    }
-  ];
+
 
   // Show loading state while data is being fetched
   if (isLoading || !portfolioData || !isValidData(portfolioData) || !isClient) {
@@ -1830,43 +1805,7 @@ export default function HomePage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {(portfolioData?.certifications || [
-              {
-                title: 'AI Foundations for Everyone',
-                issuer: 'IBM',
-                date: '2024',
-                image: '/certifications/AI Foundations for Everyone.jpg',
-                pdf: '/certifications/AI Foundations for Everyone.pdf'
-              },
-              {
-                title: 'Building AI Powered Chatbots Without Programming',
-                issuer: 'IBM',
-                date: '2024',
-                image: '/certifications/Building AI Powered Chatbots Without Programming.jpg',
-                pdf: '/certifications/Building AI Powered Chatbots Without Programming.pdf'
-              },
-              {
-                title: 'Generative AI Introduction and Applications',
-                issuer: 'IBM',
-                date: '2024',
-                image: '/certifications/Generative AI Introduction and Applications.jpg',
-                pdf: '/certifications/Generative AI Introduction and Applications.pdf'
-              },
-              {
-                title: 'Generative AI Prompt Engineering Basics',
-                issuer: 'IBM',
-                date: '2024',
-                image: '/certifications/Generative AI Prompt Engineering Basics.jpg',
-                pdf: '/certifications/Generative AI Prompt Engineering Basics.pdf'
-              },
-              {
-                title: 'Introduction to Artificial Intelligence (AI)',
-                issuer: 'IBM',
-                date: '2024',
-                image: '/certifications/Introduction to Artificial Intelligence (AI).jpg',
-                pdf: '/certifications/Introduction to Artificial Intelligence (AI).pdf'
-              }
-            ]).map((cert: any, index: number) => (
+            {(portfolioData?.certificates || []).filter((cert: any) => cert.isActive).map((cert: any, index: number) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 50 }}
@@ -1876,20 +1815,27 @@ export default function HomePage() {
                 className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift"
               >
                 <div className="aspect-video bg-gray-200 dark:bg-gray-600 rounded-lg mb-4 overflow-hidden">
-                  <img
-                    src={cert.image}
-                    alt={getMultilingualText(cert.name || cert.title, language, 'Certification')}
-                    className="w-full h-full object-cover"
-                  />
+                  {cert.type === 'image' ? (
+                    <img
+                      src={cert.url}
+                      alt={cert.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <FileText className="w-16 h-16 text-gray-400" />
+                    </div>
+                  )}
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  {getMultilingualText(cert.name || cert.title, language, 'Certification')}
+                  {cert.name}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-2">{getMultilingualText(cert.issuer, language, '')}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{getMultilingualText(cert.date, language, '')}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  {new Date(cert.uploadedAt).toLocaleDateString()}
+                </p>
                 <div className="flex space-x-2">
                   <button 
-                    onClick={() => window.open(cert.image, '_blank')}
+                    onClick={() => window.open(cert.url, '_blank')}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
                   >
                     <Eye className="h-4 w-4" />
@@ -1898,8 +1844,8 @@ export default function HomePage() {
                   <button 
                     onClick={() => {
                       const link = document.createElement('a');
-                      link.href = cert.pdf;
-                      link.download = getMultilingualText(cert.name || cert.title, language, 'Certification') + '.pdf';
+                      link.href = cert.url;
+                      link.download = cert.filename || `${cert.name}.${cert.type === 'pdf' ? 'pdf' : 'jpg'}`;
                       link.click();
                     }}
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"

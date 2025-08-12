@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PortfolioService } from '../../lib/portfolioService';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Supabase is configured
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE) {
+      return NextResponse.json(
+        { error: 'Supabase not configured' },
+        { status: 503 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const paperId = formData.get('paperId') as string;
@@ -25,20 +32,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 });
     }
 
-    // Convert file to base64
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64String = buffer.toString('base64');
-    const dataUrl = `data:application/pdf;base64,${base64String}`;
-
-    // Generate unique filename
+    // Upload to Supabase Storage
     const timestamp = Date.now();
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filename = `${paperId}_${fileType}_${timestamp}_${originalName}`;
+    const key = `papers/${filename}`;
+
+    // Dynamically import to avoid build-time errors
+    const { supabaseAdmin } = await import('../../lib/supabase-server');
+    const { getPortfolioData, updateSection } = await import('../../lib/portfolioService');
+    
+    const sb = supabaseAdmin();
+    const bytes = Buffer.from(await file.arrayBuffer());
+
+    const { error: upErr } = await sb.storage.from('assets')
+      .upload(key, bytes, { upsert: true, contentType: 'application/pdf' });
+    if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+
+    const { data: pub } = sb.storage.from('assets').getPublicUrl(key);
+    const fileUrl = pub.publicUrl;
 
     // Update the paper with the new file
     try {
-      const currentData = await PortfolioService.getPortfolioData();
+      const currentData = await getPortfolioData();
       const papers = currentData.papers || [];
       const paperIndex = papers.findIndex((p: any) => p.id === paperId);
       
@@ -52,19 +68,17 @@ export async function POST(request: NextRequest) {
       // Update the paper with the new file
       const updatedPaper = {
         ...papers[paperIndex],
-        [fileType + 'Pdf']: dataUrl,
+        [fileType + 'Pdf']: fileUrl,
         [fileType + 'Filename']: filename
       };
 
       papers[paperIndex] = updatedPaper;
       
-      await PortfolioService.updateSection('papers', papers);
-      
-      
+      await updateSection('papers', papers);
       
       return NextResponse.json({
         success: true,
-        url: dataUrl,
+        url: fileUrl,
         filename: filename,
         message: 'Paper uploaded successfully'
       });
@@ -85,6 +99,14 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Check if Supabase is configured
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE) {
+      return NextResponse.json(
+        { error: 'Supabase not configured' },
+        { status: 503 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const filename = searchParams.get('filename');
     const paperId = searchParams.get('paperId');
@@ -96,7 +118,10 @@ export async function DELETE(request: NextRequest) {
 
     // Update the paper to remove the file
     try {
-      const currentData = await PortfolioService.getPortfolioData();
+      // Dynamically import to avoid build-time errors
+      const { getPortfolioData, updateSection } = await import('../../lib/portfolioService');
+      
+      const currentData = await getPortfolioData();
       const papers = currentData.papers || [];
       const paperIndex = papers.findIndex((p: any) => p.id === paperId);
       
@@ -116,9 +141,7 @@ export async function DELETE(request: NextRequest) {
 
       papers[paperIndex] = updatedPaper;
       
-      await PortfolioService.updateSection('papers', papers);
-      
-      
+      await updateSection('papers', papers);
       
       return NextResponse.json({
         success: true,

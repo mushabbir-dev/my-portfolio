@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 
 import CVUploadModal from '../components/CVUploadModal';
+import CertificateManager from '../components/CertificateManager';
 
 interface PortfolioData {
   hero: {
@@ -2759,6 +2760,8 @@ export default function AdminPage() {
         return renderContactSection();
       case 'papers':
         return renderPapersSection();
+      case 'certificates-manager':
+        return <CertificateManager />;
       case 'logs':
         return renderLogsSection();
       default:
@@ -2814,6 +2817,7 @@ export default function AdminPage() {
               { id: 'skills', label: 'Skills', icon: '💻' },
               { id: 'projects', label: 'Projects', icon: '🚀' },
               { id: 'certifications', label: 'Certifications', icon: '🏆' },
+              { id: 'certificates-manager', label: 'Certificates Manager', icon: '📜' },
               { id: 'contact', label: 'Contact', icon: '📞' },
               { id: 'papers', label: 'Papers', icon: '📄' },
               { id: 'logs', label: 'Admin Logs', icon: '📊' }

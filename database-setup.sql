@@ -1,56 +1,69 @@
--- Database Setup for Portfolio Admin Panel
+-- Database setup for portfolio persistence
 -- Run this in Supabase SQL Editor
 
--- Create portfolio_sections table
-CREATE TABLE IF NOT EXISTS portfolio_sections (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  section TEXT NOT NULL UNIQUE,
-  data JSONB NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- Create the main portfolio table (single row with JSON data)
+CREATE TABLE IF NOT EXISTS public.portfolio (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  data JSONB DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create admin_logs table
-CREATE TABLE IF NOT EXISTS admin_logs (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  action TEXT NOT NULL CHECK (action IN ('create', 'update', 'delete', 'read')),
+-- Insert initial row if it doesn't exist
+INSERT INTO public.portfolio (id, data) 
+VALUES (1, '{}'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
+-- Create admin logs table for tracking changes
+CREATE TABLE IF NOT EXISTS public.admin_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  action TEXT NOT NULL,
   section TEXT NOT NULL,
   by TEXT NOT NULL,
-  time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  time TIMESTAMPTZ DEFAULT NOW(),
   payload JSONB,
-  success BOOLEAN NOT NULL,
+  success BOOLEAN DEFAULT true,
   error_message TEXT
 );
 
+-- Set up RLS (Row Level Security) policies
+ALTER TABLE public.portfolio ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_logs ENABLE ROW LEVEL SECURITY;
+
+-- Allow anonymous users to read portfolio data
+CREATE POLICY read_portfolio_anon ON public.portfolio
+  FOR SELECT USING (true);
+
+-- Allow authenticated users to read admin logs
+CREATE POLICY read_admin_logs_auth ON public.admin_logs
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Allow service role to perform all operations
+CREATE POLICY service_role_portfolio ON public.portfolio
+  FOR ALL USING (auth.role() = 'service_role');
+
+CREATE POLICY service_role_admin_logs ON public.admin_logs
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Create storage bucket for assets
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('assets', 'assets', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Set up storage policies for assets bucket
+CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'assets');
+CREATE POLICY "Service Role Upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'assets' AND auth.role() = 'service_role');
+CREATE POLICY "Service Role Update" ON storage.objects FOR UPDATE USING (bucket_id = 'assets' AND auth.role() = 'service_role');
+CREATE POLICY "Service Role Delete" ON storage.objects FOR DELETE USING (bucket_id = 'assets' AND auth.role() = 'service_role');
+
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_portfolio_sections_section ON portfolio_sections(section);
-CREATE INDEX IF NOT EXISTS idx_admin_logs_time ON admin_logs(time DESC);
-CREATE INDEX IF NOT EXISTS idx_admin_logs_action ON admin_logs(action);
+CREATE INDEX IF NOT EXISTS idx_portfolio_updated_at ON public.portfolio(updated_at);
+CREATE INDEX IF NOT EXISTS idx_admin_logs_time ON public.admin_logs(time);
+CREATE INDEX IF NOT EXISTS idx_admin_logs_section ON public.admin_logs(section);
+CREATE INDEX IF NOT EXISTS idx_admin_logs_action ON public.admin_logs(action);
 
--- Enable Row Level Security (RLS)
-ALTER TABLE portfolio_sections ENABLE ROW LEVEL SECURITY;
-ALTER TABLE admin_logs ENABLE ROW LEVEL SECURITY;
-
--- Create RLS policies for portfolio_sections
--- Allow all operations for now (you can restrict this later)
-CREATE POLICY "Allow all operations on portfolio_sections" ON portfolio_sections
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Create RLS policies for admin_logs
--- Allow all operations for now (you can restrict this later)
-CREATE POLICY "Allow all operations on admin_logs" ON admin_logs
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Insert some test data to verify the setup
-INSERT INTO portfolio_sections (section, data) VALUES 
-  ('hero', '{"name": {"english": "Test", "japanese": "テスト"}, "title": {"english": "Test Title", "japanese": "テストタイトル"}}'::jsonb)
-ON CONFLICT (section) DO NOTHING;
-
--- Insert a test admin log
-INSERT INTO admin_logs (action, section, by, payload, success) VALUES 
-  ('create', 'test', 'admin@example.com', '{"message": "Database setup completed"}'::jsonb, true);
-
--- Verify the setup
-SELECT 'portfolio_sections' as table_name, COUNT(*) as row_count FROM portfolio_sections
-UNION ALL
-SELECT 'admin_logs' as table_name, COUNT(*) as row_count FROM admin_logs; 
+-- Grant necessary permissions
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON public.portfolio TO anon, authenticated;
+GRANT ALL ON public.admin_logs TO authenticated;
+GRANT ALL ON public.portfolio TO service_role;
+GRANT ALL ON public.admin_logs TO service_role; 
