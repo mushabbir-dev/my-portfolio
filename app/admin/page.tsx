@@ -1122,8 +1122,8 @@ export default function AdminPage() {
       formData.append('file', file);
       formData.append('language', language);
 
-      console.log('Sending request to /api/cv-upload...');
-      const response = await fetch('/api/cv-upload', {
+      console.log('Sending request to /api/upload/cv...');
+      const response = await fetch('/api/upload/cv', {
         method: 'POST',
         body: formData,
         // Don't set Content-Type header - let the browser set it automatically for FormData
@@ -1167,7 +1167,7 @@ export default function AdminPage() {
 
   const removeCV = async (language: 'en' | 'ja') => {
     try {
-      const response = await fetch(`/api/cv-upload?language=${language}`, {
+      const response = await fetch(`/api/upload/cv?language=${language}`, {
         method: 'DELETE',
       });
 
