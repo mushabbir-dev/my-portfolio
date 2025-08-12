@@ -37,6 +37,8 @@ import {
   CheckCircle
 } from 'lucide-react';
 
+import UnderConstructionPopup from './components/UnderConstructionPopup';
+
 export default function HomePage() {
   // Helper function to safely extract multilingual text
   const getMultilingualText = (obj: any, language: 'en' | 'ja', fallback: string = '') => {
@@ -597,6 +599,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <UnderConstructionPopup />
 
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">

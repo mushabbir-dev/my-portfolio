@@ -1149,15 +1149,18 @@ export default function AdminPage() {
           }
         }));
 
-        alert(`CV uploaded successfully! File: ${result.filename}`);
+        alert(`✅ CV uploaded successfully!\n\nFile: ${result.filename}\nURL: ${result.url}\nMessage: ${result.message || 'Upload completed'}`);
         console.log('CV upload completed successfully');
       } else {
-        console.error('CV upload failed:', result.error);
-        alert('Failed to upload CV: ' + result.error);
+        console.error('CV upload failed:', result);
+        const errorMessage = result.details ? 
+          `Failed to upload CV:\n\nError: ${result.error}\n\nDetails: ${result.details}` :
+          `Failed to upload CV: ${result.error}`;
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error uploading CV:', error);
-      alert('Error uploading CV. Please try again. Check console for details.');
+      alert(`❌ Error uploading CV:\n\n${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check the console for more details.`);
     }
     
     setShowCVUploadModal(false);
@@ -1167,11 +1170,14 @@ export default function AdminPage() {
 
   const removeCV = async (language: 'en' | 'ja') => {
     try {
+      console.log('Removing CV for language:', language);
+      
       const response = await fetch(`/api/upload/cv?language=${language}`, {
         method: 'DELETE',
       });
 
       const result = await response.json();
+      console.log('CV removal result:', result);
 
       if (response.ok && result.success) {
         const cvKey = language === 'en' ? 'english' : 'japanese';
@@ -1187,14 +1193,17 @@ export default function AdminPage() {
           }
         }));
 
-        alert('CV removed successfully!');
+        alert(`✅ CV removed successfully!\n\nMessage: ${result.message || 'CV deleted'}`);
       } else {
-        console.error('CV delete failed:', result.error);
-        alert('Failed to delete CV: ' + result.error);
+        console.error('CV delete failed:', result);
+        const errorMessage = result.details ? 
+          `Failed to delete CV:\n\nError: ${result.error}\n\nDetails: ${result.details}` :
+          `Failed to delete CV: ${result.error}`;
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error deleting CV:', error);
-      alert('Error deleting CV. Please try again.');
+      alert(`❌ Error deleting CV:\n\n${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check the console for more details.`);
     }
   };
 
