@@ -4,9 +4,6 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
-// Force dynamic rendering - no caching
-export const dynamic = 'force-dynamic';
-
 import { 
   Download, 
   Github, 
@@ -37,7 +34,13 @@ import {
   CheckCircle
 } from 'lucide-react';
 
-import UnderConstructionPopup from './components/UnderConstructionPopup';
+import dynamic from 'next/dynamic';
+
+// Dynamically import UnderConstructionPopup to avoid SSR issues
+const UnderConstructionPopup = dynamic(() => import('./components/UnderConstructionPopup'), {
+  ssr: false,
+  loading: () => null
+});
 
 export default function HomePage() {
   // Helper function to safely extract multilingual text
@@ -130,11 +133,15 @@ export default function HomePage() {
     setIsClient(true);
   }, []);
 
-            const fetchPortfolioData = async () => {
-            try {
-              const response = await fetch('/api/portfolio', { cache: 'no-store' });
+  const fetchPortfolioData = async () => {
+    try {
+      console.log('🔍 Fetching portfolio data...');
+      const response = await fetch('/api/portfolio', { cache: 'no-store' });
+      
       if (response.ok) {
         const responseData = await response.json();
+        console.log('📊 Raw portfolio data:', responseData);
+        
         const data = responseData.data || responseData; // Handle both new and old API formats
         
         // Ensure data structure is correct
@@ -173,14 +180,14 @@ export default function HomePage() {
           },
           cv: {
             english: {
-              url: data.cv?.english?.url || (typeof data.cv?.english === 'string' ? data.cv.english : "/cv/mushabbir-en.pdf"),
+              url: data.cv?.english?.url || "",
               filename: data.cv?.english?.filename || "mushabbir-en.pdf",
-              isActive: data.cv?.english?.isActive === undefined || data.cv?.english?.isActive === null || data.cv?.english?.isActive === true
+              isActive: data.cv?.english?.isActive === true
             },
             japanese: {
-              url: data.cv?.japanese?.url || (typeof data.cv?.japanese === 'string' ? data.cv.japanese : "/cv/mushabbir-ja.pdf"),
+              url: data.cv?.japanese?.url || "",
               filename: data.cv?.japanese?.filename || "mushabbir-ja.pdf",
-              isActive: data.cv?.japanese?.isActive === undefined || data.cv?.japanese?.isActive === null || data.cv?.japanese?.isActive === true
+              isActive: data.cv?.japanese?.isActive === true
             }
           },
           education: Array.isArray(data.education) ? data.education.map((edu: any) => ({
@@ -227,26 +234,15 @@ export default function HomePage() {
           })) : [],
           skills: {
             languages: Array.isArray(data.skills?.languages) ? data.skills.languages : [],
-            frameworks: Array.isArray(data.skills?.frameworks) ? data.skills.frameworks : [],
-            databases: Array.isArray(data.skills?.databases) ? data.skills.databases : [],
+            frontend: Array.isArray(data.skills?.frontend) ? data.skills.frontend : [],
+            backend: Array.isArray(data.skills?.backend) ? data.skills.backend : [],
             tools: Array.isArray(data.skills?.tools) ? data.skills.tools : []
           },
-          certifications: Array.isArray(data.certifications) ? data.certifications.map((cert: any) => ({
-            ...cert,
-            name: typeof cert.name === 'string'
-              ? { english: cert.name, japanese: cert.name }
-              : cert.name || { english: "", japanese: "" },
-            issuer: typeof cert.issuer === 'string'
-              ? { english: cert.issuer, japanese: cert.issuer }
-              : cert.issuer || { english: "", japanese: "" },
-            date: typeof cert.date === 'string'
-              ? { english: cert.date, japanese: cert.date }
-              : cert.date || { english: "", japanese: "" }
-          })) : [],
           contact: {
+            ...data.contact,
             email: typeof data.contact?.email === 'string' ? data.contact.email : "",
             phone: typeof data.contact?.phone === 'string' ? data.contact.phone : "",
-            location: typeof data.contact?.location === 'string' 
+            location: typeof data.contact?.location === 'string'
               ? { english: data.contact.location, japanese: data.contact.location }
               : data.contact?.location || { english: "", japanese: "" },
             social: {
@@ -258,15 +254,18 @@ export default function HomePage() {
               facebook: typeof data.contact?.social?.facebook === 'string' ? data.contact.social.facebook : "",
               indeed: typeof data.contact?.social?.indeed === 'string' ? data.contact.social.indeed : ""
             }
-          }
+          },
+          certificates: Array.isArray(data.certificates) ? data.certificates : []
         };
         
+        console.log('✅ Sanitized portfolio data:', sanitizedData);
+        console.log('📄 CV data:', sanitizedData.cv);
         setPortfolioData(sanitizedData);
       } else {
-        // Failed to fetch portfolio data
+        console.error('❌ Failed to fetch portfolio data:', response.status);
       }
     } catch (error) {
-      // Error fetching portfolio data
+      console.error('💥 Error fetching portfolio data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -311,8 +310,12 @@ export default function HomePage() {
   // Contact form functions
   // NEW CV Download Function - Completely Rewritten
   const downloadCV = (language: 'en' | 'ja') => {
+    console.log('🚀 CV download requested for language:', language);
+    console.log('📊 Current portfolio data:', portfolioData);
+    
     // Check if portfolio data is loaded
     if (!portfolioData) {
+      console.log('❌ Portfolio data not loaded');
       setMessagePopupContent(
         language === 'en' 
           ? 'Loading portfolio data... Please try again.' 
@@ -330,7 +333,10 @@ export default function HomePage() {
       const cvKey = language === 'en' ? 'english' : 'japanese';
       const cvData = portfolioData.cv?.[cvKey];
       
+      console.log(`🔍 CV data for ${cvKey}:`, cvData);
+      
       if (!cvData) {
+        console.log('❌ CV data not found for language:', language);
         setMessagePopupContent(
           language === 'en' 
             ? 'CV not available. Please upload a CV first.' 
@@ -345,6 +351,7 @@ export default function HomePage() {
 
       // Check if CV is active
       if (!cvData.isActive) {
+        console.log('❌ CV is not active for language:', language);
         setMessagePopupContent(
           language === 'en' 
             ? 'CV is not available for download.' 
@@ -359,6 +366,7 @@ export default function HomePage() {
 
       // Check if URL exists
       if (!cvData.url) {
+        console.log('❌ CV URL not found for language:', language);
         setMessagePopupContent(
           language === 'en' 
             ? 'CV not available. Please upload a CV first.' 
@@ -371,6 +379,10 @@ export default function HomePage() {
         return;
       }
 
+      console.log('✅ CV data validated, proceeding with download');
+      console.log('🔗 CV URL:', cvData.url);
+      console.log('📄 CV filename:', cvData.filename);
+
       // Create download URL
       let downloadUrl = cvData.url;
       
@@ -378,6 +390,8 @@ export default function HomePage() {
       if (cvData.url.startsWith('/')) {
         downloadUrl = `${window.location.origin}${cvData.url}`;
       }
+      
+      console.log('🌐 Final download URL:', downloadUrl);
       
       // Create download link
       const link = document.createElement('a');
@@ -402,7 +416,7 @@ export default function HomePage() {
       setTimeout(() => setShowMessagePopup(false), 3000);
       setShowCVModal(false);
     } catch (error) {
-      console.error('CV download error:', error);
+      console.error('💥 CV download error:', error);
       setMessagePopupContent(
         language === 'en' 
           ? 'Failed to download CV. Please try again.' 
