@@ -7,7 +7,13 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Mushabbir Ahmed - AI Specialist & Software Engineer',
-      description: 'Professional portfolio of Mushabbir Ahmed, AI Specialist and Software Engineer.',
+  description: 'Professional portfolio of Mushabbir Ahmed, AI Specialist and Software Engineer.',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
+  manifest: '/site.webmanifest',
 }
 
 export default function RootLayout({
