@@ -13,9 +13,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
     
-    // Dynamically import to avoid build-time errors
-    const { PortfolioService } = await import('../../../lib/portfolioService');
-    const logs = await PortfolioService.getAdminLogs(limit);
+    // Import the function directly
+    const { getAdminLogs } = await import('../../../lib/portfolioService');
+    const logs = await getAdminLogs(limit);
     
     return NextResponse.json(logs);
   } catch (error) {

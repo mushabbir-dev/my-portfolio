@@ -1,9 +1,9 @@
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '../../../lib/supabase-server';
-import { getPortfolioData, updateSection } from '../../../lib/portfolioService';
-import { extractAssetsKeyFromPublicUrl } from '../../../lib/storage';
+import { supabaseAdmin } from '../../lib/supabase-server';
+import { getPortfolioData, updateSection } from '../../lib/portfolioService';
+import { extractAssetsKeyFromPublicUrl } from '../../lib/storage';
 
 export async function POST(req: Request) {
   try {
@@ -18,9 +18,8 @@ export async function POST(req: Request) {
 
     const sb = supabaseAdmin();
     const bytes = Buffer.from(await file.arrayBuffer());
-    const { error: upErr } = await sb.storage.from('assets').upload(key, bytes, {
-      upsert: true, contentType: file.type || 'application/pdf'
-    });
+    const { error: upErr } = await sb.storage.from('assets')
+      .upload(key, bytes, { upsert: true, contentType: file.type || 'application/pdf' });
     if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
 
     const { data: pub } = sb.storage.from('assets').getPublicUrl(key);
@@ -43,6 +42,7 @@ export async function DELETE(req: Request) {
     const urlInput = body.url as string | undefined;
 
     const current = await getPortfolioData();
+
     let lang: 'english' | 'japanese' | undefined;
     if (languageRaw) lang = languageRaw.startsWith('j') ? 'japanese' : 'english';
 

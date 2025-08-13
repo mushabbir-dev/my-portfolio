@@ -507,162 +507,147 @@ export default function AdminPage() {
     }
   }, []);
 
-  useEffect(() => {
-    // Load saved data from API
-    const fetchData = async () => {
-      try {
-    
-        const response = await fetch('/api/portfolio');
-        if (response.ok) {
-          const fetchedData = await response.json();
-  
-          
-          // Sanitize the fetched data to ensure correct structure
-          const sanitizedData = {
-            ...fetchedData,
-            hero: {
-              ...fetchedData.hero,
-              name: typeof fetchedData.hero?.name === 'string' 
-                ? { english: fetchedData.hero.name, japanese: fetchedData.hero.name }
-                : fetchedData.hero?.name || { english: "Mushabbir Ahmed", japanese: "ムサビル・アハメド" },
-              title: typeof fetchedData.hero?.title === 'string'
-                ? { english: fetchedData.hero.title, japanese: fetchedData.hero.title }
-                : fetchedData.hero?.title || { english: "AI Specialist & Software Engineer", japanese: "AIスペシャリスト・ソフトウェアエンジニア" },
-              subtitle: typeof fetchedData.hero?.subtitle === 'string'
-                ? { english: fetchedData.hero.subtitle, japanese: fetchedData.hero.subtitle }
-                : fetchedData.hero?.subtitle || { english: "Passionate about creating innovative solutions", japanese: "革新的なソリューションの創造に情熱を注ぐ" },
-              description: typeof fetchedData.hero?.description === 'string'
-                ? { english: fetchedData.hero.description, japanese: fetchedData.hero.description }
-                : fetchedData.hero?.description || { english: "I'm a results-driven AI Specialist and Software Engineer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan.", japanese: "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIスペシャリスト・ソフトウェアエンジニアです。" },
-              profilePicture: typeof fetchedData.hero?.profilePicture === 'string' ? fetchedData.hero.profilePicture : null,
-              tools: Array.isArray(fetchedData.hero?.tools) ? fetchedData.hero.tools : []
-            },
-            about: {
-              english: typeof fetchedData.about?.english === 'string' ? fetchedData.about.english : "",
-              japanese: typeof fetchedData.about?.japanese === 'string' ? fetchedData.about.japanese : "",
-              location: typeof fetchedData.about?.location === 'string' 
-                ? { english: fetchedData.about.location, japanese: fetchedData.about.location }
-                : (typeof fetchedData.about?.location === 'object' && fetchedData.about?.location?.english && fetchedData.about?.location?.japanese)
-                ? fetchedData.about.location
-                : { english: "Saga, Japan", japanese: "佐賀県、日本" },
-              status: typeof fetchedData.about?.status === 'string' ? fetchedData.about.status : "",
-              education: typeof fetchedData.about?.education === 'string' ? fetchedData.about.education : ""
-            },
-            education: Array.isArray(fetchedData.education) ? fetchedData.education.map((edu: any) => ({
-              ...edu,
-              institution: typeof edu.institution === 'string'
-                ? { english: edu.institution, japanese: edu.institution }
-                : edu.institution || { english: "", japanese: "" },
-              degree: typeof edu.degree === 'string'
-                ? { english: edu.degree, japanese: edu.degree }
-                : edu.degree || { english: "", japanese: "" },
-              period: typeof edu.period === 'string'
-                ? { english: edu.period, japanese: edu.period }
-                : edu.period || { english: "", japanese: "" },
-              description: typeof edu.description === 'string'
-                ? { english: edu.description, japanese: edu.description }
-                : edu.description || { english: "", japanese: "" },
-              achievements: {
-                english: Array.isArray(edu.achievements?.english) ? edu.achievements.english : [],
-                japanese: Array.isArray(edu.achievements?.japanese) ? edu.achievements.japanese : []
-              }
-            })) : [],
-            projects: Array.isArray(fetchedData.projects) ? fetchedData.projects.map((project: any) => ({
-              ...project,
-              title: typeof project.title === 'string'
-                ? { english: project.title, japanese: project.title }
-                : project.title || { english: "", japanese: "" },
-              description: typeof project.description === 'string'
-                ? { english: project.description, japanese: project.description }
-                : project.description || { english: "", japanese: "" },
-              technologies: Array.isArray(project.technologies) ? project.technologies : [],
-              images: Array.isArray(project.images) ? project.images : []
-            })) : [],
-            papers: Array.isArray(fetchedData.papers) ? fetchedData.papers.map((paper: any) => ({
-              ...paper,
-              title: typeof paper.title === 'string'
-                ? { english: paper.title, japanese: paper.title }
-                : (typeof paper.title === 'object' && paper.title?.english && paper.title?.japanese)
-                ? paper.title
-                : { english: "", japanese: "" },
-              date: typeof paper.date === 'string'
-                ? { english: paper.date, japanese: paper.date }
-                : (typeof paper.date === 'object' && paper.date?.english && paper.date?.japanese)
-                ? paper.date
-                : { english: "", japanese: "" },
-              conference: typeof paper.conference === 'string'
-                ? { english: paper.conference, japanese: paper.conference }
-                : (typeof paper.conference === 'object' && paper.conference?.english && paper.conference?.japanese)
-                ? paper.conference
-                : { english: "", japanese: "" }
-            })) : [],
-            certifications: Array.isArray(fetchedData.certifications) ? fetchedData.certifications.map((cert: any) => ({
-              ...cert,
-              name: typeof cert.name === 'string'
-                ? { english: cert.name, japanese: cert.name }
-                : (typeof cert.name === 'object' && cert.name?.english && cert.name?.japanese)
-                ? cert.name
-                : { english: "", japanese: "" },
-              issuer: typeof cert.issuer === 'string'
-                ? { english: cert.issuer, japanese: cert.issuer }
-                : (typeof cert.issuer === 'object' && cert.issuer?.english && cert.issuer?.japanese)
-                ? cert.issuer
-                : { english: "", japanese: "" },
-              date: typeof cert.date === 'string'
-                ? { english: cert.date, japanese: cert.date }
-                : (typeof cert.date === 'object' && cert.date?.english && cert.date?.japanese)
-                ? cert.date
-                : { english: "", japanese: "" }
-            })) : [],
-            contact: {
-              email: typeof fetchedData.contact?.email === 'string' ? fetchedData.contact.email : "",
-              phone: typeof fetchedData.contact?.phone === 'string' ? fetchedData.contact.phone : "",
-              location: typeof fetchedData.contact?.location === 'string'
-                ? { english: fetchedData.contact.location, japanese: fetchedData.contact.location }
-                : (typeof fetchedData.contact?.location === 'object' && fetchedData.contact?.location?.english && fetchedData.contact?.location?.japanese)
-                ? fetchedData.contact.location
-                : { english: "Saga, Japan", japanese: "佐賀県、日本" },
-              social: {
-                github: typeof fetchedData.contact?.github === 'string' ? fetchedData.contact.github :
-                       (typeof fetchedData.contact?.social?.github === 'string' ? fetchedData.contact.social.github : ""),
-                linkedin: typeof fetchedData.contact?.linkedin === 'string' ? fetchedData.contact.linkedin :
-                         (typeof fetchedData.contact?.social?.linkedin === 'string' ? fetchedData.contact.social.linkedin : ""),
-                whatsapp: typeof fetchedData.contact?.whatsapp === 'string' ? fetchedData.contact.whatsapp :
-                         (typeof fetchedData.contact?.social?.whatsapp === 'string' ? fetchedData.contact.social.whatsapp : ""),
-                facebook: typeof fetchedData.contact?.facebook === 'string' ? fetchedData.contact.facebook :
-                         (typeof fetchedData.contact?.social?.facebook === 'string' ? fetchedData.contact.social.facebook : ""),
-                indeed: typeof fetchedData.contact?.indeed === 'string' ? fetchedData.contact.indeed :
-                       (typeof fetchedData.contact?.social?.indeed === 'string' ? fetchedData.contact.social.indeed : "")
-              }
-            },
-            cv: {
-              english: {
-                url: typeof fetchedData.cv?.english === 'string' ? fetchedData.cv.english :
-                     (typeof fetchedData.cv?.english?.url === 'string' ? fetchedData.cv.english.url : ""),
-                filename: typeof fetchedData.cv?.english?.filename === 'string' ? fetchedData.cv.english.filename : "",
-                isActive: typeof fetchedData.cv?.english?.isActive === 'boolean' ? fetchedData.cv.english.isActive : false
-              },
-              japanese: {
-                url: typeof fetchedData.cv?.japanese === 'string' ? fetchedData.cv.japanese :
-                     (typeof fetchedData.cv?.japanese?.url === 'string' ? fetchedData.cv.japanese.url : ""),
-                filename: typeof fetchedData.cv?.japanese?.filename === 'string' ? fetchedData.cv.japanese.filename : "",
-                isActive: typeof fetchedData.cv?.japanese?.isActive === 'boolean' ? fetchedData.cv.japanese.isActive : false
-              }
+  // Load saved data from API
+  const fetchData = async () => {
+    try {
+      console.log('🔄 Fetching portfolio data from API...');
+      const response = await fetch('/api/portfolio');
+      if (response.ok) {
+        const fetchedData = await response.json();
+        console.log('📊 Raw fetched data:', fetchedData);
+        
+        // Sanitize the fetched data to ensure correct structure
+        const sanitizedData = {
+          ...fetchedData,
+          hero: {
+            ...fetchedData.hero,
+            name: typeof fetchedData.hero?.name === 'string' 
+              ? { english: fetchedData.hero.name, japanese: fetchedData.hero.name }
+              : fetchedData.hero?.name || { english: "Mushabbir Ahmed", japanese: "ムサビル・アハメド" },
+            title: typeof fetchedData.hero?.title === 'string'
+              ? { english: fetchedData.hero.title, japanese: fetchedData.hero.title }
+              : fetchedData.hero?.title || { english: "AI Specialist & Software Engineer", japanese: "AIスペシャリスト・ソフトウェアエンジニア" },
+            subtitle: typeof fetchedData.hero?.subtitle === 'string'
+              ? { english: fetchedData.hero.subtitle, japanese: fetchedData.hero.subtitle }
+              : fetchedData.hero?.subtitle || { english: "Passionate about creating innovative solutions", japanese: "革新的なソリューションの創造に情熱を注ぐ" },
+            description: typeof fetchedData.hero?.description === 'string'
+              ? { english: fetchedData.hero.description, japanese: fetchedData.hero.description }
+              : fetchedData.hero?.description || { english: "I'm a results-driven AI Specialist and Software Engineer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan.", japanese: "現在、佐賀大学大学院にて理工学専攻 知能情報工学コースの修士課程に在籍しているAIスペシャリスト・ソフトウェアエンジニアです。" },
+            profilePicture: typeof fetchedData.hero?.profilePicture === 'string' ? fetchedData.hero.profilePicture : null,
+            tools: Array.isArray(fetchedData.hero?.tools) ? fetchedData.hero.tools : []
+          },
+          about: {
+            english: typeof fetchedData.about?.english === 'string' ? fetchedData.about.english : "",
+            japanese: typeof fetchedData.about?.japanese === 'string' ? fetchedData.about.japanese : "",
+            location: typeof fetchedData.about?.location === 'string' 
+              ? { english: fetchedData.about.location, japanese: fetchedData.about.location }
+              : (typeof fetchedData.about?.location === 'object' && fetchedData.about?.location?.english && fetchedData.about?.location?.japanese)
+              ? fetchedData.about.location
+              : { english: "Saga, Japan", japanese: "佐賀県、日本" },
+            status: typeof fetchedData.about?.status === 'string' ? fetchedData.about.status : "",
+            education: typeof fetchedData.about?.education === 'string' ? fetchedData.about.education : ""
+          },
+          education: Array.isArray(fetchedData.education) ? fetchedData.education.map((edu: any) => ({
+            ...edu,
+            institution: typeof edu.institution === 'string'
+              ? { english: edu.institution, japanese: edu.institution }
+              : edu.institution || { english: "", japanese: "" },
+            degree: typeof edu.degree === 'string'
+              ? { english: edu.degree, japanese: edu.degree }
+              : edu.degree || { english: "", japanese: "" },
+            period: typeof edu.period === 'string'
+              ? { english: edu.period, japanese: edu.period }
+              : edu.period || { english: "", japanese: "" },
+            description: typeof edu.description === 'string'
+              ? { english: edu.description, japanese: edu.description }
+              : edu.description || { english: "", japanese: "" },
+            achievements: {
+              english: Array.isArray(edu.achievements?.english) ? edu.achievements.english : [],
+              japanese: Array.isArray(edu.achievements?.japanese) ? edu.achievements.japanese : []
             }
-          };
-          
-  
-          setData(sanitizedData);
-        } else {
-          console.error('Failed to fetch portfolio data');
-          setData(defaultData);
-        }
-      } catch (error) {
-        console.error('Error fetching portfolio data:', error);
-        setData(defaultData);
+          })) : [],
+          projects: Array.isArray(fetchedData.projects) ? fetchedData.projects.map((project: any) => ({
+            ...project,
+            title: typeof project.title === 'string'
+              ? { english: project.title, japanese: project.title }
+              : project.title || { english: "", japanese: "" },
+            description: typeof project.description === 'string'
+              ? { english: project.description, japanese: project.description }
+              : project.description || { english: "", japanese: "" },
+            technologies: Array.isArray(project.technologies) ? project.technologies : [],
+            images: Array.isArray(project.images) ? project.images : []
+          })) : [],
+          papers: Array.isArray(fetchedData.papers) ? fetchedData.papers.map((paper: any) => ({
+            ...paper,
+            title: typeof paper.title === 'string'
+              ? { english: paper.title, japanese: paper.title }
+              : (typeof paper.title === 'object' && paper.title?.english && paper.title?.japanese)
+              ? paper.title
+              : { english: "", japanese: "" },
+            date: typeof paper.date === 'string'
+              ? { english: paper.date, japanese: paper.date }
+              : (typeof paper.date === 'object' && paper.date?.english && paper.date?.japanese)
+              ? paper.date
+              : { english: "", japanese: "" },
+            conference: typeof paper.conference === 'string'
+              ? { english: paper.conference, japanese: paper.conference }
+              : (typeof paper.conference === 'object' && paper.conference?.english && paper.conference?.japanese)
+              ? paper.conference
+              : { english: "", japanese: "" }
+          })) : [],
+          certifications: Array.isArray(fetchedData.certifications) ? fetchedData.certifications.map((cert: any) => ({
+            ...cert,
+            name: typeof cert.name === 'string'
+              ? { english: cert.name, japanese: cert.name }
+              : (typeof cert.name === 'object' && cert.name?.english && cert.name?.japanese)
+              ? cert.name
+              : { english: "", japanese: "" },
+            issuer: typeof cert.issuer === 'string'
+              ? { english: cert.issuer, japanese: cert.issuer }
+              : (typeof cert.issuer === 'object' && cert.issuer?.english && cert.issuer?.japanese)
+              ? cert.issuer
+              : { english: "", japanese: "" },
+            date: typeof cert.date === 'string'
+              ? { english: cert.date, japanese: cert.date }
+              : (typeof cert.date === 'object' && cert.date?.english && cert.date?.japanese)
+              ? cert.date
+              : { english: "", japanese: "" },
+            image: typeof cert.image === 'string' ? cert.image : "",
+            pdf: typeof cert.pdf === 'string' ? cert.pdf : ""
+          })) : [],
+          cv: fetchedData.cv || {
+            english: { url: "", filename: "", isActive: false },
+            japanese: { url: "", filename: "", isActive: false }
+          },
+          contact: fetchedData.contact || {
+            email: "mushabbirahmed99@gmail.com",
+            phone: "(+81)090-3402-4637",
+            location: { english: "Saga, Japan", japanese: "佐賀県、日本" },
+            social: {
+              github: "https://github.com/mushabbir-ahmed",
+              linkedin: "https://linkedin.com/in/mushabbir-ahmed",
+              whatsapp: "https://wa.me/819034024637",
+              facebook: "https://facebook.com/mushabbir.ahmed",
+              indeed: "https://indeed.com/profile/mushabbir-ahmed"
+            }
+          }
+        };
+        
+        console.log('✅ Sanitized data:', sanitizedData);
+        setData(sanitizedData);
+      } else {
+        console.error('❌ Failed to fetch portfolio data:', response.status);
+        toast.error('Failed to load portfolio data. Using default data.');
+        // Keep using default data if fetch fails
       }
-    };
+    } catch (error) {
+      console.error('💥 Error fetching portfolio data:', error);
+      toast.error('Error loading portfolio data. Using default data.');
+      // Keep using default data if fetch fails
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -682,7 +667,7 @@ export default function AdminPage() {
   const saveData = async () => {
     setIsSaving(true);
     try {
-      
+      console.log('💾 Starting to save portfolio data...');
       
       // Ensure data structure is correct before saving
       const sanitizedData = {
@@ -744,86 +729,33 @@ export default function AdminPage() {
         papers: Array.isArray(data.papers) ? data.papers : []
       };
       
+      console.log('📝 Sanitized data prepared, saving to Supabase...');
       
+      // Use the main portfolio API to save the entire document
+      const response = await fetch('/api/portfolio', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sanitizedData)
+      });
       
-      // Compress the data by removing unnecessary whitespace
-      const compressedData = JSON.stringify(sanitizedData, null, 0);
-      
-      
-      // Check if data is too large and use section-specific API if needed
-      if (compressedData.length > 4 * 1024 * 1024) { // 4MB
-        console.warn('Data size is large, using section-specific updates:', compressedData.length, 'bytes');
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Portfolio saved successfully:', result);
+        toast.success('Portfolio updated successfully!');
         
-        // Save sections individually to avoid size limits
-        const sections = Object.keys(sanitizedData);
-        const results = [];
-        
-        for (const section of sections) {
-          try {
-            const sectionData = sanitizedData[section as keyof typeof sanitizedData];
-            const sectionDataString = JSON.stringify(sectionData);
-            
-            // Skip sections that are too large (like hero with base64 image)
-            if (sectionDataString.length > 2 * 1024 * 1024) { // 2MB per section
-              console.warn(`Section ${section} is too large:`, sectionDataString.length, 'bytes');
-              toast.warning(`Section ${section} is too large and will be skipped. Consider removing large images.`);
-              continue;
-            }
-            
-            const response = await fetch('/api/portfolio/sections', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                section,
-                data: sectionData
-              })
-            });
-            
-            if (response.ok) {
-              results.push({ section, success: true });
-      
-            } else {
-              const errorData = await response.json();
-              results.push({ section, success: false, error: errorData.error });
-              console.error(`❌ Section ${section} failed:`, errorData.error);
-            }
-          } catch (error) {
-            console.error(`Error saving section ${section}:`, error);
-            results.push({ section, success: false, error: error instanceof Error ? error.message : String(error) });
-          }
-        }
-        
-        const successfulSections = results.filter(r => r.success);
-        const failedSections = results.filter(r => !r.success);
-        
-        if (successfulSections.length > 0) {
-          toast.success(`Successfully saved ${successfulSections.length} sections!`);
-        }
-        
-        if (failedSections.length > 0) {
-          console.error('Some sections failed to save:', failedSections);
-          toast.error(`Failed to save: ${failedSections.map(f => f.section).join(', ')}`);
-        }
+        // Refresh data from server to ensure sync
+        await fetchData();
       } else {
-        // Use the regular API for smaller data
-        const response = await fetch('/api/portfolio', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: compressedData
-        });
-        
-        if (response.ok) {
-          toast.success('Portfolio updated successfully!');
-        } else {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to save data');
-        }
+        const errorData = await response.json();
+        console.error('❌ Save failed:', errorData);
+        throw new Error(errorData.error || 'Failed to save data');
       }
     } catch (error) {
-      console.error('Save error:', error);
-      toast.error('Failed to save portfolio data. Please try again.');
+      console.error('💥 Save error:', error);
+      toast.error(`Failed to save portfolio data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const updateData = async (section: keyof PortfolioData, updates: any) => {
@@ -1281,17 +1213,30 @@ export default function AdminPage() {
 
   const removeCV = async (language: 'en' | 'ja') => {
     try {
-      console.log('Removing CV for language:', language);
+      console.log('🗑️ Removing CV for language:', language);
       
-      const response = await fetch(`/api/upload/cv?language=${language}`, {
+      const cvKey = language === 'en' ? 'english' : 'japanese';
+      const currentCV = data.cv?.[cvKey];
+      
+      if (!currentCV?.url) {
+        toast.error('No CV found to delete for this language');
+        return;
+      }
+      
+      const response = await fetch('/api/upload/cv', {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language: language,
+          url: currentCV.url
+        })
       });
 
       const result = await response.json();
-      console.log('CV removal result:', result);
+      console.log('🗑️ CV removal result:', result);
 
       if (response.ok && result.success) {
-        const cvKey = language === 'en' ? 'english' : 'japanese';
+        // Update local state
         setData(prev => ({
           ...prev,
           cv: {
@@ -1304,17 +1249,17 @@ export default function AdminPage() {
           }
         }));
 
-        alert(`✅ CV removed successfully!\n\nMessage: ${result.message || 'CV deleted'}`);
+        toast.success(`✅ CV removed successfully for ${language === 'en' ? 'English' : 'Japanese'}!`);
+        
+        // Refresh data from server to ensure sync
+        await fetchData();
       } else {
-        console.error('CV delete failed:', result);
-        const errorMessage = result.details ? 
-          `Failed to delete CV:\n\nError: ${result.error}\n\nDetails: ${result.details}` :
-          `Failed to delete CV: ${result.error}`;
-        alert(errorMessage);
+        console.error('❌ CV delete failed:', result);
+        toast.error(`Failed to delete CV: ${result.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error deleting CV:', error);
-      alert(`❌ Error deleting CV:\n\n${error instanceof Error ? error.message : 'Unknown error occurred'}\n\nPlease check the console for more details.`);
+      console.error('💥 Error deleting CV:', error);
+      toast.error(`Error deleting CV: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
     }
   };
 

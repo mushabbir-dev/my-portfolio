@@ -1,4 +1,9 @@
+export const runtime = 'nodejs';
+
 import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '../../../lib/supabase-server';
+import { getPortfolioData, updateSection } from '../../../lib/portfolioService';
+import { extractAssetsKeyFromPublicUrl } from '../../../lib/storage';
 
 export async function POST(req: Request) {
   try {
@@ -22,10 +27,6 @@ export async function POST(req: Request) {
     if (!certificateName) {
       return NextResponse.json({ error: 'Certificate name required' }, { status: 400 });
     }
-
-    // Dynamically import to avoid build-time errors
-    const { supabaseAdmin } = await import('../../../lib/supabase-server');
-    const { getPortfolioData, updateSection } = await import('../../../lib/portfolioService');
 
     const sb = supabaseAdmin();
     
@@ -92,16 +93,13 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const { searchParams } = new URL(req.url);
-    const certificateId = searchParams.get('id');
+    const body = await req.json().catch(() => ({}));
+    const certificateId = body.id as string | undefined;
+    const urlInput = body.url as string | undefined;
     
     if (!certificateId) {
       return NextResponse.json({ error: 'Certificate ID required' }, { status: 400 });
     }
-
-    // Dynamically import to avoid build-time errors
-    const { supabaseAdmin } = await import('../../../lib/supabase-server');
-    const { getPortfolioData, updateSection } = await import('../../../lib/portfolioService');
 
     const sb = supabaseAdmin();
     
@@ -115,16 +113,17 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Certificate not found' }, { status: 404 });
     }
     
-    // Delete from Supabase Storage
-    const key = certificateToDelete.url.split('/').pop(); // Extract filename from URL
+    // Delete from Supabase Storage using the URL
+    const targetUrl = urlInput ?? certificateToDelete.url;
+    const key = extractAssetsKeyFromPublicUrl(targetUrl);
+    
     if (key) {
       const { error: deleteError } = await sb.storage
         .from('assets')
-        .remove([`certificates/${key}`]);
+        .remove([key]);
       
       if (deleteError) {
-        console.warn('Failed to delete file from storage:', deleteError);
-        // Continue with database update even if file deletion fails
+        return NextResponse.json({ error: `Storage remove failed: ${deleteError.message}`, key }, { status: 500 });
       }
     }
     
@@ -132,7 +131,7 @@ export async function DELETE(req: Request) {
     const updatedCertificates = existingCertificates.filter((cert: any) => cert.id !== certificateId);
     await updateSection('certificates', updatedCertificates);
     
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, keyRemoved: key });
     
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

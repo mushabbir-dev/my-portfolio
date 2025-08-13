@@ -1,4 +1,9 @@
+export const runtime = 'nodejs';
+
 import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '../../../lib/supabase-server';
+import { getPortfolioData, updateSection } from '../../../lib/portfolioService';
+import { extractAssetsKeyFromPublicUrl } from '../../../lib/storage';
 
 export async function POST(req: Request) {
   try {
@@ -21,10 +26,6 @@ export async function POST(req: Request) {
     const baseDir = target === 'project' ? `images/projects/${projectSlug}` : 'images';
     const key = `${baseDir}/${ts}.${ext}`;
 
-    // Dynamically import to avoid build-time errors
-    const { supabaseAdmin } = await import('../../../lib/supabase-server');
-    const { getPortfolioData, updateSection } = await import('../../../lib/portfolioService');
-    
     const sb = supabaseAdmin();
     const bytes = Buffer.from(await file.arrayBuffer());
 
@@ -45,5 +46,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, url });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
+  }
+}
+
+// DELETE: remove image from Storage
+export async function DELETE(req: Request) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const urlInput = body.url as string | undefined;
+
+    if (!urlInput) {
+      return NextResponse.json({ error: 'No URL provided' }, { status: 400 });
+    }
+
+    const key = extractAssetsKeyFromPublicUrl(urlInput);
+    if (!key) {
+      return NextResponse.json({ error: 'Could not derive storage key from URL' }, { status: 400 });
+    }
+
+    const sb = supabaseAdmin();
+    const { error: rmErr } = await sb.storage.from('assets').remove([key]);
+    if (rmErr) {
+      return NextResponse.json({ error: `Storage remove failed: ${rmErr.message}`, key }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, keyRemoved: key });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message ?? 'Unknown error' }, { status: 500 });
   }
 }

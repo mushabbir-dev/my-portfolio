@@ -1,106 +1,38 @@
-import { NextRequest, NextResponse } from 'next/server';
+export const runtime = 'nodejs';
 
-export async function POST(request: NextRequest) {
+import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '../../lib/supabase-server';
+import { getPortfolioData, updateSection } from '../../lib/portfolioService';
+
+export async function POST(req: Request) {
   try {
-    // Check if Supabase is configured
-    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE) {
-      return NextResponse.json(
-        { error: 'Supabase not configured' },
-        { status: 503 }
-      );
-    }
+    const form = await req.formData();
+    const file = form.get('image') as File | null;
+    const projectId = (form.get('projectId') as string | null) ?? null;
 
-    const formData = await request.formData();
-    const file = formData.get('image') as File;
-    const projectId = formData.get('projectId') as string;
+    if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    if (!projectId) return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-    }
-
-    if (!projectId) {
-      return NextResponse.json({ error: 'No project ID provided' }, { status: 400 });
-    }
-
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Invalid file type. Only JPEG, PNG, and WebP images are allowed.' },
-        { status: 400 }
-      );
-    }
-
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: 'File too large. Maximum size is 5MB.' },
-        { status: 400 }
-      );
-    }
-
-    // Upload to Supabase Storage
-    const ts = Date.now();
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const key = `images/projects/${projectId}/${ts}.${ext}`;
-
-    // Dynamically import to avoid build-time errors
-    const { supabaseAdmin } = await import('../../lib/supabase-server');
-    const { getPortfolioData, updateSection } = await import('../../lib/portfolioService');
-    
     const sb = supabaseAdmin();
+    const ext = (file.type?.split('/')[1] || 'png').toLowerCase();
+    const key = `images/projects/${projectId}.${ext}`;
     const bytes = Buffer.from(await file.arrayBuffer());
-
-    const { error: upErr } = await sb.storage.from('assets')
-      .upload(key, bytes, { upsert: true, contentType: file.type });
-    if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+    const { error: upErr } = await sb.storage.from('assets').upload(key, bytes, { upsert: true, contentType: file.type || 'image/png' });
+    if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
 
     const { data: pub } = sb.storage.from('assets').getPublicUrl(key);
-    const imageUrl = pub.publicUrl;
+    const url = pub.publicUrl;
 
-    // Update the project with the new image
-    try {
-      const currentData = await getPortfolioData();
-      const projects = currentData.projects || [];
-      const projectIndex = projects.findIndex((p: any) => p.id === projectId);
-      
-      if (projectIndex === -1) {
-        return NextResponse.json(
-          { error: 'Project not found' },
-          { status: 404 }
-        );
-      }
+    const current = await getPortfolioData();
+    const projects = Array.isArray(current.projects) ? current.projects.slice() : [];
+    const idx = projects.findIndex((p:any) => String(p.id) === String(projectId));
+    if (idx === -1) return NextResponse.json({ error: 'Project not found in portfolio JSON' }, { status: 404 });
 
-      // Add the new image to the project's images array
-      const updatedProject = {
-        ...projects[projectIndex],
-        images: [...(projects[projectIndex].images || []), imageUrl]
-      };
+    projects[idx] = { ...projects[idx], imageUrl: url };
+    await updateSection('projects', projects);
 
-      projects[projectIndex] = updatedProject;
-      
-      await updateSection('projects', projects);
-      
-      return NextResponse.json({ 
-        success: true, 
-        imageUrl: imageUrl,
-        filename: file.name
-      });
-      
-    } catch (updateError) {
-      console.error('Error updating project data:', updateError);
-      return NextResponse.json(
-        { error: 'Failed to update project data' },
-        { status: 500 }
-      );
-    }
-
-  } catch (error) {
-    console.error('Project image upload error:', error);
-    return NextResponse.json(
-      { error: 'Failed to upload project image', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, url, key });
+  } catch (e:any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 } 

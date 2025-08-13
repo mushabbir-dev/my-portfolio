@@ -1,0 +1,14 @@
+// app/page.tsx  (SERVER COMPONENT)
+import HomeClient from './components/HomeClient';
+import { getPortfolioData } from './lib/portfolioService';
+
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
+export default async function Page() {
+  // Read directly from Supabase on the server
+  const data = await getPortfolioData();
+
+  // Pass to the client page
+  return <HomeClient initialData={data} />;
+} 
