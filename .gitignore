@@ -54,3 +54,9 @@ next-env.d.ts
 
 # test files
 test-*.js
+
+# data population scripts (contain actual Supabase URLs)
+populate-*.js
+setup-database.js
+migrate-content-to-supabase.js
+verify-supabase-content.js
