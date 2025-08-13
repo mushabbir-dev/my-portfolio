@@ -706,39 +706,14 @@ export default function AdminPage() {
             const skills = fetchedData.skills;
             if (!skills || typeof skills !== 'object') {
               return {
-                languages: [
-                  { id: '1', name: 'Python', icon: '🐍' },
-                  { id: '2', name: 'JavaScript', icon: '💛' },
-                  { id: '3', name: 'SQL', icon: '🗄️' },
-                  { id: '4', name: 'C++', icon: '⚡' },
-                  { id: '5', name: 'HTML', icon: '🌐' },
-                  { id: '6', name: 'CSS', icon: '🎨' }
-                ],
-                frameworks: [
-                  { id: '1', name: 'React', icon: '⚛️' },
-                  { id: '2', name: 'Flask', icon: '🔥' },
-                  { id: '3', name: 'Spring Boot', icon: '🍃' },
-                  { id: '4', name: 'NumPy', icon: '📊' },
-                  { id: '5', name: 'Bootstrap', icon: '🎨' }
-                ],
-                databases: [
-                  { id: '1', name: 'MongoDB', icon: '🍃' },
-                  { id: '2', name: 'MongoDB Atlas', icon: '☁️' },
-                  { id: '3', name: 'MySQL', icon: '🐬' }
-                ],
-                tools: [
-                  { id: '1', name: 'Git', icon: '📝' },
-                  { id: '2', name: 'VS Code', icon: '💻' },
-                  { id: '3', name: 'Postman', icon: '📮' },
-                  { id: '4', name: 'MATLAB', icon: '🔬' },
-                  { id: '5', name: 'IBM Watson', icon: '🤖' },
-                  { id: '6', name: 'Excel', icon: '📈' },
-                  { id: '7', name: 'NetBeans', icon: '☕' }
-                ]
+                languages: [],
+                frameworks: [],
+                databases: [],
+                tools: []
               };
             }
             
-            // Ensure each category is an array
+            // Ensure each category is an array and preserve existing data
             return {
               languages: Array.isArray(skills.languages) ? skills.languages : [],
               frameworks: Array.isArray(skills.frameworks) ? skills.frameworks : [],
@@ -1145,7 +1120,7 @@ export default function AdminPage() {
       const response = await fetch('/api/portfolio', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section: 'skills', key: skillToRemove.id || index.toString() })
+        body: JSON.stringify({ section: 'skills', id: skillToRemove.id || index.toString() })
       });
 
       if (response.ok) {
@@ -1211,7 +1186,7 @@ export default function AdminPage() {
       const response = await fetch('/api/portfolio', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section: 'certifications', key: id })
+        body: JSON.stringify({ section: 'certifications', id: id })
       });
 
       if (response.ok) {
@@ -1272,7 +1247,7 @@ export default function AdminPage() {
       const response = await fetch('/api/portfolio', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section: 'projects', key: id })
+        body: JSON.stringify({ section: 'projects', id: id })
       });
 
       if (response.ok) {
@@ -1480,7 +1455,7 @@ export default function AdminPage() {
       const response = await fetch('/api/portfolio', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section: 'papers', key: id })
+        body: JSON.stringify({ section: 'papers', id: id })
       });
 
       if (response.ok) {
@@ -2183,13 +2158,13 @@ export default function AdminPage() {
                       placeholder="🔧"
                       readOnly
                     />
-                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-10 max-h-40 overflow-y-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
+                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-50 max-h-40 overflow-y-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
                       <div className="grid grid-cols-8 gap-1">
                         {['💻', '🔧', '⚡', '🚀', '🎯', '🔮', '🌟', '💡', '🔥', '⚙️', '🎨', '📱', '☁️', '🔒', '📊', '🎮', '🤖', '🌐', '📦', '🔍', '⚡', '🎪', '🎭', '🎨', '🎵', '🎬', '📚', '🎓', '🏆', '💎', '🔋', '📡', '🛡️'].map((icon, iconIndex) => (
                           <button
                             key={`${icon}-${iconIndex}`}
                             onClick={() => updateSkill(category, index, { icon })}
-                            className="w-8 h-8 text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center"
+                            className="w-8 h-8 text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center transition-colors duration-150"
                           >
                             {icon}
                           </button>

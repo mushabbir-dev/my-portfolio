@@ -1,24 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-export async function GET(request: NextRequest) {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+export async function GET(request: Request) {
   try {
-    // Check if Supabase is configured
-    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE) {
-      return NextResponse.json(
-        { error: 'Supabase not configured' },
-        { status: 503 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
+
+    // For now, return an empty array since we don't have a logs table
+    // In the future, you can implement actual logging to Supabase
+    const logs: any[] = [];
     
-    // Placeholder implementation - return empty logs for now
-    return NextResponse.json({
-      logs: [],
-      total: 0,
-      limit
-    });
+    return NextResponse.json(logs);
   } catch (error) {
     console.error('Error fetching admin logs:', error);
     return NextResponse.json(
