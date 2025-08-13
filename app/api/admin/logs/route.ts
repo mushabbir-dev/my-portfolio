@@ -13,11 +13,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
     
-    // Import the function directly
-    const { getAdminLogs } = await import('../../../lib/portfolioService');
-    const logs = await getAdminLogs(limit);
-    
-    return NextResponse.json(logs);
+    // Placeholder implementation - return empty logs for now
+    return NextResponse.json({
+      logs: [],
+      total: 0,
+      limit
+    });
   } catch (error) {
     console.error('Error fetching admin logs:', error);
     return NextResponse.json(
