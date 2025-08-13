@@ -1117,10 +1117,25 @@ export default function AdminPage() {
   const removeSkill = async (category: keyof PortfolioData['skills'], index: number) => {
     try {
       const skillToRemove = data.skills[category][index];
+      
+      // Ensure the skill has a proper ID
+      if (!skillToRemove.id) {
+        // If no ID, just remove from local state
+        setData(prev => ({
+          ...prev,
+          skills: {
+            ...prev.skills,
+            [category]: prev.skills[category].filter((_, i) => i !== index)
+          }
+        }));
+        toast.success(`${category} skill removed successfully!`);
+        return;
+      }
+
       const response = await fetch('/api/portfolio', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section: 'skills', id: skillToRemove.id || index.toString() })
+        body: JSON.stringify({ section: 'skills', id: skillToRemove.id })
       });
 
       if (response.ok) {
@@ -2148,44 +2163,69 @@ export default function AdminPage() {
               }
               
               return skills.map((skill, index) => (
-                <div key={skill.id || `skill-${category}-${index}`} className="flex items-center space-x-3">
+                <motion.div 
+                  key={skill.id || `skill-${category}-${index}`} 
+                  className="flex items-center space-x-3"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
+                >
                   <div className="relative group">
-                    <input
+                    <motion.input
                       type="text"
                       value={skill.icon || ''}
                       onChange={(e) => updateSkill(category, index, { icon: e.target.value })}
                       className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center cursor-pointer"
                       placeholder="🔧"
                       readOnly
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
                     />
-                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-50 max-h-40 overflow-y-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
+                    <motion.div 
+                      className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-50 max-h-40 overflow-y-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto"
+                      initial={{ opacity: 0, y: -10, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.2 }}
+                    >
                       <div className="grid grid-cols-8 gap-1">
                         {['💻', '🔧', '⚡', '🚀', '🎯', '🔮', '🌟', '💡', '🔥', '⚙️', '🎨', '📱', '☁️', '🔒', '📊', '🎮', '🤖', '🌐', '📦', '🔍', '⚡', '🎪', '🎭', '🎨', '🎵', '🎬', '📚', '🎓', '🏆', '💎', '🔋', '📡', '🛡️'].map((icon, iconIndex) => (
-                          <button
+                          <motion.button
                             key={`${icon}-${iconIndex}`}
                             onClick={() => updateSkill(category, index, { icon })}
                             className="w-8 h-8 text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center transition-colors duration-150"
-                          >
-                            {icon}
-                          </button>
+                            whileHover={{ scale: 1.2, rotate: 5 }}
+                            whileTap={{ scale: 0.9 }}
+                            transition={{ duration: 0.15 }}
+                                                      >
+                              {icon}
+                            </motion.button>
                         ))}
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
-                  <input
+                  <motion.input
                     type="text"
                     value={skill.name || ''}
                     onChange={(e) => updateSkill(category, index, { name: e.target.value })}
                     className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="Skill name"
+                    whileFocus={{ scale: 1.02, borderColor: '#3b82f6' }}
+                    transition={{ duration: 0.2 }}
                   />
-                  <button
+                  <motion.button
                     onClick={() => removeSkill(category, index)}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
                   >
                     <Trash2 className="h-5 w-4" />
-                  </button>
-                </div>
+                  </motion.button>
+                </motion.div>
               ));
             })()}
           </div>

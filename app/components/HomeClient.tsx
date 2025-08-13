@@ -1429,13 +1429,23 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                               <span className="mr-2">📄</span>
                               {language === 'en' ? 'PDF Preview' : 'PDFプレビュー'}
                             </h4>
-                            <div className="w-full h-96 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-sm">
+                            <div className="w-full h-80 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-lg relative">
+                              <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg" />
                               <iframe
-                                src={`${paper.paperPdf}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                                className="w-full h-full"
+                                src={`${paper.paperPdf}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=85`}
+                                className="w-full h-full relative z-10"
                                 title={getMultilingualText(paper.title, language, 'Paper')}
                                 style={{ border: 'none' }}
                               />
+                              <motion.div 
+                                className="absolute bottom-2 right-2 bg-white/80 dark:bg-gray-800/80 rounded-full p-2 shadow-lg"
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.5 }}
+                                whileHover={{ scale: 1.1 }}
+                              >
+                                <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                              </motion.div>
                             </div>
                           </motion.div>
                         )}
@@ -1543,18 +1553,28 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                     {/* PDF Display - Now on Top */}
                     {cert.pdf && (
                       <motion.div 
-                        className="w-full h-96 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4 border border-gray-200 dark:border-gray-600 shadow-sm"
+                        className="w-full h-80 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg overflow-hidden mb-4 border border-gray-200 dark:border-gray-600 shadow-lg relative"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        whileHover={{ scale: 1.02 }}
+                        whileHover={{ scale: 1.02, y: -5 }}
                       >
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg" />
                         <iframe
-                          src={`${cert.pdf}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                          className="w-full h-full"
+                          src={`${cert.pdf}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=85`}
+                          className="w-full h-full relative z-10"
                           title={getMultilingualText(cert.name, language, 'Certification')}
                           style={{ border: 'none' }}
                         />
+                        <motion.div 
+                          className="absolute bottom-2 right-2 bg-white/80 dark:bg-gray-800/80 rounded-full p-2 shadow-lg"
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.3 }}
+                          whileHover={{ scale: 1.1 }}
+                        >
+                          <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </motion.div>
                       </motion.div>
                     )}
                     
