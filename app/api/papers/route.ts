@@ -30,7 +30,13 @@ export async function POST(req: Request) {
     const idx = papers.findIndex((p:any) => String(p.id) === String(paperId));
     if (idx === -1) return NextResponse.json({ error: 'Paper not found' }, { status: 404 });
 
-    papers[idx] = { ...papers[idx], url, type: ext === 'pdf' ? 'pdf' : fileType, filename: file.name, isActive: true, uploadedAt: new Date().toISOString() };
+    papers[idx] = { 
+      ...papers[idx], 
+      paperPdf: url, 
+      paperFilename: file.name, 
+      isActive: true, 
+      uploadedAt: new Date().toISOString() 
+    };
     await updateSection('papers', papers);
 
     return NextResponse.json({ success: true, url, key });

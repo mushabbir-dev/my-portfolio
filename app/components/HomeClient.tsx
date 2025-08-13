@@ -29,7 +29,8 @@ import {
   Briefcase,
   FileImage,
   Presentation,
-  CheckCircle
+  CheckCircle,
+  MessageSquare
 } from 'lucide-react';
 
 import dynamic from 'next/dynamic';
@@ -53,6 +54,13 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       return obj[language === 'en' ? 'english' : 'japanese'] || fallback;
     }
     return fallback;
+  };
+
+  // Helper function to safely get array data
+  const getSafeArray = (data: any, key: string): any[] => {
+    if (!data || typeof data !== 'object') return [];
+    const value = data[key];
+    return Array.isArray(value) ? value : [];
   };
 
   // Helper function to validate data structure
@@ -86,7 +94,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   const [isDark, setIsDark] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeSkillCategory, setActiveSkillCategory] = useState('languages');
+  const [activeSkillCategory, setActiveSkillCategory] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -119,6 +127,27 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
     setIsClient(true);
   }, []);
+
+  // Set initial skill category when data loads
+  useEffect(() => {
+    if (portfolioData?.skills && Object.keys(portfolioData.skills).length > 0) {
+      setActiveSkillCategory(Object.keys(portfolioData.skills)[0]);
+    }
+  }, [portfolioData?.skills]);
+
+  // Debug: Log portfolio data structure
+  useEffect(() => {
+    if (portfolioData) {
+      console.log('🔍 Portfolio Data Structure:', {
+        skills: portfolioData.skills,
+        education: portfolioData.education,
+        experience: portfolioData.experience,
+        projects: portfolioData.projects,
+        papers: portfolioData.papers,
+        certifications: portfolioData.certifications
+      });
+    }
+  }, [portfolioData]);
 
   // Update dark mode class
   useEffect(() => {
@@ -299,6 +328,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     setLanguage(prev => prev === 'en' ? 'ja' : 'en');
   };
 
+
+
+
+
   // Safer render: guard against null once
   if (!portfolioData) {
     return <main className="p-6">Loading…</main>;
@@ -337,6 +370,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               {[
                 { id: 'about', label: language === 'en' ? 'About' : '自己紹介' },
                 { id: 'education', label: language === 'en' ? 'Education' : '学歴' },
+                { id: 'experience', label: language === 'en' ? 'Experience' : '職歴' },
                 { id: 'papers', label: language === 'en' ? 'Papers' : '論文' },
                 { id: 'skills', label: language === 'en' ? 'Skills' : 'スキル' },
                 { id: 'projects', label: language === 'en' ? 'Projects' : 'プロジェクト' },
@@ -398,7 +432,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               className="md:hidden border-t border-gray-200 dark:border-gray-700"
             >
               <div className="py-4 space-y-4">
-                {['about', 'education', 'skills', 'projects', 'certifications', 'contact'].map((item) => (
+                {['about', 'education', 'experience', 'skills', 'projects', 'papers', 'certifications', 'contact'].map((item) => (
                   <button
                     key={item}
                     onClick={() => scrollToSection(item)}
@@ -429,6 +463,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
+                whileHover={{
+                  scale: 1.05,
+                  y: -5
+                }}
               >
                 {getMultilingualText(portfolioData?.hero?.name, language, language === 'en' ? "Hi, I'm Mushabbir" : "こんにちは、ムサビルです")}
               </motion.h1>
@@ -724,115 +762,235 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           </motion.div>
 
           <div className="grid lg:grid-cols-2 gap-8">
-            {(portfolioData?.education || []).map((edu: any, index: number) => (
-              <motion.div
-                key={`edu-${edu.id}-${language}`}
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ 
-                  duration: 0.6, 
-                  delay: index * 0.2,
-                  type: "spring",
-                  stiffness: 100
-                }}
-                viewport={{ once: true }}
-                whileHover={{ 
-                  scale: 1.02, 
-                  y: -5,
-                  transition: { duration: 0.3 }
-                }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
-              >
-                <div className="flex items-center space-x-4 mb-6">
-                  <motion.div 
-                    className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 dark:from-blue-600 dark:to-purple-800 rounded-full flex items-center justify-center"
-                    whileHover={{ rotate: 360, scale: 1.1 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    <span className="text-2xl">🎓</span>
-                  </motion.div>
-                  <div className="flex-1">
-                    <motion.h3 
-                      className="text-2xl font-bold text-gray-900 dark:text-white mb-2"
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: 0.1 }}
-                      viewport={{ once: true }}
+            {(() => {
+              const education = getSafeArray(portfolioData, 'education');
+              return education.length > 0 ? education.map((edu: any, index: number) => (
+                <motion.div
+                  key={`edu-${edu.id || index}`}
+                  initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ 
+                    duration: 0.6, 
+                    delay: index * 0.2,
+                    type: "spring",
+                    stiffness: 100
+                  }}
+                  viewport={{ once: true }}
+                  whileHover={{ 
+                    scale: 1.02, 
+                    y: -5,
+                    transition: { duration: 0.3 }
+                  }}
+                  className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
+                >
+                  <div className="flex items-center space-x-4 mb-6">
+                    <motion.div 
+                      className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 dark:from-blue-600 dark:to-purple-800 rounded-full flex items-center justify-center"
+                      whileHover={{ rotate: 360, scale: 1.1 }}
+                      transition={{ duration: 0.6 }}
                     >
-                      {getMultilingualText(edu.institution, language, '')}
-                    </motion.h3>
+                      <span className="text-2xl">🎓</span>
+                    </motion.div>
+                    <div className="flex-1">
+                      <motion.h3 
+                        className="text-2xl font-bold text-gray-900 dark:text-white mb-2"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 }}
+                        viewport={{ once: true }}
+                      >
+                        {getMultilingualText(edu.institution, language, '')}
+                      </motion.h3>
+                      <motion.p 
+                        className="text-blue-600 dark:text-blue-400 font-medium text-lg"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.2 }}
+                        viewport={{ once: true }}
+                      >
+                        {getMultilingualText(edu.degree, language, '')}
+                      </motion.p>
+                      <motion.p 
+                        className="text-gray-600 dark:text-gray-400 text-sm"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.3 }}
+                        viewport={{ once: true }}
+                      >
+                        {getMultilingualText(edu.period, language, '')}
+                      </motion.p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
                     <motion.p 
-                      className="text-blue-600 dark:text-blue-400 font-medium text-lg"
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: 0.2 }}
+                      className="text-gray-600 dark:text-gray-300 leading-relaxed"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.4 }}
                       viewport={{ once: true }}
                     >
-                      {getMultilingualText(edu.degree, language, '')}
+                      {getMultilingualText(edu.description, language, '')}
                     </motion.p>
-                    <motion.p 
-                      className="text-gray-600 dark:text-gray-400 text-sm"
-                      initial={{ opacity: 0, x: -20 }}
+                    
+                    {edu.achievements && (
+                      <div>
+                        <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                          {language === 'en' ? 'Key Achievements:' : '主要な成果：'}
+                        </h4>
+                        <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400">
+                          {Array.isArray(edu.achievements) ? edu.achievements.map((achievement: any, achievementIndex: number) => (
+                            <li key={achievementIndex}>
+                              {getMultilingualText(achievement, language, '')}
+                            </li>
+                          )) : (
+                            <li>{getMultilingualText(edu.achievements, language, '')}</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )) : (
+                <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+                  {language === 'en' ? 'No education found.' : '教育が見つかりません。'}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      </section>
+
+      {/* Experience Section */}
+      <section id="experience" className="py-20 bg-white dark:bg-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6 gradient-text">
+              {language === 'en' ? 'Professional Experience' : '職歴'}
+            </h2>
+            <p className="text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+              {language === 'en' 
+                ? 'My professional journey and work experience in software development and AI.'
+                : 'ソフトウェア開発とAIにおける私の職歴と実務経験。'
+              }
+            </p>
+          </motion.div>
+
+          <div className="space-y-8">
+            {(() => {
+              const experience = getSafeArray(portfolioData, 'experience');
+              return experience.length > 0 ? experience.map((exp: any, index: number) => (
+                <motion.div
+                  key={`exp-${exp.id || index}`}
+                  initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ 
+                    duration: 0.6, 
+                    delay: index * 0.2,
+                    type: "spring",
+                    stiffness: 100
+                  }}
+                  viewport={{ once: true }}
+                  whileHover={{ 
+                    scale: 1.01, 
+                    y: -2,
+                    transition: { duration: 0.3 }
+                  }}
+                  className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-blue-500"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+                    <div className="flex items-center space-x-4 mb-4 lg:mb-0">
+                      <motion.div 
+                        className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 rounded-full flex items-center justify-center"
+                        whileHover={{ rotate: 360, scale: 1.1 }}
+                        transition={{ duration: 0.6 }}
+                      >
+                        <Briefcase className="h-8 w-8 text-white" />
+                      </motion.div>
+                      <div>
+                        <motion.h3 
+                          className="text-2xl font-bold text-gray-900 dark:text-white mb-2"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: 0.1 }}
+                          viewport={{ once: true }}
+                        >
+                          {getMultilingualText(exp.title, language, '')}
+                        </motion.h3>
+                        <motion.p 
+                          className="text-blue-600 dark:text-blue-400 font-medium text-lg"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: 0.2 }}
+                          viewport={{ once: true }}
+                        >
+                          {getMultilingualText(exp.company, language, '')}
+                        </motion.p>
+                      </div>
+                    </div>
+                    <motion.div 
+                      className="text-right"
+                      initial={{ opacity: 0, x: 20 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.4, delay: 0.3 }}
                       viewport={{ once: true }}
                     >
-                      {getMultilingualText(edu.period, language, '')}
-                    </motion.p>
+                      <span className="inline-block px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+                        {getMultilingualText(exp.period, language, '')}
+                      </span>
+                    </motion.div>
                   </div>
-                </div>
-                
-                <div className="space-y-4">
+                  
                   <motion.p 
-                    className="text-gray-600 dark:text-gray-300 leading-relaxed"
+                    className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.4 }}
                     viewport={{ once: true }}
                   >
-                    {getMultilingualText(edu.description, language, '')}
+                    {getMultilingualText(exp.description, language, '')}
                   </motion.p>
                   
-                  {edu.achievements && (
+                  {exp.technologies && exp.technologies.length > 0 && (
                     <motion.div 
-                      className="space-y-2"
+                      className="flex flex-wrap gap-2"
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: 0.5 }}
                       viewport={{ once: true }}
                     >
-                      <h4 className="font-semibold text-gray-700 dark:text-gray-300 text-sm uppercase tracking-wide">
-                        {language === 'en' ? 'Achievements' : '実績'}
-                      </h4>
-                      <div className="space-y-1">
-                        {(language === 'en' 
-                          ? (edu.achievements?.english || [])
-                          : (edu.achievements?.japanese || edu.achievements?.english || [])
-                        ).map((achievement: string, i: number) => (
-                          <motion.p 
-                            key={i} 
-                            className="text-sm text-gray-600 dark:text-gray-400 flex items-start"
-                            initial={{ opacity: 0, x: -10 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.3, delay: 0.6 + i * 0.1 }}
-                            viewport={{ once: true }}
-                          >
-                            <span className="text-blue-500 mr-2">•</span>
-                            {achievement}
-                          </motion.p>
-                        ))}
-                      </div>
+                      {exp.technologies.map((tech: string, techIndex: number) => (
+                        <motion.span
+                          key={techIndex}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: techIndex * 0.1 }}
+                          className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full"
+                        >
+                          {tech}
+                        </motion.span>
+                      ))}
                     </motion.div>
                   )}
+                </motion.div>
+              )) : (
+                <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                  {language === 'en' ? 'No experience entries found.' : '職歴が見つかりません。'}
                 </div>
-              </motion.div>
-            ))}
+              );
+            })()}
           </div>
         </div>
       </section>
 
       {/* Skills Section */}
-      <section id="skills" className="py-20 bg-white dark:bg-gray-800">
+      <section id="skills" className="py-20 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -854,27 +1012,44 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
           {/* Skill Categories */}
           <div className="flex flex-wrap justify-center gap-4 mb-12">
-            {[
-              { id: 'languages', name: language === 'en' ? 'Languages' : 'プログラミング言語', icon: <Code className="h-5 w-5" /> },
-              { id: 'frontend', name: language === 'en' ? 'Frontend' : 'フロントエンド', icon: <Globe className="h-5 w-5" /> },
-              { id: 'backend', name: language === 'en' ? 'Backend' : 'バックエンド', icon: <Database className="h-5 w-5" /> },
-              { id: 'tools', name: language === 'en' ? 'Tools & Platforms' : 'ツール・プラットフォーム', icon: <Cloud className="h-5 w-5" /> }
-            ].map((category) => (
-              <motion.button
-                key={category.id}
-                onClick={() => setActiveSkillCategory(category.id)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
-                  activeSkillCategory === category.id
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {category.icon}
-                <span>{category.name}</span>
-              </motion.button>
-            ))}
+            {(() => {
+              // Get all available skill categories dynamically
+              const skillCategories = portfolioData?.skills ? Object.keys(portfolioData.skills) : [];
+              const categoryLabels: { [key: string]: { en: string; ja: string; icon: any } } = {
+                languages: { en: 'Languages', ja: 'プログラミング言語', icon: <Code className="h-5 w-5" /> },
+                frontend: { en: 'Frontend', ja: 'フロントエンド', icon: <Globe className="h-5 w-5" /> },
+                backend: { en: 'Backend', ja: 'バックエンド', icon: <Database className="h-5 w-5" /> },
+                ai_ml: { en: 'AI & ML', ja: 'AI・機械学習', icon: <Brain className="h-5 w-5" /> },
+                cloud: { en: 'Cloud & DevOps', ja: 'クラウド・DevOps', icon: <Cloud className="h-5 w-5" /> },
+                tools: { en: 'Tools & Platforms', ja: 'ツール・プラットフォーム', icon: <Code className="h-5 w-5" /> },
+                mobile: { en: 'Mobile Development', ja: 'モバイル開発', icon: <Smartphone className="h-5 w-5" /> }
+              };
+
+              return skillCategories.map((categoryId) => {
+                const category = categoryLabels[categoryId] || { 
+                  en: categoryId.charAt(0).toUpperCase() + categoryId.slice(1), 
+                  ja: categoryId,
+                  icon: <Code className="h-5 w-5" />
+                };
+                
+                return (
+                  <motion.button
+                    key={categoryId}
+                    onClick={() => setActiveSkillCategory(categoryId)}
+                    className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
+                      activeSkillCategory === categoryId
+                        ? 'bg-blue-600 text-white shadow-lg'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {category.icon}
+                    <span>{language === 'en' ? category.en : category.ja}</span>
+                  </motion.button>
+                );
+              });
+            })()}
           </div>
 
           {/* Skills Grid */}
@@ -885,36 +1060,64 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             transition={{ duration: 0.5 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {(portfolioData?.skills?.[activeSkillCategory as keyof typeof portfolioData.skills] || []).map((skill: any, index: number) => (
-              <motion.div
-                key={skill.name || skill}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ 
-                  scale: 1.05,
-                  y: -5,
-                  boxShadow: "0 20px 25px -5px rgba(59, 130, 246, 0.2), 0 10px 10px -5px rgba(59, 130, 246, 0.1)"
-                }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg card-hover card-glow relative overflow-hidden group"
-              >
-                <div className="flex items-center space-x-3 relative z-10">
-                  <motion.span 
-                    className="text-2xl"
-                    whileHover={{ 
-                      scale: 1.2,
-                      rotate: [0, -10, 10, 0]
-                    }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {skill.icon || '💻'}
-                  </motion.span>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
-                    {skill.name || skill}
-                  </h3>
-                </div>
-              </motion.div>
-            ))}
+            {(() => {
+              // Ensure we have valid skills data for the active category
+              const skillsData = portfolioData?.skills;
+              if (!skillsData || typeof skillsData !== 'object') {
+                return (
+                  <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+                    {language === 'en' ? 'No skills data available.' : 'スキルデータが利用できません。'}
+                  </div>
+                );
+              }
+              
+              const skills = getSafeArray(skillsData, activeSkillCategory);
+              if (!Array.isArray(skills) || skills.length === 0) {
+                return (
+                  <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+                    {language === 'en' ? 'No skills found for this category.' : 'このカテゴリのスキルが見つかりません。'}
+                  </div>
+                );
+              }
+              
+              return skills.map((skill: any, index: number) => (
+                <motion.div
+                  key={skill.id || skill.name || `skill-${activeSkillCategory}-${index}`}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ 
+                    scale: 1.05,
+                    y: -5,
+                    boxShadow: "0 20px 25px -5px rgba(59, 130, 246, 0.2), 0 10px 10px -5px rgba(59, 130, 246, 0.1)"
+                  }}
+                  className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg card-hover card-glow relative overflow-hidden group"
+                >
+                  <div className="flex items-center space-x-3 relative z-10">
+                    <motion.span 
+                      className="text-2xl"
+                      whileHover={{ 
+                        scale: 1.2,
+                        rotate: [0, -10, 10, 0]
+                      }}
+                      animate={{
+                        scale: [1, 1.1, 1]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatType: "reverse"
+                      }}
+                    >
+                      {skill.icon || '💻'}
+                    </motion.span>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                      {skill.name || skill}
+                    </h3>
+                  </div>
+                </motion.div>
+              ));
+            })()}
           </motion.div>
         </div>
       </section>
@@ -941,115 +1144,122 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           </motion.div>
 
           <div className="grid lg:grid-cols-2 gap-8">
-            {(portfolioData?.projects || []).map((project: any, index: number) => (
-              <motion.div
-                key={project.id || getMultilingualText(project.title, language, 'Project')}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                whileHover={{ 
-                  scale: 1.02,
-                  y: -10,
-                  boxShadow: "0 25px 50px -12px rgba(59, 130, 246, 0.25)"
-                }}
-                className="bg-white dark:bg-gray-700 rounded-xl overflow-hidden shadow-lg card-hover card-glow relative"
-              >
-                <div className="relative h-64 bg-gradient-to-br from-blue-500 to-purple-600">
-                  {project.images && project.images.length > 0 ? (
-                    <div className="relative h-full">
-                      <img
-                        src={project.images[0]}
-                        alt={getMultilingualText(project.title, language, "Project")}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/40"></div>
-                      <button
-                        onClick={() => openImageModal(project.images)}
-                        className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors duration-200"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="absolute inset-0 bg-black/20"></div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center text-white">
-                          <h3 className="text-2xl font-bold mb-2">{getMultilingualText(project.title, language, "Project")}</h3>
-                          <p className="text-white/80">{getMultilingualText(project.description, language, "")}</p>
-                        </div>
+            {(() => {
+              const projects = getSafeArray(portfolioData, 'projects');
+              return projects.length > 0 ? projects.map((project: any, index: number) => (
+                <motion.div
+                  key={project.id || getMultilingualText(project.title, language, 'Project')}
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: index * 0.2 }}
+                  viewport={{ once: true }}
+                  whileHover={{ 
+                    scale: 1.02,
+                    y: -10,
+                    boxShadow: "0 25px 50px -12px rgba(59, 130, 246, 0.25)"
+                  }}
+                  className="bg-white dark:bg-gray-700 rounded-xl overflow-hidden shadow-lg card-hover card-glow relative"
+                >
+                  <div className="relative h-64 bg-gradient-to-br from-blue-500 to-purple-600">
+                    {project.images && project.images.length > 0 ? (
+                      <div className="relative h-full">
+                        <img
+                          src={project.images[0]}
+                          alt={getMultilingualText(project.title, language, "Project")}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40"></div>
+                        <button
+                          onClick={() => openImageModal(project.images)}
+                          className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors duration-200"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </button>
                       </div>
-                    </>
-                  )}
-                </div>
-                <div className="p-6 relative">
-                  <div className="relative z-10">
-                    <motion.h3 
-                      className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300"
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      {getMultilingualText(project.title, language, 'Project')}
-                    </motion.h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      {getMultilingualText(project.description, language, '')}
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {(project.technologies || []).map((tech: string, techIndex: number) => (
-                        <motion.span
-                          key={tech}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: techIndex * 0.1 }}
-                          whileHover={{ 
-                            scale: 1.1,
-                            backgroundColor: "rgb(59 130 246 / 0.2)",
-                            color: "rgb(59 130 246)"
-                          }}
-                          className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm rounded-full transition-all duration-300 cursor-pointer"
-                        >
-                          {tech}
-                        </motion.span>
-                      ))}
-                    </div>
-                    <div className="flex gap-4">
-                      {project.github && (
-                        <motion.a
-                          href={project.github}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          whileHover={{ 
-                            scale: 1.05,
-                            y: -2
-                          }}
-                          whileTap={{ scale: 0.95 }}
-                          className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 hover-glow"
-                        >
-                          <Github className="h-5 w-5 group-hover:animate-bounce-gentle" />
-                          <span>Code</span>
-                        </motion.a>
-                      )}
-                      {project.live && (
-                        <motion.a
-                          href={project.live}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          whileHover={{ 
-                            scale: 1.05,
-                            y: -2
-                          }}
-                          whileTap={{ scale: 0.95 }}
-                          className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 hover-glow"
-                        >
-                          <ExternalLink className="h-5 w-5 group-hover:animate-bounce-gentle" />
-                          <span>Live Demo</span>
-                        </motion.a>
-                      )}
+                    ) : (
+                      <>
+                        <div className="absolute inset-0 bg-black/20"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center text-white">
+                            <h3 className="text-2xl font-bold mb-2">{getMultilingualText(project.title, language, "Project")}</h3>
+                            <p className="text-white/80">{getMultilingualText(project.description, language, "")}</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="p-6 relative">
+                    <div className="relative z-10">
+                      <motion.h3 
+                        className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300"
+                        whileHover={{ scale: 1.02 }}
+                      >
+                        {getMultilingualText(project.title, language, 'Project')}
+                      </motion.h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-4">
+                        {getMultilingualText(project.description, language, '')}
+                      </p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {(project.technologies || []).map((tech: string, techIndex: number) => (
+                          <motion.span
+                            key={tech}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: techIndex * 0.1 }}
+                            whileHover={{ 
+                              scale: 1.1,
+                              backgroundColor: "rgb(59 130 246 / 0.2)",
+                              color: "rgb(59 130 246)"
+                            }}
+                            className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm rounded-full transition-all duration-300 cursor-pointer"
+                          >
+                            {tech}
+                          </motion.span>
+                        ))}
+                      </div>
+                      <div className="flex gap-4">
+                        {project.github && (
+                          <motion.a
+                            href={project.github}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            whileHover={{ 
+                              scale: 1.05,
+                              y: -2
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 hover-glow"
+                          >
+                            <Github className="h-5 w-5 group-hover:animate-bounce-gentle" />
+                            <span>Code</span>
+                          </motion.a>
+                        )}
+                        {project.live && (
+                          <motion.a
+                            href={project.live}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            whileHover={{ 
+                              scale: 1.05,
+                              y: -2
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 hover-glow"
+                          >
+                            <ExternalLink className="h-5 w-5 group-hover:animate-bounce-gentle" />
+                            <span>Live Demo</span>
+                          </motion.a>
+                        )}
+                      </div>
                     </div>
                   </div>
+                </motion.div>
+              )) : (
+                <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+                  {language === 'en' ? 'No projects found.' : 'プロジェクトが見つかりません。'}
                 </div>
-              </motion.div>
-            ))}
+              );
+            })()}
           </div>
         </div>
       </section>
@@ -1076,75 +1286,208 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           </motion.div>
 
           <div className="grid lg:grid-cols-2 gap-8">
-            {(portfolioData?.papers || []).map((paper: any, index: number) => (
-              <motion.div
-                key={paper.id || getMultilingualText(paper.title, language, 'Paper')}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                whileHover={{ 
-                  scale: 1.02,
-                  y: -5,
-                  boxShadow: "0 20px 25px -5px rgba(139, 92, 246, 0.2)"
-                }}
-                className="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg card-hover card-glow relative overflow-hidden group"
-              >
-                <div className="flex items-start space-x-4">
-                  <motion.div 
-                    className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-600 dark:from-purple-600 dark:to-pink-800 rounded-full flex items-center justify-center flex-shrink-0"
-                    whileHover={{ rotate: 360, scale: 1.1 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    <FileText className="h-8 w-8 text-white" />
-                  </motion.div>
-                  <div className="flex-1 min-w-0">
-                    <motion.h3 
-                      className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300"
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      {getMultilingualText(paper.title, language, 'Paper Title')}
-                    </motion.h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm leading-relaxed">
-                      {getMultilingualText(paper.abstract, language, '')}
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {(paper.authors || []).map((author: string, authorIndex: number) => (
-                        <motion.span
-                          key={author}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: authorIndex * 0.1 }}
-                          className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm rounded-full"
+            {(() => {
+              const papers = getSafeArray(portfolioData, 'papers');
+              return papers.length > 0 ? papers.map((paper: any, index: number) => (
+                <motion.div
+                  key={paper.id || getMultilingualText(paper.title, language, 'Paper')}
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: index * 0.2 }}
+                  viewport={{ once: true }}
+                  whileHover={{ 
+                    scale: 1.02,
+                    y: -5,
+                    boxShadow: "0 20px 25px -5px rgba(139, 92, 246, 0.2)"
+                  }}
+                  className="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg card-hover card-glow relative overflow-hidden group border border-gray-100 dark:border-gray-600"
+                >
+                  {/* Background gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-start space-x-4">
+                      <motion.div 
+                        className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-600 dark:from-purple-600 dark:to-pink-800 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg"
+                        whileHover={{ rotate: 360, scale: 1.1 }}
+                        transition={{ duration: 0.6 }}
+                      >
+                        <FileText className="h-8 w-8 text-white" />
+                      </motion.div>
+                      <div className="flex-1 min-w-0">
+                        <motion.h3 
+                          className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300"
+                          whileHover={{ scale: 1.02 }}
                         >
-                          {author}
-                        </motion.span>
-                      ))}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {paper.publicationDate || paper.year || '2024'}
-                      </span>
-                      {paper.pdfUrl && (
-                        <motion.a
-                          href={paper.pdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="flex items-center space-x-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors duration-200"
-                        >
-                          <FileText className="h-4 w-4" />
-                          <span className="text-sm font-medium">
-                            {language === 'en' ? 'View PDF' : 'PDFを見る'}
-                          </span>
-                        </motion.a>
-                      )}
+                          {getMultilingualText(paper.title, language, 'Paper Title')}
+                        </motion.h3>
+                        
+                        {/* Paper Type Badge */}
+                        {paper.type && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="mb-4"
+                          >
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
+                              paper.type === 'oral' 
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-700' 
+                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border border-green-200 dark:border-green-700'
+                            }`}>
+                              {paper.type === 'oral' ? '🎤 Oral Presentation' : '📊 Poster'}
+                            </span>
+                          </motion.div>
+                        )}
+                        
+                        {/* Conference Information */}
+                        {paper.conference && (
+                          <motion.p 
+                            className="text-gray-600 dark:text-gray-400 mb-4 text-sm font-medium flex items-center"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                          >
+                            <span className="mr-2">📍</span>
+                            {getMultilingualText(paper.conference, language, 'Conference')}
+                          </motion.p>
+                        )}
+                        
+                        {/* Description */}
+                        {paper.description && (
+                          <motion.div 
+                            className="mb-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                          >
+                            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 p-4 rounded-lg border border-purple-200 dark:border-purple-700 shadow-sm">
+                              {getMultilingualText(paper.description, language, '')}
+                            </p>
+                          </motion.div>
+                        )}
+
+                        {/* Abstract */}
+                        {paper.abstract && (
+                          <motion.div 
+                            className="mb-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                          >
+                            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border-l-4 border-purple-400">
+                              {getMultilingualText(paper.abstract, language, '')}
+                            </p>
+                          </motion.div>
+                        )}
+                        
+                                                {/* Authors */}
+                        {paper.authors && (
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                              <span className="mr-2">👥</span>
+                              {language === 'en' ? 'Authors' : '著者'}
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {(() => {
+                                let authors: string[] = [];
+                                if (Array.isArray(paper.authors)) {
+                                  authors = paper.authors.filter((author: string): author is string => typeof author === 'string');
+                                } else if (typeof paper.authors === 'object') {
+                                  const langAuthors = getMultilingualText(paper.authors, language, '');
+                                  if (Array.isArray(langAuthors)) {
+                                    authors = langAuthors.filter((author: string): author is string => typeof author === 'string');
+                                  }
+                                }
+
+                                if (authors.length === 0) return null;
+
+                                return authors.map((author: string, authorIndex: number) => (
+                                  <motion.span
+                                    key={`${author}-${authorIndex}`}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: authorIndex * 0.1 }}
+                                    className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm rounded-full border border-purple-200 dark:border-purple-700"
+                                  >
+                                    {author}
+                                  </motion.span>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* PDF Preview */}
+                        {paper.paperPdf && (
+                          <motion.div 
+                            className="mb-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                          >
+                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                              <span className="mr-2">📄</span>
+                              {language === 'en' ? 'PDF Preview' : 'PDFプレビュー'}
+                            </h4>
+                            <div className="w-full h-64 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-sm">
+                              <iframe
+                                src={`${paper.paperPdf}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                                className="w-full h-full"
+                                title={getMultilingualText(paper.title, language, 'Paper')}
+                                style={{ border: 'none' }}
+                              />
+                            </div>
+                          </motion.div>
+                        )}
+                        
+                        {/* Date and Actions */}
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                          <div className="flex items-center space-x-4">
+                            <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                              <span className="mr-1">📅</span>
+                              {getMultilingualText(paper.date, language, paper.publicationDate || paper.year || '2024')}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {paper.paperPdf && (
+                              <motion.a
+                                href={paper.paperPdf}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                whileHover={{ scale: 1.05, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="inline-flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-md"
+                              >
+                                <FileText className="h-4 w-4" />
+                                <span>{language === 'en' ? 'View PDF' : 'PDFを見る'}</span>
+                              </motion.a>
+                            )}
+                            {paper.paperFilename && (
+                              <motion.a
+                                href={paper.paperPdf || '#'}
+                                download={paper.paperFilename}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                whileHover={{ scale: 1.05, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="inline-flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-md"
+                              >
+                                <Download className="h-4 w-4" />
+                                <span>{language === 'en' ? 'Download' : 'ダウンロード'}</span>
+                              </motion.a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                </motion.div>
+              )) : (
+                <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+                  {language === 'en' ? 'No papers found.' : '研究論文が見つかりません。'}
                 </div>
-              </motion.div>
-            ))}
+              );
+            })()}
           </div>
         </div>
       </section>
@@ -1171,84 +1514,147 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(portfolioData?.certifications || []).map((cert: any, index: number) => (
-              <motion.div
-                key={cert.id || getMultilingualText(cert.title, language, 'Certification')}
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ 
-                  duration: 0.6, 
-                  delay: index * 0.1,
-                  type: "spring",
-                  stiffness: 100
-                }}
-                viewport={{ once: true }}
-                whileHover={{ 
-                  scale: 1.05,
-                  y: -10,
-                  boxShadow: "0 25px 50px -12px rgba(34, 197, 94, 0.25)"
-                }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg card-hover card-glow relative overflow-hidden group"
-              >
-                <div className="text-center">
-                  <motion.div 
-                    className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-600 dark:from-green-600 dark:to-blue-800 rounded-full flex items-center justify-center mx-auto mb-4"
-                    whileHover={{ rotate: 360, scale: 1.1 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    <CheckCircle className="h-10 w-10 text-white" />
-                  </motion.div>
-                  <motion.h3 
-                    className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    {getMultilingualText(cert.title, language, 'Certification Title')}
-                  </motion.h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm">
-                    {getMultilingualText(cert.issuer, language, '')}
-                  </p>
-                  <div className="flex items-center justify-center space-x-2 mb-4">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {cert.issueDate || cert.year || '2024'}
-                    </span>
-                    {cert.expiryDate && (
-                      <>
-                        <span className="text-gray-400">-</span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {cert.expiryDate}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  {cert.image && (
+            {(() => {
+              const certifications = getSafeArray(portfolioData, 'certifications');
+              return certifications.length > 0 ? certifications.map((cert: any, index: number) => (
+                <motion.div
+                  key={cert.id || getMultilingualText(cert.title, language, 'Certification')}
+                  initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ 
+                    duration: 0.6, 
+                    delay: index * 0.1,
+                    type: "spring",
+                    stiffness: 100
+                  }}
+                  viewport={{ once: true }}
+                  whileHover={{ 
+                    scale: 1.03,
+                    y: -8,
+                    boxShadow: "0 25px 50px -12px rgba(34, 197, 94, 0.25)"
+                  }}
+                  className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg card-hover card-glow relative overflow-hidden group border border-gray-100 dark:border-gray-700"
+                >
+                  {/* Background gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  <div className="relative z-10">
+                    {/* Certificate Icon */}
                     <motion.div 
-                      className="w-full h-32 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.3 }}
+                      className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-600 dark:from-green-600 dark:to-blue-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg"
+                      whileHover={{ rotate: 360, scale: 1.1 }}
+                      transition={{ duration: 0.6 }}
                     >
-                      <img
-                        src={cert.image}
-                        alt={getMultilingualText(cert.title, language, "Certification")}
-                        className="w-full h-full object-cover"
-                      />
+                      <CheckCircle className="h-8 w-8 text-white" />
                     </motion.div>
-                  )}
-                  {cert.pdfUrl && (
-                    <motion.a
-                      href={cert.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="inline-flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                    
+                    {/* PDF Display - Now on Top */}
+                    {cert.pdf && (
+                      <motion.div 
+                        className="w-full h-64 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4 border border-gray-200 dark:border-gray-600 shadow-sm"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        whileHover={{ scale: 1.02 }}
+                      >
+                        <iframe
+                          src={`${cert.pdf}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                          className="w-full h-full"
+                          title={getMultilingualText(cert.name, language, 'Certification')}
+                          style={{ border: 'none' }}
+                        />
+                      </motion.div>
+                    )}
+                    
+                    {/* Certificate Image - Alternative to PDF */}
+                    {!cert.pdf && cert.image && (
+                      <motion.div 
+                        className="w-full h-48 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4 border border-gray-200 dark:border-gray-600"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <img
+                          src={cert.image}
+                          alt={getMultilingualText(cert.name, language, "Certification")}
+                          className="w-full h-full object-cover"
+                        />
+                      </motion.div>
+                    )}
+                    
+                    {/* Certificate Title */}
+                    <motion.h3 
+                      className="text-lg font-bold text-gray-900 dark:text-white mb-3 text-center group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300"
+                      whileHover={{ scale: 1.02 }}
                     >
-                      <FileText className="h-4 w-4" />
-                      <span>{language === 'en' ? 'View Certificate' : '証明書を見る'}</span>
-                    </motion.a>
-                  )}
+                      {getMultilingualText(cert.name, language, 'Certification Title')}
+                    </motion.h3>
+                    
+                    {/* Issuer */}
+                    {cert.issuer && (
+                      <motion.p 
+                        className="text-gray-600 dark:text-gray-300 mb-3 text-sm text-center font-medium"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        {getMultilingualText(cert.issuer, language, '')}
+                      </motion.p>
+                    )}
+                    
+                    {/* Date Information */}
+                    <div className="flex items-center justify-center space-x-2 mb-4">
+                      <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                        <span className="mr-1">📅</span>
+                        {getMultilingualText(cert.date, language, cert.issueDate || cert.year || '2024')}
+                      </span>
+                      {cert.expiryDate && (
+                        <>
+                          <span className="text-gray-400">-</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {getMultilingualText(cert.expiryDate, language, '')}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Certificate Actions - Now at Bottom */}
+                    <div className="flex items-center justify-center space-x-2">
+                      {cert.pdf && (
+                        <motion.a
+                          href={cert.pdf}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="inline-flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 mr-2 shadow-md"
+                        >
+                          <FileText className="h-4 w-4" />
+                          <span>{language === 'en' ? 'View Certificate' : '証明書を見る'}</span>
+                        </motion.a>
+                      )}
+                      {cert.pdf && (
+                        <motion.a
+                          href={cert.pdf || '#'}
+                          download={getMultilingualText(cert.name, language, 'certification') + '.pdf'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-md"
+                        >
+                          <Download className="h-4 w-4" />
+                          <span>{language === 'en' ? 'Download Certificate' : 'ダウンロード'}</span>
+                        </motion.a>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )) : (
+                <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+                  {language === 'en' ? 'No certifications found.' : '資格が見つかりません。'}
                 </div>
-              </motion.div>
-            ))}
+              );
+            })()}
           </div>
         </div>
       </section>
@@ -1353,7 +1759,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                   {[
                     { icon: Github, href: portfolioData?.contact?.social?.github, label: 'GitHub', color: 'bg-gray-800 hover:bg-gray-900' },
                     { icon: Linkedin, href: portfolioData?.contact?.social?.linkedin, label: 'LinkedIn', color: 'bg-blue-600 hover:bg-blue-700' },
-                    { icon: Facebook, href: portfolioData?.contact?.social?.facebook, label: 'Facebook', color: 'bg-blue-800 hover:bg-blue-900' }
+                    { icon: Facebook, href: portfolioData?.contact?.social?.facebook, label: 'Facebook', color: 'bg-blue-800 hover:bg-blue-900' },
+                    { icon: MessageSquare, href: portfolioData?.contact?.social?.whatsapp, label: 'WhatsApp', color: 'bg-green-600 hover:bg-green-700' }
                   ].map((social, index) => (
                     social.href && (
                       <motion.a
@@ -1361,14 +1768,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                         href={social.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        whileHover={{ scale: 1.1, y: -5 }}
+                        whileHover={{ scale: 1.1, y: -2 }}
                         whileTap={{ scale: 0.95 }}
-                        className={`w-12 h-12 ${social.color} text-white rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl`}
+                        className={`w-12 h-12 ${social.color} rounded-full flex items-center justify-center transition-colors duration-200`}
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+                        transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
                       >
-                        <social.icon className="h-6 w-6" />
+                        <social.icon className="h-6 w-6 text-white" />
                       </motion.a>
                     )
                   ))}
@@ -1448,7 +1855,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       {/* Footer */}
       <footer className="bg-gray-900 dark:bg-black text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8 text-center md:text-left">
             <div>
               <h3 className="text-2xl font-bold gradient-text mb-4">Mushabbir</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
@@ -1458,12 +1865,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 }
               </p>
             </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4">
+            <div className="flex flex-col items-center md:items-start">
+              <h4 className="text-lg font-semibold mb-4 text-center md:text-left">
                 {language === 'en' ? 'Quick Links' : 'クイックリンク'}
               </h4>
-              <ul className="space-y-2">
-                {['about', 'education', 'skills', 'projects', 'contact'].map((item) => (
+              <ul className="space-y-2 text-center md:text-left">
+                {['about', 'education', 'experience', 'skills', 'projects', 'papers', 'certifications', 'contact'].map((item) => (
                   <li key={item}>
                     <button
                       onClick={() => scrollToSection(item)}
@@ -1472,8 +1879,11 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                       {language === 'en' ? item : {
                         'about': '自己紹介',
                         'education': '学歴',
+                        'experience': '職歴',
                         'skills': 'スキル',
                         'projects': 'プロジェクト',
+                        'papers': '論文',
+                        'certifications': '資格',
                         'contact': '連絡先'
                       }[item]}
                     </button>
@@ -1481,7 +1891,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 ))}
               </ul>
             </div>
-            <div>
+            <div className="flex flex-col items-center md:items-start">
               <h4 className="text-lg font-semibold mb-4">
                 {language === 'en' ? 'Connect' : 'つながる'}
               </h4>

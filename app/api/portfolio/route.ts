@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getPortfolioData, setPortfolioData } from '../../lib/portfolioService';
+import { getPortfolioData, setPortfolioData, deleteItem } from '../../lib/portfolioService';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -20,6 +20,19 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
     }
     await setPortfolioData(body);
+    return NextResponse.json({ success: true });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { section, id } = await req.json();
+    if (!section || !id) {
+      return NextResponse.json({ error: 'Missing section or id' }, { status: 400 });
+    }
+    await deleteItem(section, id);
     return NextResponse.json({ success: true });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

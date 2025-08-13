@@ -27,7 +27,8 @@ import {
   Circle,
   FileImage,
   Presentation,
-  RotateCcw
+  RotateCcw,
+  RefreshCw
 } from 'lucide-react';
 
 import CVUploadModal from '../components/CVUploadModal';
@@ -140,12 +141,24 @@ interface PortfolioData {
       english: string;
       japanese: string;
     };
+    description: {
+      english: string;
+      japanese: string;
+    };
     paperPdf: string;
     paperFilename: string;
     posterPdf?: string;
     posterFilename?: string;
     presentationPdf?: string;
     presentationFilename?: string;
+    abstract?: {
+      english: string;
+      japanese: string;
+    };
+    authors?: {
+      english: string[];
+      japanese: string[];
+    };
   }>;
   projects: Array<{
     id: string;
@@ -175,6 +188,10 @@ interface PortfolioData {
       japanese: string;
     };
     date: {
+      english: string;
+      japanese: string;
+    };
+    expiryDate?: {
       english: string;
       japanese: string;
     };
@@ -367,6 +384,18 @@ const defaultData: PortfolioData = {
         english: "IEEE International Conference on Artificial Intelligence",
         japanese: "IEEE人工知能国際会議"
       },
+      description: {
+        english: "This paper explores the application of artificial intelligence in healthcare, focusing on diagnostic accuracy and patient care optimization.",
+        japanese: "本論文は、医療における人工知能の応用について、診断精度と患者ケアの最適化に焦点を当てて探求します。"
+      },
+      abstract: {
+        english: "This paper explores the application of artificial intelligence in healthcare, focusing on diagnostic accuracy and patient care optimization.",
+        japanese: "本論文は、医療における人工知能の応用について、診断精度と患者ケアの最適化に焦点を当てて探求します。"
+      },
+      authors: {
+        english: ["Mushabbir Ahmed", "Dr. Smith", "Prof. Johnson"],
+        japanese: ["ムサビル・アハメド", "スミス博士", "ジョンソン教授"]
+      },
       paperPdf: "",
       paperFilename: "",
       presentationPdf: "",
@@ -386,6 +415,18 @@ const defaultData: PortfolioData = {
       conference: {
         english: "Computer Vision Conference",
         japanese: "コンピュータビジョン会議"
+      },
+      description: {
+        english: "A comprehensive study on deep learning approaches for computer vision applications, including object detection and image classification.",
+        japanese: "オブジェクト検出と画像分類を含むコンピュータビジョンアプリケーションのためのディープラーニングアプローチに関する包括的な研究。"
+      },
+      abstract: {
+        english: "A comprehensive study on deep learning approaches for computer vision applications, including object detection and image classification.",
+        japanese: "オブジェクト検出と画像分類を含むコンピュータビジョンアプリケーションのためのディープラーニングアプローチに関する包括的な研究。"
+      },
+      authors: {
+        english: ["Mushabbir Ahmed", "Dr. Brown", "Prof. Wilson"],
+        japanese: ["ムサビル・アハメド", "ブラウン博士", "ウィルソン教授"]
       },
       paperPdf: "",
       paperFilename: "",
@@ -444,6 +485,10 @@ const defaultData: PortfolioData = {
         english: "2023",
         japanese: "2023年"
       },
+      expiryDate: {
+        english: "2025",
+        japanese: "2025年"
+      },
       image: "/certifications/AI Foundations for Everyone.jpg",
       pdf: "/certifications/AI Foundations for Everyone.pdf"
     },
@@ -460,6 +505,10 @@ const defaultData: PortfolioData = {
       date: {
         english: "2023",
         japanese: "2023年"
+      },
+      expiryDate: {
+        english: "2025",
+        japanese: "2025年"
       },
       image: "/certifications/Building AI Powered Chatbots Without Programming.jpg",
       pdf: "/certifications/Building AI Powered Chatbots Without Programming.pdf"
@@ -497,6 +546,7 @@ export default function AdminPage() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [adminLogs, setAdminLogs] = useState<any[]>([]);
   const [showLogs, setShowLogs] = useState(false);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
   // Get section from URL parameter
   useEffect(() => {
@@ -593,7 +643,22 @@ export default function AdminPage() {
               ? { english: paper.conference, japanese: paper.conference }
               : (typeof paper.conference === 'object' && paper.conference?.english && paper.conference?.japanese)
               ? paper.conference
-              : { english: "", japanese: "" }
+              : { english: "", japanese: "" },
+            description: typeof paper.description === 'string'
+              ? { english: paper.description, japanese: paper.description }
+              : (typeof paper.description === 'object' && paper.description?.english && paper.description?.japanese)
+              ? paper.description
+              : { english: "", japanese: "" },
+            abstract: typeof paper.abstract === 'string'
+              ? { english: paper.abstract, japanese: paper.abstract }
+              : (typeof paper.abstract === 'object' && paper.abstract?.english && paper.abstract?.japanese)
+              ? paper.abstract
+              : { english: "", japanese: "" },
+            authors: typeof paper.authors === 'string'
+              ? { english: [paper.authors], japanese: [paper.authors] }
+              : (typeof paper.authors === 'object' && paper.authors?.english && paper.authors?.japanese)
+              ? paper.authors
+              : { english: [], japanese: [] }
           })) : [],
           certifications: Array.isArray(fetchedData.certifications) ? fetchedData.certifications.map((cert: any) => ({
             ...cert,
@@ -611,6 +676,11 @@ export default function AdminPage() {
               ? { english: cert.date, japanese: cert.date }
               : (typeof cert.date === 'object' && cert.date?.english && cert.date?.japanese)
               ? cert.date
+              : { english: "", japanese: "" },
+            expiryDate: typeof cert.expiryDate === 'string'
+              ? { english: cert.expiryDate, japanese: cert.expiryDate }
+              : (typeof cert.expiryDate === 'object' && cert.expiryDate?.english && cert.expiryDate?.japanese)
+              ? cert.expiryDate
               : { english: "", japanese: "" },
             image: typeof cert.image === 'string' ? cert.image : "",
             pdf: typeof cert.pdf === 'string' ? cert.pdf : ""
@@ -630,7 +700,68 @@ export default function AdminPage() {
               facebook: "https://facebook.com/mushabbir.ahmed",
               indeed: "https://indeed.com/profile/mushabbir-ahmed"
             }
-          }
+          },
+          skills: (() => {
+            // Ensure skills is always an object with arrays
+            const skills = fetchedData.skills;
+            if (!skills || typeof skills !== 'object') {
+              return {
+                languages: [
+                  { id: '1', name: 'Python', icon: '🐍' },
+                  { id: '2', name: 'JavaScript', icon: '💛' },
+                  { id: '3', name: 'SQL', icon: '🗄️' },
+                  { id: '4', name: 'C++', icon: '⚡' },
+                  { id: '5', name: 'HTML', icon: '🌐' },
+                  { id: '6', name: 'CSS', icon: '🎨' }
+                ],
+                frameworks: [
+                  { id: '1', name: 'React', icon: '⚛️' },
+                  { id: '2', name: 'Flask', icon: '🔥' },
+                  { id: '3', name: 'Spring Boot', icon: '🍃' },
+                  { id: '4', name: 'NumPy', icon: '📊' },
+                  { id: '5', name: 'Bootstrap', icon: '🎨' }
+                ],
+                databases: [
+                  { id: '1', name: 'MongoDB', icon: '🍃' },
+                  { id: '2', name: 'MongoDB Atlas', icon: '☁️' },
+                  { id: '3', name: 'MySQL', icon: '🐬' }
+                ],
+                tools: [
+                  { id: '1', name: 'Git', icon: '📝' },
+                  { id: '2', name: 'VS Code', icon: '💻' },
+                  { id: '3', name: 'Postman', icon: '📮' },
+                  { id: '4', name: 'MATLAB', icon: '🔬' },
+                  { id: '5', name: 'IBM Watson', icon: '🤖' },
+                  { id: '6', name: 'Excel', icon: '📈' },
+                  { id: '7', name: 'NetBeans', icon: '☕' }
+                ]
+              };
+            }
+            
+            // Ensure each category is an array
+            return {
+              languages: Array.isArray(skills.languages) ? skills.languages : [],
+              frameworks: Array.isArray(skills.frameworks) ? skills.frameworks : [],
+              databases: Array.isArray(skills.databases) ? skills.databases : [],
+              tools: Array.isArray(skills.tools) ? skills.tools : []
+            };
+          })(),
+          experience: Array.isArray(fetchedData.experience) ? fetchedData.experience.map((exp: any) => ({
+            ...exp,
+            title: typeof exp.title === 'string'
+              ? { english: exp.title, japanese: exp.title }
+              : exp.title || { english: "", japanese: "" },
+            company: typeof exp.company === 'string'
+              ? { english: exp.company, japanese: exp.company }
+              : exp.company || { english: "", japanese: "" },
+            period: typeof exp.period === 'string'
+              ? { english: exp.period, japanese: exp.period }
+              : exp.period || { english: "", japanese: "" },
+            description: typeof exp.description === 'string'
+              ? { english: exp.description, japanese: exp.description }
+              : exp.description || { english: "", japanese: "" },
+            technologies: Array.isArray(exp.technologies) ? exp.technologies : []
+          })) : []
         };
         
         console.log('✅ Sanitized data:', sanitizedData);
@@ -657,10 +788,29 @@ export default function AdminPage() {
       const response = await fetch('/api/admin/logs?limit=50');
       if (response.ok) {
         const logs = await response.json();
-        setAdminLogs(logs);
+        // Ensure logs is always an array
+        if (Array.isArray(logs)) {
+          setAdminLogs(logs);
+        } else {
+          console.warn('Admin logs response is not an array:', logs);
+          setAdminLogs([]);
+        }
+      } else {
+        console.error('Failed to fetch admin logs');
+        setAdminLogs([]);
       }
     } catch (error) {
       console.error('Error fetching admin logs:', error);
+      setAdminLogs([]);
+    }
+  };
+
+  const refreshLogs = async () => {
+    setIsLoadingLogs(true);
+    try {
+      await fetchAdminLogs();
+    } finally {
+      setIsLoadingLogs(false);
     }
   };
 
@@ -857,7 +1007,7 @@ export default function AdminPage() {
       const response = await fetch('/api/portfolio', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section: 'education', key: id })
+        body: JSON.stringify({ section: 'education', id: id })
       });
 
       if (response.ok) {
@@ -928,6 +1078,8 @@ export default function AdminPage() {
   };
 
   const removeExperience = async (id: string) => {
+    setIsDeleting(id);
+    
     // Optimistic update
     const prevData = { ...data };
     const updatedExperience = data.experience.filter(exp => exp.id !== id);
@@ -938,11 +1090,11 @@ export default function AdminPage() {
 
     try {
       const response = await fetch('/api/portfolio/sections', {
-        method: 'PUT',
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           section: 'experience',
-          data: updatedExperience
+          id: id
         })
       });
 
@@ -958,6 +1110,8 @@ export default function AdminPage() {
       setData(prevData);
       console.error('Remove experience error:', error);
       toast.error('Failed to remove experience entry. Please try again.');
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -1025,6 +1179,10 @@ export default function AdminPage() {
         japanese: ""
       },
       date: {
+        english: "",
+        japanese: ""
+      },
+      expiryDate: {
         english: "",
         japanese: ""
       },
@@ -1279,6 +1437,18 @@ export default function AdminPage() {
       conference: {
         english: "",
         japanese: ""
+      },
+      description: {
+        english: "",
+        japanese: ""
+      },
+      abstract: {
+        english: "",
+        japanese: ""
+      },
+      authors: {
+        english: [],
+        japanese: []
       },
       paperPdf: "",
       paperFilename: "",
@@ -1991,30 +2161,58 @@ export default function AdminPage() {
           </div>
           
           <div className="space-y-3">
-            {data.skills[category].map((skill, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <input
-                  type="text"
-                  value={skill.icon}
-                  onChange={(e) => updateSkill(category, index, { icon: e.target.value })}
-                  className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center"
-                  placeholder="🔧"
-                />
-                <input
-                  type="text"
-                  value={skill.name}
-                  onChange={(e) => updateSkill(category, index, { name: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Skill name"
-                />
-                <button
-                  onClick={() => removeSkill(category, index)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </button>
-              </div>
-            ))}
+            {(() => {
+              // Ensure we have valid data before mapping
+              const skills = data.skills?.[category];
+              if (!skills || !Array.isArray(skills)) {
+                return (
+                  <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                    No skills found for {category}. Click "Add Skill" to get started.
+                  </div>
+                );
+              }
+              
+              return skills.map((skill, index) => (
+                <div key={skill.id || `skill-${category}-${index}`} className="flex items-center space-x-3">
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      value={skill.icon || ''}
+                      onChange={(e) => updateSkill(category, index, { icon: e.target.value })}
+                      className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center cursor-pointer"
+                      placeholder="🔧"
+                      readOnly
+                    />
+                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-10 max-h-40 overflow-y-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
+                      <div className="grid grid-cols-8 gap-1">
+                        {['💻', '🔧', '⚡', '🚀', '🎯', '🔮', '🌟', '💡', '🔥', '⚙️', '🎨', '📱', '☁️', '🔒', '📊', '🎮', '🤖', '🌐', '📦', '🔍', '⚡', '🎪', '🎭', '🎨', '🎵', '🎬', '📚', '🎓', '🏆', '💎', '🔋', '📡', '🛡️'].map((icon, iconIndex) => (
+                          <button
+                            key={`${icon}-${iconIndex}`}
+                            onClick={() => updateSkill(category, index, { icon })}
+                            className="w-8 h-8 text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center"
+                          >
+                            {icon}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    value={skill.name || ''}
+                    onChange={(e) => updateSkill(category, index, { name: e.target.value })}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Skill name"
+                  />
+                  <button
+                    onClick={() => removeSkill(category, index)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="h-5 w-4" />
+                  </button>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       ))}
@@ -2124,6 +2322,32 @@ export default function AdminPage() {
                   value={cert.date.japanese}
                   onChange={(e) => updateCertification(cert.id, { date: { ...cert.date, japanese: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Expiry Date (English)
+                </label>
+                <input
+                  type="text"
+                  value={cert.expiryDate?.english || ''}
+                  onChange={(e) => updateCertification(cert.id, { expiryDate: { ...cert.expiryDate, english: e.target.value } })}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Optional expiry date"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Expiry Date (Japanese)
+                </label>
+                <input
+                  type="text"
+                  value={cert.expiryDate?.japanese || ''}
+                  onChange={(e) => updateCertification(cert.id, { expiryDate: { ...cert.expiryDate, japanese: e.target.value } })}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Optional expiry date"
                 />
               </div>
               
@@ -2794,6 +3018,29 @@ export default function AdminPage() {
                   />
                 </div>
 
+                {/* Description */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description (English)</label>
+                  <textarea
+                    value={paper.description?.english || ''}
+                    onChange={(e) => updatePaper(paper.id, { description: { ...paper.description, english: e.target.value } })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="Enter paper description in English"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description (Japanese)</label>
+                  <textarea
+                    value={paper.description?.japanese || ''}
+                    onChange={(e) => updatePaper(paper.id, { description: { ...paper.description, japanese: e.target.value } })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="Enter paper description in Japanese"
+                  />
+                </div>
+
                 {/* Paper PDF Upload */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Paper PDF</label>
@@ -2823,6 +3070,52 @@ export default function AdminPage() {
                       <Upload className="h-4 w-4" />
                     </button>
                   </div>
+                </div>
+
+                {/* Abstract */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Abstract (English)</label>
+                  <textarea
+                    value={paper.abstract?.english || ''}
+                    onChange={(e) => updatePaper(paper.id, { abstract: { ...paper.abstract, english: e.target.value } })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="Enter paper abstract in English"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Abstract (Japanese)</label>
+                  <textarea
+                    value={paper.abstract?.japanese || ''}
+                    onChange={(e) => updatePaper(paper.id, { abstract: { ...paper.abstract, japanese: e.target.value } })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="Enter paper abstract in Japanese"
+                  />
+                </div>
+
+                {/* Authors */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Authors (English)</label>
+                  <input
+                    type="text"
+                    value={paper.authors?.english?.join(', ') || ''}
+                    onChange={(e) => updatePaper(paper.id, { authors: { ...paper.authors, english: e.target.value.split(',').map(author => author.trim()).filter(author => author) } })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="Enter authors separated by commas"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Authors (Japanese)</label>
+                  <input
+                    type="text"
+                    value={paper.authors?.japanese?.join(', ') || ''}
+                    onChange={(e) => updatePaper(paper.id, { authors: { ...paper.authors, japanese: e.target.value.split(',').map(author => author.trim()).filter(author => author) } })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                    placeholder="Enter authors separated by commas"
+                  />
                 </div>
 
                 {/* Poster PDF Upload (for poster type) */}
@@ -2898,72 +3191,75 @@ export default function AdminPage() {
     );
   };
 
-  const renderLogsSection = () => {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Action Logs</h2>
-          <button
-            onClick={fetchAdminLogs}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-          >
-            <RotateCcw className="h-4 w-4" />
-            <span>Refresh Logs</span>
-          </button>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-          <div className="space-y-4">
-            {adminLogs.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500 dark:text-gray-400">No admin logs found. Click &quot;Refresh Logs&quot; to load recent activity.</p>
-              </div>
-            ) : (
-              adminLogs.map((log) => (
-                <div key={log.id} className={`p-4 rounded-lg border ${
-                  log.success 
-                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                }`}>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          log.action === 'create' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                          log.action === 'update' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                          log.action === 'delete' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                          'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                        }`}>
-                          {log.action.toUpperCase()}
-                        </span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {new Date(log.time).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        Section: {log.section}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        By: {log.by}
-                      </p>
-                      {log.error_message && (
-                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                          Error: {log.error_message}
-                        </p>
-                      )}
+  const renderLogsSection = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Logs</h2>
+        <button
+          onClick={refreshLogs}
+          disabled={isLoadingLogs}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+        >
+          {isLoadingLogs ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          <span>Refresh Logs</span>
+        </button>
+      </div>
+      
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div className="space-y-4">
+          {(!adminLogs || !Array.isArray(adminLogs) || adminLogs.length === 0) ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">No admin logs found. Click &quot;Refresh Logs&quot; to load recent activity.</p>
+            </div>
+          ) : (
+            adminLogs.map((log) => (
+              <div key={log.id || `log-${Date.now()}`} className={`p-4 rounded-lg border ${
+                log.success 
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+              }`}>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        log.action === 'create' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                        log.action === 'update' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                        log.action === 'delete' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                      }`}>
+                        {log.action?.toUpperCase() || 'UNKNOWN'}
+                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(log.time || Date.now()).toLocaleString()}
+                      </span>
                     </div>
-                    <div className={`w-3 h-3 rounded-full ${
-                      log.success ? 'bg-green-500' : 'bg-red-500'
-                    }`}></div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      Section: {log.section || 'Unknown'}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      By: {log.by || 'Unknown'}
+                    </p>
+                    {log.error_message && (
+                      <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                        Error: {log.error_message}
+                      </p>
+                    )}
                   </div>
+                  <div className={`w-3 h-3 rounded-full ${
+                    log.success ? 'bg-green-500' : 'bg-red-500'
+                  }`}></div>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
-    );
-  };
+    </div>
+  );
 
   const renderSection = () => {
     switch (activeSection) {

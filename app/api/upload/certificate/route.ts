@@ -15,6 +15,15 @@ export async function POST(req: Request) {
       );
     }
 
+    // Check content type
+    const contentType = req.headers.get('content-type');
+    if (!contentType || !contentType.includes('multipart/form-data')) {
+      return NextResponse.json(
+        { error: 'Content-Type must be multipart/form-data' },
+        { status: 400 }
+      );
+    }
+
     const form = await req.formData();
     const file = form.get('file') as File | null;
     const certificateName = form.get('certificateName') as string;
@@ -79,6 +88,7 @@ export async function POST(req: Request) {
     });
     
   } catch (e: any) {
+    console.error('Certificate upload error:', e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
