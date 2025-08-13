@@ -1429,7 +1429,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                               <span className="mr-2">📄</span>
                               {language === 'en' ? 'PDF Preview' : 'PDFプレビュー'}
                             </h4>
-                            <div className="w-full h-64 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-sm">
+                            <div className="w-full h-96 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-sm">
                               <iframe
                                 src={`${paper.paperPdf}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                                 className="w-full h-full"
@@ -1539,19 +1539,11 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                   <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   
                   <div className="relative z-10">
-                    {/* Certificate Icon */}
-                    <motion.div 
-                      className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-600 dark:from-green-600 dark:to-blue-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg"
-                      whileHover={{ rotate: 360, scale: 1.1 }}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <CheckCircle className="h-8 w-8 text-white" />
-                    </motion.div>
                     
                     {/* PDF Display - Now on Top */}
                     {cert.pdf && (
                       <motion.div 
-                        className="w-full h-64 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4 border border-gray-200 dark:border-gray-600 shadow-sm"
+                        className="w-full h-96 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4 border border-gray-200 dark:border-gray-600 shadow-sm"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
