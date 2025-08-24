@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import * as si from 'react-icons/si';
 import { 
   Download, 
   Github, 
@@ -34,12 +35,16 @@ import {
 } from 'lucide-react';
 
 import dynamic from 'next/dynamic';
+import Footer from './Footer';
 
 // Dynamically import UnderConstructionPopup to avoid SSR issues
 const UnderConstructionPopup = dynamic(() => import('./UnderConstructionPopup'), {
   ssr: false,
   loading: () => null
 });
+
+// Dynamically import Certificates component
+const Certificates = dynamic(() => import('./site/Certificates'), { ssr: false });
 
 interface HomeClientProps {
   initialData: any;
@@ -92,6 +97,38 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     return true;
   };
 
+  // Normalize certifications from either `certifications` (relative paths) or `certificates` (public URLs)
+  const normalizeCertifications = (data: any) => {
+    const a = Array.isArray(data?.certifications) ? data.certifications : [];
+    const b = Array.isArray(data?.certificates) ? data.certificates : [];
+
+    // Prefer entries with a usable absolute pdf URL
+    const mappedA = a.map((c: any, i: number) => ({
+      id: c.id || `cert-a-${i}`,
+      name: c.name || c.title || { english: '', japanese: '' },
+      issuer: c.issuer || { english: '', japanese: '' },
+      date: c.date || { english: '', japanese: '' },
+      // accept either `pdf` or `url`
+      pdf: typeof c.pdf === 'string' && c.pdf.startsWith('http')
+        ? c.pdf
+        : (typeof c.url === 'string' ? c.url : ''),
+      image: c.image || '',
+    }));
+
+    const mappedB = b.map((c: any, i: number) => ({
+      id: c.id || `cert-b-${i}`,
+      name: c.name || { english: '', japanese: '' },
+      issuer: c.issuer || { english: '', japanese: '' },
+      date: typeof c.date === 'string' ? { english: c.date, japanese: c.date } : (c.date || { english: '', japanese: '' }),
+      pdf: typeof c.url === 'string' ? c.url : '',
+      image: '',
+    }));
+
+    // merge (B first because it tends to have working URLs)
+    const merged = [...mappedB, ...mappedA].filter(x => x.pdf);
+    return merged;
+  };
+
   const [isDark, setIsDark] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSkillCategory, setActiveSkillCategory] = useState('');
@@ -130,10 +167,13 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   // Set initial skill category when data loads
   useEffect(() => {
-    if (portfolioData?.skills && Object.keys(portfolioData.skills).length > 0) {
+    if (portfolioData && portfolioData.skills && Object.keys(portfolioData.skills).length > 0) {
       setActiveSkillCategory(Object.keys(portfolioData.skills)[0]);
+    } else {
+      // Set a default category if no skills data is available
+      setActiveSkillCategory('languages');
     }
-  }, [portfolioData?.skills]);
+  }, [portfolioData]);
 
   // Debug: Log portfolio data structure
   useEffect(() => {
@@ -455,14 +495,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.3 }}
               className="text-center lg:text-left"
             >
               <motion.h1
                 className="text-5xl lg:text-7xl font-bold mb-6 gradient-text"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
                 whileHover={{
                   scale: 1.05,
                   y: -5
@@ -475,7 +515,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 className="text-2xl lg:text-3xl mb-6 text-blue-600 dark:text-blue-400 font-semibold"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
               >
                 {getMultilingualText(portfolioData?.hero?.title, language, language === 'en' ? "AI Specialist & Software Engineer" : "AIスペシャリスト・ソフトウェアエンジニア")}
               </motion.h2>
@@ -484,7 +524,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 className="text-lg lg:text-xl mb-8 text-gray-600 dark:text-gray-300 leading-relaxed"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
               >
                 {getMultilingualText(portfolioData?.hero?.description, language, language === 'en' 
                   ? "I'm a results-driven AI Engineer and Full-Stack Developer currently pursuing my Master's in Intelligent Information Engineering at Saga University, Japan."
@@ -496,7 +536,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
               >
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -523,7 +563,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 className="flex gap-4 justify-center lg:justify-start mt-8"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1.0 }}
+                transition={{ duration: 0.3, delay: 0.5 }}
               >
                 {[
                   { icon: Github, href: portfolioData?.contact?.social?.github || "https://github.com/mushabbir", label: "GitHub" },
@@ -1061,12 +1101,56 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {(() => {
-              // Ensure we have valid skills data for the active category
               const skillsData = portfolioData?.skills;
+              console.log('🔍 Skills data in HomeClient:', skillsData);
+              console.log('🔍 Skills data type:', typeof skillsData);
+              console.log('🔍 Skills data keys:', skillsData ? Object.keys(skillsData) : 'undefined');
+              console.log('🔍 Active skill category:', activeSkillCategory);
+              
               if (!skillsData || typeof skillsData !== 'object') {
                 return (
                   <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
-                    {language === 'en' ? 'No skills data available.' : 'スキルデータが利用できません。'}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6 }}
+                      className="space-y-4"
+                    >
+                      <div className="text-6xl mb-4">💻</div>
+                      <h3 className="text-xl font-medium text-gray-600 dark:text-gray-300">
+                        {language === 'en' ? 'Skills data not available' : 'スキルデータが利用できません'}
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                        {language === 'en' 
+                          ? 'Skills information will appear here once the data is loaded.'
+                          : 'データが読み込まれると、スキル情報がここに表示されます。'
+                        }
+                      </p>
+                    </motion.div>
+                  </div>
+                );
+              }
+              
+              if (!activeSkillCategory || !skillsData[activeSkillCategory]) {
+                return (
+                  <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6 }}
+                      className="space-y-4"
+                    >
+                      <div className="text-6xl mb-4">🔍</div>
+                      <h3 className="text-xl font-medium text-gray-600 dark:text-gray-300">
+                        {language === 'en' ? 'Select a skill category' : 'スキルカテゴリを選択してください'}
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                        {language === 'en' 
+                          ? 'Choose a category from the tabs above to view skills.'
+                          : '上記のタブからカテゴリを選択してスキルを表示してください。'
+                        }
+                      </p>
+                    </motion.div>
                   </div>
                 );
               }
@@ -1075,14 +1159,30 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               if (!Array.isArray(skills) || skills.length === 0) {
                 return (
                   <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
-                    {language === 'en' ? 'No skills found for this category.' : 'このカテゴリのスキルが見つかりません。'}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6 }}
+                      className="space-y-4"
+                    >
+                      <div className="text-6xl mb-4">📚</div>
+                      <h3 className="text-xl font-medium text-gray-600 dark:text-gray-300">
+                        {language === 'en' ? 'No skills found for this category' : 'このカテゴリのスキルが見つかりません'}
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                        {language === 'en' 
+                          ? 'Skills for this category will appear here once they are added.'
+                          : 'このカテゴリのスキルが追加されると、ここに表示されます。'
+                        }
+                      </p>
+                    </motion.div>
                   </div>
                 );
               }
               
               return skills.map((skill: any, index: number) => (
                 <motion.div
-                  key={skill.id || skill.name || `skill-${activeSkillCategory}-${index}`}
+                  key={skill.id || `skill-${activeSkillCategory}-${index}-${Date.now()}`}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -1094,8 +1194,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                   className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg card-hover card-glow relative overflow-hidden group"
                 >
                   <div className="flex items-center space-x-3 relative z-10">
-                    <motion.span 
-                      className="text-2xl"
+                    <motion.div 
+                      className="text-2xl flex items-center justify-center"
                       whileHover={{ 
                         scale: 1.2,
                         rotate: [0, -10, 10, 0]
@@ -1109,10 +1209,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                         repeatType: "reverse"
                       }}
                     >
-                      {skill.icon || '💻'}
-                    </motion.span>
+                      {(() => {
+                        const Icon = skill.iconKey ? (si as any)[skill.iconKey] : null;
+                        return Icon ? <Icon size={24} /> : (skill.icon || '💻');
+                      })()}
+                    </motion.div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
-                      {skill.name || skill}
+                      {typeof skill.name === 'string' ? skill.name : 
+                       (skill.name?.english || skill.name?.japanese || 'Unknown Skill')}
                     </h3>
                   </div>
                 </motion.div>
@@ -1353,7 +1457,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                         )}
                         
                         {/* Description */}
-                        {paper.description && (
+                        {(paper.description && (
+                          (typeof paper.description === 'object' && (paper.description.english || paper.description.japanese)) ||
+                          (typeof paper.description === 'string' && paper.description.trim() !== '')
+                        )) && (
                           <motion.div 
                             className="mb-4"
                             initial={{ opacity: 0, y: 10 }}
@@ -1361,7 +1468,26 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                             transition={{ delay: 0.2 }}
                           >
                             <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 p-4 rounded-lg border border-purple-200 dark:border-purple-700 shadow-sm">
-                              {getMultilingualText(paper.description, language, '')}
+                              {getMultilingualText(paper.description, language, 'No description available')}
+                            </p>
+                          </motion.div>
+                        )}
+                        
+                        {/* Fallback description if none exists */}
+                        {(!paper.description || 
+                          (typeof paper.description === 'object' && !paper.description.english && !paper.description.japanese) ||
+                          (typeof paper.description === 'string' && paper.description.trim() === '')) && 
+                          (!paper.abstract || 
+                           (typeof paper.abstract === 'object' && !paper.abstract.english && !paper.abstract.japanese) ||
+                           (typeof paper.abstract === 'string' && paper.abstract.trim() === '')) && (
+                          <motion.div 
+                            className="mb-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                          >
+                            <p className="text-gray-500 dark:text-gray-400 text-sm italic text-center p-4 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                              {language === 'en' ? 'No description available for this paper.' : 'この論文の説明は利用できません。'}
                             </p>
                           </motion.div>
                         )}
@@ -1418,37 +1544,60 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                         )}
 
                         {/* PDF Preview */}
-                        {paper.paperPdf && (
-                          <motion.div 
-                            className="mb-4"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                          >
-                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                              <span className="mr-2">📄</span>
-                              {language === 'en' ? 'PDF Preview' : 'PDFプレビュー'}
-                            </h4>
-                            <div className="w-full h-80 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-lg relative">
-                              <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg" />
-                              <iframe
-                                src={`${paper.paperPdf}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=85`}
-                                className="w-full h-full relative z-10"
-                                title={getMultilingualText(paper.title, language, 'Paper')}
-                                style={{ border: 'none' }}
-                              />
-                              <motion.div 
-                                className="absolute bottom-2 right-2 bg-white/80 dark:bg-gray-800/80 rounded-full p-2 shadow-lg"
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.5 }}
-                                whileHover={{ scale: 1.1 }}
-                              >
-                                <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                              </motion.div>
-                            </div>
-                          </motion.div>
-                        )}
+                        {(() => {
+                          const paperPdfUrl = typeof paper.paperPdf === 'string' && paper.paperPdf.startsWith('http') ? paper.paperPdf : (typeof paper.url === 'string' ? paper.url : '');
+                          return paperPdfUrl && (
+                            <motion.div 
+                              className="mb-4"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.4 }}
+                            >
+                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                <span className="mr-2">📄</span>
+                                {language === 'en' ? 'PDF Preview' : 'PDFプレビュー'}
+                              </h4>
+                              <div className="w-full h-[70vh] bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-lg relative">
+                                <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg" />
+                                <div className="w-full h-full pdf-container">
+                                  {/* PDF Viewer with fallback for browser security restrictions */}
+                                  <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                                    <div className="text-center p-6">
+                                      <div className="text-6xl mb-4">📄</div>
+                                      <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                        {language === 'en' ? 'PDF Preview' : 'PDFプレビュー'}
+                                      </h4>
+                                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                        {language === 'en' 
+                                          ? 'Due to browser security, PDF preview is not available inline.'
+                                          : 'ブラウザのセキュリティにより、PDFプレビューはインラインで利用できません。'
+                                        }
+                                      </p>
+                                      <a
+                                        href={paperPdfUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-md"
+                                      >
+                                        <FileText className="h-4 w-4" />
+                                        <span>{language === 'en' ? 'Open PDF' : 'PDFを開く'}</span>
+                                      </a>
+                                    </div>
+                                  </div>
+                                </div>
+                                <motion.div 
+                                  className="absolute bottom-2 right-2 bg-white/80 dark:bg-gray-800/80 rounded-full p-2 shadow-lg"
+                                  initial={{ opacity: 0, scale: 0 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: 0.5 }}
+                                  whileHover={{ scale: 1.1 }}
+                                >
+                                  <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                </motion.div>
+                              </div>
+                            </motion.div>
+                          );
+                        })()}
                         
                         {/* Date and Actions */}
                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
@@ -1459,33 +1608,39 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            {paper.paperPdf && (
-                              <motion.a
-                                href={paper.paperPdf}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                whileHover={{ scale: 1.05, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="inline-flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-md"
-                              >
-                                <FileText className="h-4 w-4" />
-                                <span>{language === 'en' ? 'View PDF' : 'PDFを見る'}</span>
-                              </motion.a>
-                            )}
-                            {paper.paperFilename && (
-                              <motion.a
-                                href={paper.paperPdf || '#'}
-                                download={paper.paperFilename}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                whileHover={{ scale: 1.05, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="inline-flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-md"
-                              >
-                                <Download className="h-4 w-4" />
-                                <span>{language === 'en' ? 'Download' : 'ダウンロード'}</span>
-                              </motion.a>
-                            )}
+                            {(() => {
+                              const paperPdfUrl = typeof paper.paperPdf === 'string' && paper.paperPdf.startsWith('http') ? paper.paperPdf : (typeof paper.url === 'string' ? paper.url : '');
+                              return paperPdfUrl && (
+                                <motion.a
+                                  href={paperPdfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  whileHover={{ scale: 1.05, y: -2 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  className="inline-flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-md"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                  <span>{language === 'en' ? 'View PDF' : 'PDFを見る'}</span>
+                                </motion.a>
+                              );
+                            })()}
+                            {paper.paperFilename && (() => {
+                              const paperPdfUrl = typeof paper.paperPdf === 'string' && paper.paperPdf.startsWith('http') ? paper.paperPdf : (typeof paper.url === 'string' ? paper.url : '');
+                              return paperPdfUrl && (
+                                <motion.a
+                                  href={paperPdfUrl}
+                                  download={paper.paperFilename}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  whileHover={{ scale: 1.05, y: -2 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  className="inline-flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-md"
+                                >
+                                  <Download className="h-4 w-4" />
+                                  <span>{language === 'en' ? 'Download' : 'ダウンロード'}</span>
+                                </motion.a>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -1494,7 +1649,23 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 </motion.div>
               )) : (
                 <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
-                  {language === 'en' ? 'No papers found.' : '研究論文が見つかりません。'}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="space-y-4"
+                  >
+                    <div className="text-6xl mb-4">📚</div>
+                    <h3 className="text-xl font-medium text-gray-600 dark:text-gray-300">
+                      {language === 'en' ? 'No papers found yet' : 'まだ論文がありません'}
+                    </h3>
+                    <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                      {language === 'en' 
+                        ? 'Research papers and publications will appear here once they are added.'
+                        : '研究論文や出版物が追加されると、ここに表示されます。'
+                      }
+                    </p>
+                  </motion.div>
                 </div>
               );
             })()}
@@ -1502,174 +1673,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         </div>
       </section>
 
-      {/* Certifications Section */}
-      <section id="certifications" className="py-20 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl lg:text-5xl font-bold mb-6 gradient-text">
-              {language === 'en' ? 'Certifications' : '資格・認定'}
-            </h2>
-            <p className="text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              {language === 'en' 
-                ? 'Professional certifications and achievements in technology and AI.'
-                : '技術とAIにおける専門資格と実績。'
-              }
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(() => {
-              const certifications = getSafeArray(portfolioData, 'certifications');
-              return certifications.length > 0 ? certifications.map((cert: any, index: number) => (
-                <motion.div
-                  key={cert.id || getMultilingualText(cert.title, language, 'Certification')}
-                  initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ 
-                    duration: 0.6, 
-                    delay: index * 0.1,
-                    type: "spring",
-                    stiffness: 100
-                  }}
-                  viewport={{ once: true }}
-                  whileHover={{ 
-                    scale: 1.03,
-                    y: -8,
-                    boxShadow: "0 25px 50px -12px rgba(34, 197, 94, 0.25)"
-                  }}
-                  className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg card-hover card-glow relative overflow-hidden group border border-gray-100 dark:border-gray-700"
-                >
-                  {/* Background gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  <div className="relative z-10">
-                    
-                    {/* PDF Display - Now on Top */}
-                    {cert.pdf && (
-                      <motion.div 
-                        className="w-full h-80 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg overflow-hidden mb-4 border border-gray-200 dark:border-gray-600 shadow-lg relative"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        whileHover={{ scale: 1.02, y: -5 }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg" />
-                        <iframe
-                          src={`${cert.pdf}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=85`}
-                          className="w-full h-full relative z-10"
-                          title={getMultilingualText(cert.name, language, 'Certification')}
-                          style={{ border: 'none' }}
-                        />
-                        <motion.div 
-                          className="absolute bottom-2 right-2 bg-white/80 dark:bg-gray-800/80 rounded-full p-2 shadow-lg"
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.3 }}
-                          whileHover={{ scale: 1.1 }}
-                        >
-                          <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        </motion.div>
-                      </motion.div>
-                    )}
-                    
-                    {/* Certificate Image - Alternative to PDF */}
-                    {!cert.pdf && cert.image && (
-                      <motion.div 
-                        className="w-full h-48 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4 border border-gray-200 dark:border-gray-600"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <img
-                          src={cert.image}
-                          alt={getMultilingualText(cert.name, language, "Certification")}
-                          className="w-full h-full object-cover"
-                        />
-                      </motion.div>
-                    )}
-                    
-                    {/* Certificate Title */}
-                    <motion.h3 
-                      className="text-lg font-bold text-gray-900 dark:text-white mb-3 text-center group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300"
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      {getMultilingualText(cert.name, language, 'Certification Title')}
-                    </motion.h3>
-                    
-                    {/* Issuer */}
-                    {cert.issuer && (
-                      <motion.p 
-                        className="text-gray-600 dark:text-gray-300 mb-3 text-sm text-center font-medium"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                      >
-                        {getMultilingualText(cert.issuer, language, '')}
-                      </motion.p>
-                    )}
-                    
-                    {/* Date Information */}
-                    <div className="flex items-center justify-center space-x-2 mb-4">
-                      <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
-                        <span className="mr-1">📅</span>
-                        {getMultilingualText(cert.date, language, cert.issueDate || cert.year || '2024')}
-                      </span>
-                      {cert.expiryDate && (
-                        <>
-                          <span className="text-gray-400">-</span>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {getMultilingualText(cert.expiryDate, language, '')}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    
-                    {/* Certificate Actions - Now at Bottom */}
-                    <div className="flex items-center justify-center space-x-2">
-                      {cert.pdf && (
-                        <motion.a
-                          href={cert.pdf}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="inline-flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 mr-2 shadow-md"
-                        >
-                          <FileText className="h-4 w-4" />
-                          <span>{language === 'en' ? 'View Certificate' : '証明書を見る'}</span>
-                        </motion.a>
-                      )}
-                      {cert.pdf && (
-                        <motion.a
-                          href={cert.pdf || '#'}
-                          download={getMultilingualText(cert.name, language, 'certification') + '.pdf'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-md"
-                        >
-                          <Download className="h-4 w-4" />
-                          <span>{language === 'en' ? 'Download Certificate' : 'ダウンロード'}</span>
-                        </motion.a>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              )) : (
-                <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
-                  {language === 'en' ? 'No certifications found.' : '資格が見つかりません。'}
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-      </section>
+      {/* Certificates Section */}
+      <Certificates />
 
       {/* Contact Section */}
       <section id="contact" className="py-20 bg-white dark:bg-gray-800">
@@ -2077,6 +2082,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { toast, Toaster } from 'sonner';
+import * as si from 'react-icons/si';
 import { 
   Save, 
   Eye, 
@@ -33,6 +34,10 @@ import {
 
 import CVUploadModal from '../components/CVUploadModal';
 import CertificateManager from '../components/CertificateManager';
+import dynamic from 'next/dynamic';
+import SkillIconPicker from '../components/admin/SkillIconPicker';
+
+const CertificatesSection = dynamic(() => import('../components/admin/CertificatesSection'), { ssr: false });
 
 interface PortfolioData {
   hero: {
@@ -53,7 +58,7 @@ interface PortfolioData {
       japanese: string;
     };
     profilePicture: string | null;
-    tools: Array<{ id: string; name: string; icon: string }>;
+    tools: Array<{ id: string; name: string; icon: string; iconKey?: string }>;
   };
   about: {
     english: string;
@@ -121,10 +126,10 @@ interface PortfolioData {
     technologies: string[];
   }>;
   skills: {
-    languages: Array<{ id: string; name: string; icon: string }>;
-    frameworks: Array<{ id: string; name: string; icon: string }>;
-    databases: Array<{ id: string; name: string; icon: string }>;
-    tools: Array<{ id: string; name: string; icon: string }>;
+    languages: Array<{ id: string; name: string; icon: string; iconKey?: string }>;
+    frameworks: Array<{ id: string; name: string; icon: string; iconKey?: string }>;
+    databases: Array<{ id: string; name: string; icon: string; iconKey?: string }>;
+    tools: Array<{ id: string; name: string; icon: string; iconKey?: string }>;
   };
   papers: Array<{
     id: string;
@@ -547,6 +552,11 @@ export default function AdminPage() {
   const [adminLogs, setAdminLogs] = useState<any[]>([]);
   const [showLogs, setShowLogs] = useState(false);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [openIconDropdown, setOpenIconDropdown] = useState<string | null>(null);
+  const [dataDebug, setDataDebug] = useState<any>(null);
+  const [migrationStatus, setMigrationStatus] = useState<'idle' | 'previewing' | 'migrating' | 'completed' | 'error'>('idle');
+  const [migrationData, setMigrationData] = useState<any>(null);
+  const [migrationError, setMigrationError] = useState<string>('');
 
   // Get section from URL parameter
   useEffect(() => {
@@ -565,6 +575,14 @@ export default function AdminPage() {
       if (response.ok) {
         const fetchedData = await response.json();
         console.log('📊 Raw fetched data:', fetchedData);
+        console.log('🔍 Skills data analysis:');
+        console.log('  - Skills exists:', !!fetchedData?.skills);
+        console.log('  - Skills type:', typeof fetchedData?.skills);
+        console.log('  - Skills keys:', fetchedData?.skills ? Object.keys(fetchedData.skills) : 'undefined');
+        console.log('  - Languages:', fetchedData?.skills?.languages);
+        console.log('  - Frameworks:', fetchedData?.skills?.frameworks);
+        console.log('  - Databases:', fetchedData?.skills?.databases);
+        console.log('  - Tools:', fetchedData?.skills?.tools);
         
         // Sanitize the fetched data to ensure correct structure
         const sanitizedData = {
@@ -597,8 +615,9 @@ export default function AdminPage() {
             status: typeof fetchedData.about?.status === 'string' ? fetchedData.about.status : "",
             education: typeof fetchedData.about?.education === 'string' ? fetchedData.about.education : ""
           },
-          education: Array.isArray(fetchedData.education) ? fetchedData.education.map((edu: any) => ({
+          education: Array.isArray(fetchedData.education) ? fetchedData.education.map((edu: any, index: number) => ({
             ...edu,
+            id: edu.id || `edu-${index}-${Date.now()}`,
             institution: typeof edu.institution === 'string'
               ? { english: edu.institution, japanese: edu.institution }
               : edu.institution || { english: "", japanese: "" },
@@ -616,8 +635,9 @@ export default function AdminPage() {
               japanese: Array.isArray(edu.achievements?.japanese) ? edu.achievements.japanese : []
             }
           })) : [],
-          projects: Array.isArray(fetchedData.projects) ? fetchedData.projects.map((project: any) => ({
+          projects: Array.isArray(fetchedData.projects) ? fetchedData.projects.map((project: any, index: number) => ({
             ...project,
+            id: project.id || `project-${index}-${Date.now()}`,
             title: typeof project.title === 'string'
               ? { english: project.title, japanese: project.title }
               : project.title || { english: "", japanese: "" },
@@ -627,8 +647,9 @@ export default function AdminPage() {
             technologies: Array.isArray(project.technologies) ? project.technologies : [],
             images: Array.isArray(project.images) ? project.images : []
           })) : [],
-          papers: Array.isArray(fetchedData.papers) ? fetchedData.papers.map((paper: any) => ({
+          papers: Array.isArray(fetchedData.papers) ? fetchedData.papers.map((paper: any, index: number) => ({
             ...paper,
+            id: paper.id || `paper-${index}-${Date.now()}`,
             title: typeof paper.title === 'string'
               ? { english: paper.title, japanese: paper.title }
               : (typeof paper.title === 'object' && paper.title?.english && paper.title?.japanese)
@@ -660,31 +681,43 @@ export default function AdminPage() {
               ? paper.authors
               : { english: [], japanese: [] }
           })) : [],
-          certifications: Array.isArray(fetchedData.certifications) ? fetchedData.certifications.map((cert: any) => ({
-            ...cert,
-            name: typeof cert.name === 'string'
-              ? { english: cert.name, japanese: cert.name }
-              : (typeof cert.name === 'object' && cert.name?.english && cert.name?.japanese)
-              ? cert.name
-              : { english: "", japanese: "" },
-            issuer: typeof cert.issuer === 'string'
-              ? { english: cert.issuer, japanese: cert.issuer }
-              : (typeof cert.issuer === 'object' && cert.issuer?.english && cert.issuer?.japanese)
-              ? cert.issuer
-              : { english: "", japanese: "" },
-            date: typeof cert.date === 'string'
-              ? { english: cert.date, japanese: cert.date }
-              : (typeof cert.date === 'object' && cert.date?.english && cert.date?.japanese)
-              ? cert.date
-              : { english: "", japanese: "" },
-            expiryDate: typeof cert.expiryDate === 'string'
-              ? { english: cert.expiryDate, japanese: cert.expiryDate }
-              : (typeof cert.expiryDate === 'object' && cert.expiryDate?.english && cert.expiryDate?.japanese)
-              ? cert.expiryDate
-              : { english: "", japanese: "" },
-            image: typeof cert.image === 'string' ? cert.image : "",
-            pdf: typeof cert.pdf === 'string' ? cert.pdf : ""
-          })) : [],
+          certifications: (() => {
+            // Handle both certifications and certificates arrays
+            const certs = fetchedData.certifications || fetchedData.certificates || [];
+            if (!Array.isArray(certs)) return [];
+            
+            return certs.map((cert: any, index: number) => {
+              // Handle different certificate data structures
+              const certData = {
+                id: cert.id || `cert-${index}-${Date.now()}`,
+                name: typeof cert.name === 'string'
+                  ? { english: cert.name, japanese: cert.name }
+                  : (typeof cert.name === 'object' && cert.name?.english && cert.name?.japanese)
+                  ? cert.name
+                  : { english: cert.name || "", japanese: cert.name || "" },
+                issuer: typeof cert.issuer === 'string'
+                  ? { english: cert.issuer, japanese: cert.issuer }
+                  : (typeof cert.issuer === 'object' && cert.issuer?.english && cert.issuer?.japanese)
+                  ? cert.issuer
+                  : { english: cert.issuer || "", japanese: cert.issuer || "" },
+                date: typeof cert.date === 'string'
+                  ? { english: cert.date, japanese: cert.date }
+                  : (typeof cert.date === 'object' && cert.date?.english && cert.date?.japanese)
+                  ? cert.date
+                  : { english: cert.date || "", japanese: cert.date || "" },
+                expiryDate: typeof cert.expiryDate === 'string'
+                  ? { english: cert.expiryDate, japanese: cert.expiryDate }
+                  : (typeof cert.expiryDate === 'object' && cert.expiryDate?.english && cert.expiryDate?.japanese)
+                  ? cert.expiryDate
+                  : { english: cert.expiryDate || "", japanese: cert.expiryDate || "" },
+                image: typeof cert.image === 'string' ? cert.image : "",
+                pdf: typeof cert.pdf === 'string' ? cert.pdf : (typeof cert.url === 'string' ? cert.url : "")
+              };
+              
+              console.log(`Processing certification ${index}:`, cert, '→', certData);
+              return certData;
+            });
+          })(),
           cv: fetchedData.cv || {
             english: { url: "", filename: "", isActive: false },
             japanese: { url: "", filename: "", isActive: false }
@@ -704,7 +737,13 @@ export default function AdminPage() {
           skills: (() => {
             // Ensure skills is always an object with arrays
             const skills = fetchedData.skills;
+            console.log('🔧 Skills sanitization process:');
+            console.log('  - Input skills:', skills);
+            console.log('  - Skills type:', typeof skills);
+            console.log('  - Skills is object:', skills && typeof skills === 'object');
+            
             if (!skills || typeof skills !== 'object') {
+              console.log('  - No skills data, returning defaults');
               return {
                 languages: [],
                 frameworks: [],
@@ -713,16 +752,63 @@ export default function AdminPage() {
               };
             }
             
-            // Ensure each category is an array and preserve existing data
-            return {
-              languages: Array.isArray(skills.languages) ? skills.languages : [],
-              frameworks: Array.isArray(skills.frameworks) ? skills.frameworks : [],
-              databases: Array.isArray(skills.databases) ? skills.databases : [],
-              tools: Array.isArray(skills.tools) ? skills.tools : []
+            // Clean and fix malformed skills data
+            const cleanSkills = (skillArray: any[], category: string) => {
+              console.log(`  - Cleaning ${category}:`, skillArray);
+              console.log(`  - ${category} is array:`, Array.isArray(skillArray));
+              
+              if (!Array.isArray(skillArray)) {
+                console.log(`  - ${category} is not array, returning empty`);
+                return [];
+              }
+              
+              const cleaned = skillArray
+                .filter(skill => skill && typeof skill === 'object')
+                .map((skill: any, index: number) => {
+                  console.log(`  - Processing ${category} skill ${index}:`, skill);
+                  
+                  // Fix malformed skills (like the "English" skill that got split into characters)
+                  if (skill['0'] && skill['1']) {
+                    // This is a malformed skill, reconstruct it
+                    const name = Object.values(skill)
+                      .filter(val => typeof val === 'string')
+                      .join('');
+                    console.log(`  - Fixed malformed skill:`, { original: skill, fixed: name });
+                    return {
+                      id: skill.id || `skill-${category}-${index}-${Date.now()}`,
+                      name,
+                      icon: skill.icon || '🔧'
+                    };
+                  }
+                  
+                  // Normal skill object - preserve empty names until user edits
+                  const cleanedSkill = {
+                    ...skill,
+                    id: skill.id || `skill-${category}-${index}-${Date.now()}`,
+                    name: typeof skill.name === 'string' ? skill.name : '',
+                    icon: typeof skill.icon === 'string' ? skill.icon : '🔧'
+                  };
+                  console.log(`  - Cleaned skill:`, cleanedSkill);
+                  return cleanedSkill;
+                });
+              
+              console.log(`  - Final ${category} result:`, cleaned);
+              return cleaned;
             };
+            
+            const result = {
+              languages: cleanSkills(skills.languages, 'lang'),
+              frameworks: cleanSkills(skills.frameworks, 'frame'),
+              databases: cleanSkills(skills.databases, 'db'),
+              tools: cleanSkills(skills.tools, 'tool')
+            };
+            
+            console.log('  - Final skills result:', result);
+            return result;
           })(),
-          experience: Array.isArray(fetchedData.experience) ? fetchedData.experience.map((exp: any) => ({
+          experience: Array.isArray(fetchedData.experience) ? fetchedData.experience.map((exp: any, index: number) => ({
             ...exp,
+            id: exp.id || `exp-${index}-${Date.now()}`,
             title: typeof exp.title === 'string'
               ? { english: exp.title, japanese: exp.title }
               : exp.title || { english: "", japanese: "" },
@@ -740,7 +826,9 @@ export default function AdminPage() {
         };
         
         console.log('✅ Sanitized data:', sanitizedData);
+        console.log('✅ Skills data in sanitized data:', sanitizedData.skills);
         setData(sanitizedData);
+        setDataDebug(sanitizedData);
       } else {
         console.error('❌ Failed to fetch portfolio data:', response.status);
         toast.error('Failed to load portfolio data. Using default data.');
@@ -756,6 +844,32 @@ export default function AdminPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Close icon dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openIconDropdown && !(event.target as Element).closest('.icon-dropdown-container')) {
+        setOpenIconDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openIconDropdown]);
+
+  // Debug data changes
+  useEffect(() => {
+    console.log('🔄 Data state changed:', data);
+    console.log('🔄 Skills data in state:', data?.skills);
+    console.log('🔄 Skills structure:', {
+      languages: data?.skills?.languages?.length || 0,
+      frameworks: data?.skills?.frameworks?.length || 0,
+      databases: data?.skills?.databases?.length || 0,
+      tools: data?.skills?.tools?.length || 0
+    });
+  }, [data]);
 
   // Fetch admin logs
   const fetchAdminLogs = async () => {
@@ -851,7 +965,13 @@ export default function AdminPage() {
           technologies: Array.isArray(project.technologies) ? project.technologies : [],
           images: Array.isArray(project.images) ? project.images : []
         })) : [],
-        papers: Array.isArray(data.papers) ? data.papers : []
+        papers: Array.isArray(data.papers) ? data.papers : [],
+        skills: {
+          languages: data.skills.languages.map(({id, name, icon}) => ({id, name, icon})),
+          frameworks: data.skills.frameworks.map(({id, name, icon}) => ({id, name, icon})),
+          databases: data.skills.databases.map(({id, name, icon}) => ({id, name, icon})),
+          tools: data.skills.tools.map(({id, name, icon}) => ({id, name, icon})),
+        }
       };
       
       console.log('📝 Sanitized data prepared, saving to Supabase...');
@@ -1091,12 +1211,14 @@ export default function AdminPage() {
   };
 
   const addSkill = (category: keyof PortfolioData['skills']) => {
-    const newSkill = { id: uuidv4(), name: '', icon: '🔧' };
+    const newSkill = { id: uuidv4(), name: '', icon: '🔧', iconKey: 'SiCode' };
     setData(prev => ({
       ...prev,
       skills: {
         ...prev.skills,
-        [category]: [...prev.skills[category], newSkill]
+        [category]: Array.isArray(prev.skills[category])
+          ? [...prev.skills[category], newSkill]
+          : [newSkill]
       }
     }));
     toast.success(`${category} skill added successfully!`);
@@ -1107,16 +1229,30 @@ export default function AdminPage() {
       ...prev,
       skills: {
         ...prev.skills,
-        [category]: prev.skills[category].map((skill, i) => 
-          i === index ? { ...skill, ...updates } : skill
-        )
+        [category]: Array.isArray(prev.skills[category])
+          ? prev.skills[category].map((skill, i) => 
+              i === index ? { ...skill, ...updates } : skill
+            )
+          : []
       }
     }));
   };
 
   const removeSkill = async (category: keyof PortfolioData['skills'], index: number) => {
     try {
+      // Ensure skills array exists and is valid
+      if (!data.skills || !data.skills[category] || !Array.isArray(data.skills[category])) {
+        console.error('Skills array not found or invalid for category:', category);
+        toast.error('Skills data not available. Please refresh the page.');
+        return;
+      }
+
       const skillToRemove = data.skills[category][index];
+      if (!skillToRemove) {
+        console.error('Skill not found at index:', index);
+        toast.error('Skill not found. Please refresh the page.');
+        return;
+      }
       
       // Ensure the skill has a proper ID
       if (!skillToRemove.id) {
@@ -1125,7 +1261,9 @@ export default function AdminPage() {
           ...prev,
           skills: {
             ...prev.skills,
-            [category]: prev.skills[category].filter((_, i) => i !== index)
+            [category]: Array.isArray(prev.skills[category]) 
+              ? prev.skills[category].filter((_, i) => i !== index)
+              : []
           }
         }));
         toast.success(`${category} skill removed successfully!`);
@@ -1143,7 +1281,9 @@ export default function AdminPage() {
           ...prev,
           skills: {
             ...prev.skills,
-            [category]: prev.skills[category].filter((_, i) => i !== index)
+            [category]: Array.isArray(prev.skills[category])
+              ? prev.skills[category].filter((_, i) => i !== index)
+              : []
           }
         }));
         toast.success(`${category} skill removed successfully!`);
@@ -2154,10 +2294,23 @@ export default function AdminPage() {
             {(() => {
               // Ensure we have valid data before mapping
               const skills = data.skills?.[category];
+              console.log(`🎯 Rendering skills for ${category}:`);
+              console.log(`  - Skills data:`, skills);
+              console.log(`  - Skills type:`, typeof skills);
+              console.log(`  - Skills is array:`, Array.isArray(skills));
+              console.log(`  - Skills length:`, skills?.length);
+              console.log(`  - Full data.skills:`, data.skills);
+              console.log(`  - Category:`, category);
+              
               if (!skills || !Array.isArray(skills)) {
+                console.log(`  - No valid skills for ${category}, showing empty state`);
                 return (
                   <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-                    No skills found for {category}. Click "Add Skill" to get started.
+                    No skills found for {category}. Click &quot;Add Skill&quot; to get started.
+                    <br />
+                    <small className="text-xs text-gray-400">
+                      Debug: skills={JSON.stringify(skills)} | type={typeof skills} | isArray={Array.isArray(skills)}
+                    </small>
                   </div>
                 );
               }
@@ -2165,47 +2318,101 @@ export default function AdminPage() {
               return skills.map((skill, index) => (
                 <motion.div 
                   key={skill.id || `skill-${category}-${index}`} 
-                  className="flex items-center space-x-3"
+                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
                   whileHover={{ scale: 1.02, y: -2 }}
-                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
                 >
-                  <div className="relative group">
-                    <motion.input
-                      type="text"
-                      value={skill.icon || ''}
-                      onChange={(e) => updateSkill(category, index, { icon: e.target.value })}
-                      className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center cursor-pointer"
-                      placeholder="🔧"
-                      readOnly
+                  <div className="relative icon-dropdown-container">
+                    <motion.button
+                      type="button"
+                      onClick={() => setOpenIconDropdown(openIconDropdown === skill.id ? null : skill.id)}
+                      className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       transition={{ duration: 0.2 }}
-                    />
-                    <motion.div 
-                      className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-50 max-h-40 overflow-y-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto"
-                      initial={{ opacity: 0, y: -10, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.2 }}
                     >
-                      <div className="grid grid-cols-8 gap-1">
-                        {['💻', '🔧', '⚡', '🚀', '🎯', '🔮', '🌟', '💡', '🔥', '⚙️', '🎨', '📱', '☁️', '🔒', '📊', '🎮', '🤖', '🌐', '📦', '🔍', '⚡', '🎪', '🎭', '🎨', '🎵', '🎬', '📚', '🎓', '🏆', '💎', '🔋', '📡', '🛡️'].map((icon, iconIndex) => (
-                          <motion.button
-                            key={`${icon}-${iconIndex}`}
-                            onClick={() => updateSkill(category, index, { icon })}
-                            className="w-8 h-8 text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center transition-colors duration-150"
-                            whileHover={{ scale: 1.2, rotate: 5 }}
-                            whileTap={{ scale: 0.9 }}
-                            transition={{ duration: 0.15 }}
-                                                      >
-                              {icon}
-                            </motion.button>
-                        ))}
-                      </div>
-                    </motion.div>
+                      {(() => {
+                        const Icon = skill.iconKey ? (si as any)[skill.iconKey] : null;
+                        return Icon ? <Icon size={20} /> : (skill.icon || '🔧');
+                      })()}
+                    </motion.button>
+                    {openIconDropdown === skill.id && (
+                      <motion.div 
+                        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setOpenIconDropdown(null)}
+                      >
+                        <motion.div 
+                          className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl p-6 shadow-2xl max-w-md w-full mx-4"
+                          initial={{ opacity: 0, y: -20, scale: 0.9 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                          transition={{ duration: 0.2 }}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)'
+                          }}
+                        >
+                          {/* Header */}
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                              Choose Icon for {skill.name || 'Skill'}
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={() => setOpenIconDropdown(null)}
+                              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                            >
+                              <X className="h-5 w-5" />
+                            </button>
+                          </div>
+
+                          {/* Icon Grid */}
+                          <div className="mb-4">
+                            <SkillIconPicker
+                              value={skill.iconKey || skill.icon}
+                              onChange={(iconKey) => {
+                                setData(prev => ({
+                                  ...prev,
+                                  skills: {
+                                    ...prev.skills,
+                                    [category]: Array.isArray(prev.skills[category])
+                                      ? prev.skills[category].map(s =>
+                                          s.id === skill.id ? { ...s, iconKey, icon: iconKey } : s
+                                        )
+                                      : []
+                                  }
+                                }));
+                                setOpenIconDropdown(null);
+                              }}
+                            />
+                          </div>
+
+                          {/* Footer */}
+                          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-600">
+                            <button
+                              type="button"
+                              onClick={() => setOpenIconDropdown(null)}
+                              className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setOpenIconDropdown(null)}
+                              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                            >
+                              Done
+                            </button>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
                   </div>
                   <motion.input
                     type="text"
@@ -2645,7 +2852,7 @@ export default function AdminPage() {
                   {/* Existing Images */}
                   <div className="space-y-2">
                     {project.images.map((image, index) => (
-                      <div key={index} className="flex items-center space-x-2">
+                      <div key={`${project.id}-image-${index}`} className="flex items-center space-x-2">
                         <img
                           src={image}
                           alt={`Project ${index + 1}`}
@@ -2933,8 +3140,8 @@ export default function AdminPage() {
         </div>
 
         <div className="space-y-6">
-          {papersArray.map((paper) => (
-            <div key={paper.id} className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          {papersArray.map((paper, index) => (
+            <div key={paper.id || `paper-${index}`} className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {paper.title.english || 'Untitled Paper'}
@@ -3276,6 +3483,149 @@ export default function AdminPage() {
     </div>
   );
 
+  const renderMigrationSection = () => {
+    const previewMigration = async () => {
+      try {
+        setMigrationStatus('previewing');
+        const response = await fetch('/api/migrate-certifications', { method: 'GET' });
+        const data = await response.json();
+        
+        if (response.ok) {
+          setMigrationData(data);
+          setMigrationStatus('idle');
+        } else {
+          throw new Error(data.error || 'Failed to preview migration');
+        }
+      } catch (error: any) {
+        setMigrationError(error.message);
+        setMigrationStatus('error');
+      }
+    };
+
+    const executeMigration = async () => {
+      try {
+        setMigrationStatus('migrating');
+        const response = await fetch('/api/migrate-certifications', { method: 'POST' });
+        const data = await response.json();
+        
+        if (response.ok) {
+          setMigrationData(data);
+          setMigrationStatus('completed');
+          // Refresh the main data after successful migration
+          await fetchData();
+          toast.success('Migration completed successfully!');
+        } else {
+          throw new Error(data.error || 'Failed to execute migration');
+        }
+      } catch (error: any) {
+        setMigrationError(error.message);
+        setMigrationStatus('error');
+        toast.error(`Migration failed: ${error.message}`);
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Certifications Migration Tool</h2>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">
+            This tool will consolidate your duplicate certifications and certificates data into a single, clean schema.
+            <br />
+            <strong className="text-orange-600">⚠️ This is a one-time operation. Run it only once!</strong>
+          </p>
+        </div>
+
+        {/* Current Data Status */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">Current Data Status</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium text-blue-800 dark:text-blue-200">Certifications:</span>
+              <span className="ml-2 text-blue-600 dark:text-blue-300">{data?.certifications?.length || 0} entries</span>
+            </div>
+            <div>
+              <span className="font-medium text-blue-800 dark:text-blue-200">Certificates:</span>
+              <span className="ml-2 text-blue-600 dark:text-blue-300">{(data as any)?.certificates?.length || 0} entries</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Migration Actions */}
+        <div className="flex space-x-4">
+          <button
+            onClick={previewMigration}
+            disabled={migrationStatus === 'previewing'}
+            className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white px-6 py-3 rounded-lg flex items-center space-x-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${migrationStatus === 'previewing' ? 'animate-spin' : ''}`} />
+            <span>Preview Migration</span>
+          </button>
+          
+          <button
+            onClick={executeMigration}
+            disabled={migrationStatus === 'migrating' || migrationStatus === 'completed'}
+            className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-6 py-3 rounded-lg flex items-center space-x-2"
+          >
+            <RotateCcw className={`h-4 w-4 ${migrationStatus === 'migrating' ? 'animate-spin' : ''}`} />
+            <span>Execute Migration</span>
+          </button>
+        </div>
+
+        {/* Migration Results */}
+        {migrationData && (
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-3">
+              {migrationStatus === 'completed' ? 'Migration Completed!' : 'Migration Preview'}
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <span className="font-medium text-green-800 dark:text-green-200">Before:</span>
+                <div className="text-sm text-green-600 dark:text-green-300">
+                  <div>Certifications: {migrationData.summary?.before?.certifications || migrationData.before?.certifications || 0}</div>
+                  <div>Certificates: {migrationData.summary?.before?.certificates || migrationData.before?.certificates || 0}</div>
+                </div>
+              </div>
+              <div>
+                <span className="font-medium text-green-800 dark:text-green-200">After:</span>
+                <div className="text-sm text-green-600 dark:text-green-300">
+                  <div>Certifications: {migrationData.summary?.after?.certifications || migrationData.after?.certifications || 0}</div>
+                  <div>Certificates: 0 (removed)</div>
+                </div>
+              </div>
+            </div>
+
+            {migrationStatus === 'completed' && (
+              <div className="text-sm text-green-700 dark:text-green-300">
+                ✅ Migration executed successfully! Your data has been consolidated into a single certifications schema.
+                <br />
+                The old certificates field has been removed to prevent future confusion.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Error Display */}
+        {migrationError && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">Migration Error</h3>
+            <p className="text-red-700 dark:text-red-300">{migrationError}</p>
+          </div>
+        )}
+
+        {/* Migration Details */}
+        {migrationData && (
+          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Migration Details</h3>
+            <pre className="text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-900 p-3 rounded border overflow-auto">
+              {JSON.stringify(migrationData, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderSection = () => {
     switch (activeSection) {
       case 'hero':
@@ -3294,11 +3644,13 @@ export default function AdminPage() {
       case 'projects':
         return renderProjectsSection();
       case 'certifications':
-        return renderCertificationsSection();
+        return <CertificatesSection />;
       case 'contact':
         return renderContactSection();
       case 'papers':
         return renderPapersSection();
+      case 'migration':
+        return renderMigrationSection();
       case 'certificates-manager':
         return <CertificateManager />;
       case 'logs':
@@ -3360,6 +3712,7 @@ export default function AdminPage() {
               { id: 'certificates-manager', label: 'Certificates Manager', icon: '📜' },
               { id: 'contact', label: 'Contact', icon: '📞' },
               { id: 'papers', label: 'Papers', icon: '📄' },
+              { id: 'migration', label: 'Migration Tool', icon: '🔄' },
               { id: 'logs', label: 'Admin Logs', icon: '📊' }
             ].map((section) => (
               <motion.button
@@ -3434,9 +3787,14 @@ export default function AdminPage() {
                   <div key={category}>
                     <h4 className="capitalize">{category}</h4>
                     <ul>
-                      {data.skills[category].map((skill, index) => (
-                        <li key={index}>{skill.icon} {skill.name}</li>
-                      ))}
+                      {data.skills[category].map((skill, index) => {
+                        const Icon = skill.iconKey ? (si as any)[skill.iconKey] : null;
+                        return (
+                          <li key={skill.id || `skill-${category}-${index}`} className="flex items-center gap-2">
+                            {Icon ? <Icon size={16} /> : (skill.icon || '🔧')} {skill.name}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 ))}

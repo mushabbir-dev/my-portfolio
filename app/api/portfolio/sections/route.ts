@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   getPortfolioData, getSection, updateSection,
-  pushItem, upsertItems, deleteItem
+  pushItem, deleteItem
 } from '../../../lib/portfolioService';
 
 export const revalidate = 0;

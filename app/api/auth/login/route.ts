@@ -3,10 +3,10 @@ import crypto from 'crypto';
 import sessionStore from '../../../lib/sessionStore';
 import { sendEmail, createOTPEmail } from '../../../lib/emailService';
 
-// Hashed credentials (ahmed:Ahmed@2025)
+// Credentials from environment variables only
 const VALID_CREDENTIALS = {
-  userId: process.env.ADMIN_USER_ID || 'ahmed',
-  passwordHash: process.env.ADMIN_PASSWORD_HASH || '757162ad31b07cbf9291d629916881410ace61bbb6b1067721ea8cde107c4e57' // SHA-256 hash of Ahmed@2025
+  userId: process.env.ADMIN_USER_ID,
+  passwordHash: process.env.ADMIN_PASSWORD_HASH
 };
 
 // Target email for OTP
@@ -15,13 +15,10 @@ const TARGET_EMAIL = process.env.ADMIN_EMAIL || 'mushabbirahmed99@gmail.com';
 // Send OTP email using Resend
 async function sendOTPEmail(otp: string) {
   try {
-    
-    
     const emailData = createOTPEmail(otp, TARGET_EMAIL);
     const result = await sendEmail(emailData);
     
     if (result.success) {
-      
       return { success: true };
     } else {
       console.error('📧 Failed to send OTP via Resend:', result.error);
@@ -36,6 +33,15 @@ async function sendOTPEmail(otp: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if admin credentials are configured
+    if (!VALID_CREDENTIALS.userId || !VALID_CREDENTIALS.passwordHash) {
+      console.error('❌ Admin credentials not configured');
+      return NextResponse.json(
+        { error: 'Admin authentication not configured' },
+        { status: 500 }
+      );
+    }
+
     const { userId, password } = await request.json();
 
     // Validate required fields
